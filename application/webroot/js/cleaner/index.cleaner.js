@@ -13,9 +13,11 @@
 $(document).ready(function () {
     $("tr.clickable-row").click(function () {
 
-        var selected = $(this).hasClass("highlight");
-        $("tr.clickable-row").removeClass("highlight");
+        var selected = $(this).hasClass("highlight_row");
+        $("tr.clickable-row").removeClass("highlight_row");
         if (!selected)
-            $(this).addClass("highlight");
+            $(this).addClass("highlight_row");
+        
+        $(location).attr('href',LINK+"Cleaner/index/"+$(this).data("id"));
     });
 });

@@ -1,11 +1,6 @@
-
-
-
-
-
-
     <table class="pmacontrol">
         <tr>
+            <th><?= __('ID') ?> </th>
             <th><?= __('Name') ?> </th>
             <th><?= __('Server') ?> </th>
             <th><?= __('IP') ?> </th>
@@ -18,14 +13,18 @@
         <?php
         foreach ($data['cleaner_main'] as $cleaner) {
 
-            echo '<tr class="cleaner_main clickable-row" data-href="' . LINK  . 'Cleaner/index/'. $cleaner['id_cleaner_main'].'">';
+            
+            
+            $hightlight = ($cleaner['id_cleaner_main'] === $data['id_cleaner'])? "highlight_row": "";
+            
+            echo '<tr class="cleaner_main clickable-row '.$hightlight.'" data-id="'.$cleaner['id_cleaner_main'].'" data-href="' . LINK  . 'Cleaner/index/'. $cleaner['id_cleaner_main'].'">';
+            echo '<td>' . $cleaner['id_cleaner_main'] .'</td>';
             echo '<td>' . $cleaner['libelle'] . '</td>';
             echo '<td>' . str_replace("_","-",$cleaner['mysql_server_name']) . '</td>';
             echo '<td>' . $cleaner['ip'] . '</td>';
             echo '<td>' . $cleaner['main_table'] . '</td>';
             
             echo '<td>';
-
             echo '<div class="btn-group" role="group" aria-label="Default button group">';
             
             //
@@ -37,14 +36,10 @@
             
             echo ' <a href="' . LINK  . 'Cleaner/delete/'. $cleaner['id_cleaner_main'].'" type="button" class="btn btn-danger" style="font-size:12px">'. ' <span class="glyphicon glyphicon-remove aria-hidden="true" style="font-size:13px"></span> ' . __("Delete cleaner"). '</a>';
             
-
             echo '</td>';
-           
-
              echo '<td>'
-            . '<span class="label label-success" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">Running</span>' 
-
-            . ' <span class="label label-danger" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Error</span>' 
+           // . '<span class="label label-success" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">Running</span>' 
+           // . ' <span class="label label-danger" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Error</span>' 
             . ' <span class="label label-warning" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Stopped</span>' 
             . '</td>';
 
@@ -69,38 +64,7 @@
 <br />
 
 
-<div class="well">
-    <div class="btn-group" role="group" aria-label="Default button group">
-        <?php
-        foreach ($data['cleaner_name'] as $name) {
-
-            if ($name['name'] == $data['cleaner']) {
-                $class = 'btn-primary';
-            } else {
-                $class = 'btn-default';
-            }
-            echo '<a href="' . LINK . 'Cleaner/index/' . $name['name'] . '" type="button" class="btn ' . $class . '"><span class="glyphicon glyphicon-trash" aria-hidden="true" style="font-size:12px"></span> Cleaner ' . $name['name'] . '</a>';
-        }
-        ?>
-    </div>
-
-
-    <div class="btn-group" role="group" aria-label="Default button group">
-        <?php
-        $class = 'btn-default';
-        echo '<a href="' . LINK . 'Cleaner/index/' . $data['cleaner'] . '" type="button" class="btn ' . $class . '">'
-        . ' <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> ' . __('Stop Daemon') . '</a>';
-
-        $class = 'btn-primary';
-        echo '<a href="' . LINK . 'Cleaner/index/' . $data['cleaner'] . '" type="button" class="btn ' . $class . '">'
-        . ' <span class="glyphicon glyphicon-play" aria-hidden="true"></span> ' . __('Start Daemon') . '</a>';
-        $class = 'btn-default';
-        echo '<a href="' . LINK . 'Cleaner/index/' . $data['cleaner'] . '" type="button" class="btn ' . $class . '">'
-        . ' <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . __('Restart Daemon') . '</a>';
-        ?>
-    </div>
-</div>
-
+<!--
 <div class="well">
     <div class="btn-group" role="group" aria-label="Default button group">
         <?php
@@ -119,7 +83,7 @@
         ?>
 
     </div>
-
+-->
     
     
     <!--

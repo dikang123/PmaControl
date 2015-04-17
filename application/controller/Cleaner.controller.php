@@ -682,24 +682,26 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-
-
         /** new cleaner with UI * */
         $sql = "SELECT *,a.id as id_cleaner_main,
             b.name as mysql_server_name
         FROM cleaner_main a
-        INNER JOIN mysql_server b ON a.id_mysql_server = b.id
-        INNER JOIN mysql_database c ON a.id_mysql_database = c.id";
-
+        INNER JOIN mysql_server b ON a.id_mysql_server = b.id";
 
         $data['cleaner_main'] = $db->sql_fetch_yield($sql);
-
 
         $sql = "SELECT DISTINCT `name` FROM pmacli_drain_process";
         $data['cleaner_name'] = $db->sql_fetch_yield($sql);
 
         $data['cleaner_name'] = iterator_to_array($data['cleaner_name']);
 
+        
+        $data['id_cleaner'] = empty($param[0])? 0: $param[0];
+        
+        
+        
+        
+        /*
         if (empty($param[0])) {
             $data['cleaner'] = $data['cleaner_name'][0]['name'];
         } else {
@@ -713,15 +715,16 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $data['menu'] = $param[1];
         }
 
-
-        $this->title = "Cleaner 3.0";
-
+        empty($param[0])? $param[0] = "index": $param[0] = $param[0];
+        */
+        
+        
+        $this->title = __("Cleaner");
         $this->ariane = " > " . $this->title . " > " . $param[0];
         $this->layout_name = 'pmacontrol';
 
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
             'cleaner/index.cleaner.js',
-            'http://getbootstrap.com/assets/js/docs.min.js',
             'jQplot/jquery.jqplot.min.js',
             'jQplot/plugins/jqplot.dateAxisRenderer.min.js',
             //  'jQplot/plugins/jqplot.barRenderer.min.js',
@@ -1029,6 +1032,12 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
                     $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
                 }
+                
+                
+                if ($id_cleaner_foreign_key)
+                {
+                    header('location: ' . LINK . 'Cleaner/index/');
+                }
             }
         }
 
@@ -1080,12 +1089,16 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $db_to_get_db = $this->di['db']->sql($ob->name);
         }
 
+        
+        
+        
+        
         $sql = "SHOW DATABASES";
-        $res = $db->sql_query($sql);
+        $res = $db_to_get_db->sql_query($sql);
         
         
         $data['databases'] = [];
-        while ($ob = $db->sql_fetch_object($res)) {
+        while ($ob = $db_to_get_db->sql_fetch_object($res)) {
             $tmp = [];
             $tmp['id'] = $ob->Database;
             $tmp['libelle'] = $ob->Database;
@@ -1099,13 +1112,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
     
     function getTableByDatabase($param)
     {
-
-        
-        //var_dump($param);
-        
-        
         $database = $param[0];
-        
         
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -1119,24 +1126,9 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $db_clean = $this->di['db']->sql($ob->name);
         }
 
-
-/*
-        $sql = "SELECT id,name FROM mysql_database WHERE id = '" . $db->sql_real_escape_string($param[0]) . "';";
-
-        $res = $db->sql_query($sql);
-        while ($ob = $db->sql_fetch_object($res)) {
-            $id_database = $ob->id;
-            $database = $ob->name;
-        }
-*/
-
         $sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '" . $database . "' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
-
         
-        //echo $sql;
-
         $res = $db_clean->sql_query($sql);
-
 
         $data['table'] = [];
         while ($ob = $db->sql_fetch_object($res)) {
@@ -1146,7 +1138,6 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
             $data['table'][] = $tmp;
         }
-
 
         $this->set("data", $data);
     }
@@ -1160,23 +1151,17 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($_GET['id_mysql_server']) . "';";
         $res = $db->sql_query($sql);
 
-
         while ($ob = $db->sql_fetch_object($res)) {
             $id_server = $ob->id;
             $db_clean = $this->di['db']->sql($ob->name);
         }
 
-
-
         $sql = "show index from `" . $_GET['schema'] . "`.`" . $param[0] . "`";
-
         //$sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '".$database."' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
-
 
         echo $sql;
 
         $res = $db_clean->sql_query($sql);
-
 
         $data['column'] = [];
         while ($ob = $db->sql_fetch_object($res)) {
@@ -1187,17 +1172,16 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $data['column'][] = $tmp;
         }
 
-
         $this->set("data", $data);
     }
+    
+    
 
     function delete($param)
     {
         $db = $this->di['db']->sql(DB_DEFAULT);
         $sql = "DELETE FROM cleaner_main where id ='" . $param[0] . "'";
         $db->sql_query($sql);
-
-        header('location: ' . LINK . 'Cleaner/index/');
     }
 
 }
