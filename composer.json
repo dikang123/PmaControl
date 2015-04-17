@@ -1,0 +1,23 @@
+{
+"name": "glial/pmacontrol",
+"version": "dev-master",
+"license": "GPL-3.0",
+"description": "PmaControl 0.5 Beta",
+"authors": [ {
+    "name": "Aurélien LEQUOY",
+    "email": "aurelien.lequoy@esysteme.com",
+    "homepage": "http://www.esysteme.com",
+    "role": "DBA MySQL / MariaDB"
+    }
+],
+"require": {
+        "php": "5.5.*",
+        "ext-gd" : "*",
+        "ext-mcrypt" : "*",
+        "ext-ssh2" : "*",
+        "ext-mysqlnd" : "*",
+        "glial/glial": "4.1.1",
+        "phpunit/phpunit": "3.7.*",
+ 	"crodas/influx-php": ">0.0.1"
+    }
+}

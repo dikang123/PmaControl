@@ -1,0 +1,984 @@
+/*!
+ * IProd common CSS v1.0.0
+ *
+ * Copyright 2012 Photobox
+ * Designed and built over the marvelous twitter Bootstrap CSS.
+ *
+ */
+
+/* Body and structure
+-------------------------------------------------- */
+body {
+	position: relative;
+	padding-top: 50px;
+	background-color: #f5f5f5;
+	background-image: url(../images/background/grid-18px-masked.png);
+	background-repeat: repeat-x;
+	background-position: 0 40px;
+}
+
+.well {
+	padding: 5px;
+	background-color: #fff;
+	border: 1px solid #dedede;
+}
+.well.flat {
+	border: 0;
+	box-shadow: none;
+}
+.well.flat .wellHeader {
+	margin: 0;
+	padding: 8px 9px 7px 10px;
+	border-radius: 4px 4px 0 0;
+	font-weight: bold;
+	font-variant: small-caps;
+	font-size: 18px;
+    line-height: 23px;
+	background-color: #2ecc71;
+}
+.well.flat.flat-blue {
+	background-color: #2c3e50;
+	color: white;
+}
+.well.flat.flat-blue .wellHeader {
+	color: #2c3e50;
+}
+
+form {
+	padding: 0;
+	margin: 0;
+}
+
+/* Application messages
+-------------------------------------------------- */
+
+.messages {
+	position: fixed;
+	height: auto;
+	width: auto;
+	max-width: 500px;
+	top: 50px;
+	left: 50%;
+	z-index: 1055;
+	margin: 0 0 0 -200px;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	padding: 6px;
+	background-image: -moz-linear-gradient(top, #668ed1 0%, #3e5da0 100%);
+	background-image: -webkit-linear-gradient(top, #668ed1 0%,#3e5da0 100%);
+	border-color: #426298 #35538b #365493;
+	border-style: solid;
+	border-width: 1px;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 3px 5px rgba(0, 0, 0, 0.5);
+}
+
+.messages:hover {
+	cursor: pointer;
+}
+
+.messageInfo, .messageWarning, .messageError {
+	padding: 4px 5px 4px 50px;
+	min-height: 34px;
+}
+
+.messageInfo *, .messageWarning *, .messageError * {
+	vertical-align: middle;
+}
+
+.messageInfo {
+	background: #ffffff url(../images/icon/medium/info.png) 10px 5px no-repeat;
+	color: #333333;
+}
+
+/* TODO changer les couleurs */
+.messageWarning {
+	background: #dff0d8 url(../images/icon/medium/warning.png) 10px 5px no-repeat;
+	color: #468847;
+}
+
+.messageError {
+	background: #f2dede url(../images/icon/medium/delete.png) 10px 5px no-repeat;
+	color: #b94a48;
+}
+
+.messages *:first-child {
+  -webkit-border-radius: 4px 4px 0 0;
+  -moz-border-radius: 4px 4px 0 0;
+  border-radius: 4px 4px 0 0;
+}
+
+.messages *:last-child {
+  -webkit-border-radius: 0 0 4px 4px;
+  -moz-border-radius: 0 0 4px 4px;
+  border-radius: 0 0 4px 4px;
+}
+
+.messages *:only-child {
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+
+#wait {
+	position: fixed;
+	z-index: 3000;
+	top: 50%;
+	left: 50%;
+	overflow: hidden;
+	width: 100px;
+	height: 100px;
+	margin: -100px 0 0 -50px;
+	padding: 0;
+	color: white;
+	background-color: black;
+	opacity: 0.75;
+	filter: alpha(opacity=75);
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+	-webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45);
+	-moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45);
+	box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45);
+	text-align: center;
+}
+#wait.hide {
+	display: none;
+}
+#wait * {
+	line-height: 100px;
+}
+
+/* Colored boxes.
+-------------------------------------------------- */
+
+.box {
+	padding: 8px 10px 8px 10px;
+	margin-bottom: 18px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+}
+
+.box-inline {
+	display: inline;
+	float: left;
+	margin-right: 7px;
+	margin-bottom: 8px;
+}
+
+.box-default {
+	background-color: #E6E6E6;
+    background-image: -moz-linear-gradient(center top , #FFFFFF, #FFFFFF 25%, #E6E6E6);
+    background-repeat: no-repeat;
+    border-color: #CCCCCC #CCCCCC #BBBBBB;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: #333333;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+}
+
+.box-highlight {
+	background-color: #EEDC94;
+    background-image: -moz-linear-gradient(center top , #FCEEC1, #EEDC94);
+    background-repeat: repeat-x;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+    color: #404040;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.box-error {
+	background-color: #C43C35;
+    background-image: -moz-linear-gradient(center top , #EE5F5B, #C43C35);
+    background-repeat: repeat-x;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+    color: #FFFFFF;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Pagination
+-------------------------------------------------- */
+
+.paginator {
+	width: auto;
+	background-color: white;
+}
+.paginator tbody tr td {
+	padding: 0 14px;
+	line-height: 34px;
+	background-color: transparent;
+	cursor: pointer;
+	color: #0088CC;
+}
+.paginator tbody tr:hover td {
+	background-color: transparent;
+}
+.paginator tbody tr td.selected,
+.paginator tbody tr td.selected:hover {
+	color: #000000;
+	background-color: #f5f5f5;
+	cursor: default;
+}
+.paginator tbody tr td:hover {
+	background-color: #f5f5f5;
+	color: #005580;
+}
+.paginator-small {
+	margin-bottom: 0px;
+}
+.paginator-small tbody tr td {
+	line-height: 18px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+/* Navigation bar
+-------------------------------------------------- */
+
+.navbar strong {
+	color: #0088cc;
+}
+.navbar .logo {
+	float: left;
+	padding-top: 5px;
+	margin-right: 10px;
+}
+
+/* Toolbars and component groups
+-------------------------------------------------- */
+
+.btn-group + .btn-group {
+	margin-left: 15px;
+}
+.badge-group {
+	position: relative;
+}
+.badge-group:before,
+.badge-group:after {
+	display: table;
+	content: "";
+}
+.badge-group:after {
+	clear: both;
+}
+.badge-group .badge {
+	padding-right: 5px;
+	padding-left: 5px;
+	margin: 0;
+	-webkit-border-radius: 0;
+	-moz-border-radius: 0;
+	border-radius: 0;
+}
+.badge-group .badge:first-child {
+	padding-left: 10px;
+	-webkit-border-top-left-radius: 9px;
+	-moz-border-radius-topleft: 9px;
+	border-top-left-radius: 9px;
+	-webkit-border-bottom-left-radius: 9px;
+	-moz-border-radius-bottomleft: 9px;
+	border-bottom-left-radius: 9px;
+}
+.badge-group .badge:last-child {
+	padding-right: 10px;
+	-webkit-border-top-right-radius: 9px;
+	-moz-border-radius-topright: 9px;
+	border-top-right-radius: 9px;
+	-webkit-border-bottom-right-radius: 9px;
+	-moz-border-radius-bottomright: 9px;
+	border-bottom-right-radius: 9px;
+}
+
+/* Forms
+-------------------------------------------------- */
+
+.form-horizontal .control-group {
+    margin-bottom: 5px;
+}
+.richRadio,
+.richCheckbox {
+	margin-top: 5px;
+}
+.richRadio input[type="radio"],
+.richCheckbox input[type="checkbox"] {
+	float: right;
+	display: inline-block;
+	margin-right: 10px;
+}
+.richRadio label,
+.richCheckbox label {
+	display: inline-block;
+	margin-right: 15px;
+}
+table.form-table td {
+	padding: 2px 0 0 5px;
+}
+table.form-table input {
+	margin-bottom: 0;
+}
+table.form-table label {
+	float: right;
+	margin-right: 10px;
+}
+span.deleteicon {
+	position: relative;
+}
+span.deleteicon span {
+	position: absolute;
+	display: block;
+	top: 2px;
+	right: 2px;
+	width: 16px;
+	height: 16px;
+	background: url('../images/icon/mini/delete.png') no-repeat 0 0;
+	cursor: pointer;
+}
+span.deleteicon input {
+	padding-right: 20px;
+}
+
+/* Miscellaneous
+-------------------------------------------------- */
+
+.full-size {
+	width: 100%;
+}
+
+.pre-format {
+	white-space: pre-wrap;      /* CSS3 */   
+	white-space: -moz-pre-wrap; /* Firefox */    
+	white-space: -pre-wrap;     /* Opera <7 */   
+	white-space: -o-pre-wrap;   /* Opera 7 */    
+	word-wrap: break-word;      /* IE */
+}
+
+.label + .label {
+	margin-left: 5px;
+}
+
+.badge-alert-ok {
+  background-color: #0F9D58;
+}
+.badge-alert-ok:hover {
+  background-color: #13CA73;
+}
+
+.badge-alert-warning {
+  background-color: #f89406;
+}
+.badge-alert-warning:hover {
+  background-color: #c67605;
+}
+
+.badge-alert-critical {
+  background-color: #b94a48;
+}
+.badge-alert-critical:hover {
+  background-color: #953b39;
+}
+
+/* Table
+-------------------------------------------------- */
+.table thead tr td.info,
+.table thead tr th.info,
+.table tbody tr td.info,
+.table tbody tr th.info,
+.table thead tr:hover td.info,
+.table thead tr:hover th.info,
+.table tbody tr:hover td.info,
+.table tbody tr:hover th.info {
+	background-color: #3a87ad;
+	color: white;
+}
+.table thead tr td.info-light,
+.table thead tr th.info-light,
+.table tbody tr td.info-light,
+.table tbody tr th.info-light,
+.table thead tr:hover td.info-light,
+.table thead tr:hover th.info-light,
+.table tbody tr:hover td.info-light,
+.table tbody tr:hover th.info-light {
+	background-color: #66afd8;
+}
+.table thead tr td.success,
+.table thead tr th.success,
+.table tbody tr td.success,
+.table tbody tr th.success,
+.table thead tr:hover td.success,
+.table thead tr:hover th.success,
+.table tbody tr:hover td.success,
+.table tbody tr:hover th.success {
+	background-color: #468847;
+	color: white;
+}
+.table thead tr td.success-light,
+.table thead tr th.success-light,
+.table tbody tr td.success-light,
+.table tbody tr th.success-light,
+.table thead tr:hover td.success-light,
+.table thead tr:hover th.success-light,
+.table tbody tr:hover td.success-light,
+.table tbody tr:hover th.success-light {
+	background-color: #71b570;
+}
+.table thead tr td.warn,
+.table thead tr th.warn,
+.table tbody tr td.warn,
+.table tbody tr th.warn,
+.table thead tr:hover td.warn,
+.table thead tr:hover th.warn,
+.table tbody tr:hover td.warn,
+.table tbody tr:hover th.warn {
+	background-color: #f89406;
+	color: white;
+}
+.table thead tr td.warn-light,
+.table thead tr th.warn-light,
+.table tbody tr td.warn-light,
+.table tbody tr th.warn-light,
+.table thead tr:hover td.warn-light,
+.table thead tr:hover th.warn-light,
+.table tbody tr:hover td.warn-light,
+.table tbody tr:hover th.warn-light {
+	background-color: #ffc246;
+}
+.table thead tr td.error,
+.table thead tr th.error,
+.table tbody tr td.error,
+.table tbody tr th.error,
+.table thead tr:hover td.error,
+.table thead tr:hover th.error,
+.table tbody tr:hover td.error,
+.table tbody tr:hover th.error {
+	background-color: #b94a48;
+	color: white;
+}
+.table thead tr td.error-light,
+.table thead tr th.error-light,
+.table tbody tr td.error-light,
+.table tbody tr th.error-light,
+.table thead tr:hover td.error-light,
+.table thead tr:hover th.error-light,
+.table tbody tr:hover td.error-light,
+.table tbody tr:hover th.error-light {
+	background-color: #f8817b;
+}
+
+table.clickable tbody tr:hover td {
+	cursor: pointer;
+}
+
+table.row-bordered {
+	border-collapse: separate;
+	border-spacing: 0 7px;
+}
+.row-bordered td {
+	background-color: white;
+	border: 1px solid #dddddd;
+	border-right: 0;
+}
+.row-bordered td:first-child {
+	-webkit-border-radius: 4px 0 0 4px;
+	-moz-border-radius: 4px 0 0 4px;
+	border-radius: 4px 0 0 4px;
+}
+.row-bordered td:last-child {
+	-webkit-border-radius: 0 4px 4px 0;
+	-moz-border-radius: 0 4px 4px 0;
+	border-radius: 0 4px 4px 0;
+	border-right: 1px solid #dddddd;
+}
+
+table.invisible-header thead td {
+	border: 0;
+	background-color: transparent;
+}
+.table.table-ended tbody tr:last-child th, .table.table-ended tbody tr:last-child td {
+	border-bottom: 1px solid #dddddd;
+}
+
+/* Modal panes
+-------------------------------------------------- */
+/* Initial Bootstrap modal body max-height : 400px; */
+
+.modal-narrow {
+	width: 400px;
+	margin-left: -200px;
+}
+/* Normal width : 560px; */
+.modal-large {
+	width: 800px;
+	margin-left: -400px;
+}
+.modal-small {
+	margin-top: -200px;
+}
+.modal-tall {
+	margin-top: -300px;
+}
+.modal-extratall {
+	margin-top: -400px;
+	width: 900px;
+}
+.modal-body {
+	min-height: 100px;
+	max-height: 300px;
+}
+.modal-small .modal-body {
+	min-height: 10px;
+	max-height: 150px;
+}
+.modal-tall .modal-body {
+	min-height: 200px;
+	max-height: 450px;
+}
+.modal-extratall .modal-body {
+	min-height: 300px;
+	max-height: 700px;
+}
+
+/* For input sizes, make them display block
+-------------------------------------------------- */
+
+.docs-input-sizes select,
+.docs-input-sizes input[type=text] {
+	display: block;
+	margin-bottom: 9px;
+}
+
+/* Jumbotron
+-------------------------------------------------- */
+
+.jumbotron .container-fluid {
+    position: relative;
+    z-index: 2;
+}
+.jumbotron {
+    margin-top: -20px;
+}
+.jumbotron:after {
+    bottom: 0;
+    content: "";
+    display: block;
+    left: 0;
+    opacity: 0.4;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+.jumbotron {
+	background: none repeat scroll 0 0 #F0F0F0;
+    box-shadow: 0 4px 2px rgba(0, 0, 0, 0.2);
+    /*color: #FFFFFF;*/
+    padding: 20px 0 10px 0;
+    position: relative;
+    /* text-shadow: 1px 1px 1.5px rgba(0, 0, 0, 0.3); */
+}
+
+/*------------------------------------------------
+-- Pure CSS switch button
+-- See http://jsfiddle.net/r1ch0/fM6q8/
+-------------------------------------------------- */
+
+/* CSS classes used for switch button */
+/* Generated from LESS using BS mixins */
+.switch {
+  display: inline-block;
+  width: 75px;
+  height: 26px;
+  position: relative;
+  background-color: #f0f0f0;
+  background-image: -moz-linear-gradient(top, #e6e6e6, #ffffff);
+  background-image: -ms-linear-gradient(top, #e6e6e6, #ffffff);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#e6e6e6), to(#ffffff));
+  background-image: -webkit-linear-gradient(top, #e6e6e6, #ffffff);
+  background-image: -o-linear-gradient(top, #e6e6e6, #ffffff);
+  background-image: linear-gradient(top, #e6e6e6, #ffffff);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e6e6e6', endColorstr='#ffffff', GradientType=0);
+  border-color: #ffffff #ffffff #d9d9d9;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #ffffff;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  border: 1px solid #cccccc;
+  -webkit-border-radius: 13px;
+  -moz-border-radius: 13px;
+  border-radius: 13px;
+  padding: 0;
+  outline: none;
+  overflow: hidden;
+  cursor: pointer;
+}
+.switch:hover,
+.switch:active,
+.switch.active,
+.switch.disabled,
+.switch[disabled] {
+  background-color: #ffffff;
+  *background-color: #f2f2f2;
+}
+.switch:active,
+.switch.active {
+  background-color: #e6e6e6 \9;
+}
+.switch > .switch-track {
+  display: block;
+  width: 13px;
+  height: 26px;
+  position: absolute;
+  z-index: 1;
+  border: 0;
+  -webkit-border-radius: 13px 0 0 13px;
+  -moz-border-radius: 13px 0 0 13px;
+  border-radius: 13px 0 0 13px;
+  background-color: #0069cc;
+  background-image: -moz-linear-gradient(top, #0055cc, #0088cc);
+  background-image: -ms-linear-gradient(top, #0055cc, #0088cc);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0055cc), to(#0088cc));
+  background-image: -webkit-linear-gradient(top, #0055cc, #0088cc);
+  background-image: -o-linear-gradient(top, #0055cc, #0088cc);
+  background-image: linear-gradient(top, #0055cc, #0088cc);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0055cc', endColorstr='#0088cc', GradientType=0);
+  border-color: #0088cc #0088cc #005580;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #0088cc;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  opacity: 0;
+  filter: alpha(opacity=0);
+  -webkit-transition: width .15s linear, opacity .15s linear;
+  -moz-transition: width .15s linear, opacity .15s linear;
+  -ms-transition: width .15s linear, opacity .15s linear;
+  -o-transition: width .15s linear, opacity .15s linear;
+  transition: width .15s linear, opacity .15s linear;
+}
+.switch > .switch-track:hover,
+.switch > .switch-track:active,
+.switch > .switch-track.active,
+.switch > .switch-track.disabled,
+.switch > .switch-track[disabled] {
+  background-color: #0088cc;
+  *background-color: #0077b3;
+}
+.switch > .switch-track:active,
+.switch > .switch-track.active {
+  background-color: #006699 \9;
+}
+.switch > .switch-track.switch-warning {
+  background-color: #f9a123;
+  background-image: -moz-linear-gradient(top, #f89406, #fbb450);
+  background-image: -ms-linear-gradient(top, #f89406, #fbb450);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#f89406), to(#fbb450));
+  background-image: -webkit-linear-gradient(top, #f89406, #fbb450);
+  background-image: -o-linear-gradient(top, #f89406, #fbb450);
+  background-image: linear-gradient(top, #f89406, #fbb450);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f89406', endColorstr='#fbb450', GradientType=0);
+  border-color: #fbb450 #fbb450 #f89406;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #fbb450;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+}
+.switch > .switch-track.switch-warning:hover,
+.switch > .switch-track.switch-warning:active,
+.switch > .switch-track.switch-warning.active,
+.switch > .switch-track.switch-warning.disabled,
+.switch > .switch-track.switch-warning[disabled] {
+  background-color: #fbb450;
+  *background-color: #faa937;
+}
+.switch > .switch-track.switch-warning:active,
+.switch > .switch-track.switch-warning.active {
+  background-color: #fa9f1e \9;
+}
+.switch > .switch-track.switch-danger {
+  background-color: #d14641;
+  background-image: -moz-linear-gradient(top, #bd362f, #ee5f5b);
+  background-image: -ms-linear-gradient(top, #bd362f, #ee5f5b);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#bd362f), to(#ee5f5b));
+  background-image: -webkit-linear-gradient(top, #bd362f, #ee5f5b);
+  background-image: -o-linear-gradient(top, #bd362f, #ee5f5b);
+  background-image: linear-gradient(top, #bd362f, #ee5f5b);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#bd362f', endColorstr='#ee5f5b', GradientType=0);
+  border-color: #ee5f5b #ee5f5b #e51d18;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #ee5f5b;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+}
+.switch > .switch-track.switch-danger:hover,
+.switch > .switch-track.switch-danger:active,
+.switch > .switch-track.switch-danger.active,
+.switch > .switch-track.switch-danger.disabled,
+.switch > .switch-track.switch-danger[disabled] {
+  background-color: #ee5f5b;
+  *background-color: #ec4844;
+}
+.switch > .switch-track.switch-danger:active,
+.switch > .switch-track.switch-danger.active {
+  background-color: #e9322d \9;
+}
+.switch > .switch-track.switch-success {
+  background-color: #58b058;
+  background-image: -moz-linear-gradient(top, #51a351, #62c462);
+  background-image: -ms-linear-gradient(top, #51a351, #62c462);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#51a351), to(#62c462));
+  background-image: -webkit-linear-gradient(top, #51a351, #62c462);
+  background-image: -o-linear-gradient(top, #51a351, #62c462);
+  background-image: linear-gradient(top, #51a351, #62c462);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#51a351', endColorstr='#62c462', GradientType=0);
+  border-color: #62c462 #62c462 #3b9e3b;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #62c462;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+}
+.switch > .switch-track.switch-success:hover,
+.switch > .switch-track.switch-success:active,
+.switch > .switch-track.switch-success.active,
+.switch > .switch-track.switch-success.disabled,
+.switch > .switch-track.switch-success[disabled] {
+  background-color: #62c462;
+  *background-color: #4fbd4f;
+}
+.switch > .switch-track.switch-success:active,
+.switch > .switch-track.switch-success.active {
+  background-color: #42b142 \9;
+}
+.switch > .switch-track.switch-info {
+  background-color: #41a7c5;
+  background-image: -moz-linear-gradient(top, #2f96b4, #5bc0de);
+  background-image: -ms-linear-gradient(top, #2f96b4, #5bc0de);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#2f96b4), to(#5bc0de));
+  background-image: -webkit-linear-gradient(top, #2f96b4, #5bc0de);
+  background-image: -o-linear-gradient(top, #2f96b4, #5bc0de);
+  background-image: linear-gradient(top, #2f96b4, #5bc0de);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#2f96b4', endColorstr='#5bc0de', GradientType=0);
+  border-color: #5bc0de #5bc0de #28a1c5;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #5bc0de;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+}
+.switch > .switch-track.switch-info:hover,
+.switch > .switch-track.switch-info:active,
+.switch > .switch-track.switch-info.active,
+.switch > .switch-track.switch-info.disabled,
+.switch > .switch-track.switch-info[disabled] {
+  background-color: #5bc0de;
+  *background-color: #46b8da;
+}
+.switch > .switch-track.switch-info:active,
+.switch > .switch-track.switch-info.active {
+  background-color: #31b0d5 \9;
+}
+.switch > .switch-track.switch-inverse {
+  background-color: #363636;
+  background-image: -moz-linear-gradient(top, #222222, #555555);
+  background-image: -ms-linear-gradient(top, #222222, #555555);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#222222), to(#555555));
+  background-image: -webkit-linear-gradient(top, #222222, #555555);
+  background-image: -o-linear-gradient(top, #222222, #555555);
+  background-image: linear-gradient(top, #222222, #555555);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#222222', endColorstr='#555555', GradientType=0);
+  border-color: #555555 #555555 #2f2f2f;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #555555;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+}
+.switch > .switch-track.switch-inverse:hover,
+.switch > .switch-track.switch-inverse:active,
+.switch > .switch-track.switch-inverse.active,
+.switch > .switch-track.switch-inverse.disabled,
+.switch > .switch-track.switch-inverse[disabled] {
+  background-color: #555555;
+  *background-color: #484848;
+}
+.switch > .switch-track.switch-inverse:active,
+.switch > .switch-track.switch-inverse.active {
+  background-color: #3b3b3b \9;
+}
+.switch > .switch-thumb {
+  display: block;
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  background-color: #f5f5f5;
+  background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
+  background-image: -ms-linear-gradient(top, #ffffff, #e6e6e6);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
+  background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
+  background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
+  background-image: linear-gradient(top, #ffffff, #e6e6e6);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);
+  border-color: #e6e6e6 #e6e6e6 #bfbfbf;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  *background-color: #e6e6e6;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  border: 1px solid #999999;
+  -webkit-border-radius: 13px;
+  -moz-border-radius: 13px;
+  border-radius: 13px;
+  -webkit-transition: left 0.15s linear;
+  -moz-transition: left 0.15s linear;
+  -ms-transition: left 0.15s linear;
+  -o-transition: left 0.15s linear;
+  transition: left 0.15s linear;
+}
+.switch > .switch-thumb:hover,
+.switch > .switch-thumb:active,
+.switch > .switch-thumb.active,
+.switch > .switch-thumb.disabled,
+.switch > .switch-thumb[disabled] {
+  background-color: #e6e6e6;
+  *background-color: #d9d9d9;
+}
+.switch > .switch-thumb:active,
+.switch > .switch-thumb.active {
+  background-color: #cccccc \9;
+}
+.switch > .switch-thumb:hover {
+  background-position: 0 -15px;
+  -webkit-transition: left .15s linear, background-position .1s linear;
+  -moz-transition: left .15s linear, background-position .1s linear;
+  -ms-transition: left .15s linear, background-position .1s linear;
+  -o-transition: left .15s linear, background-position .1s linear;
+  transition: left .15s linear, background-position .1s linear;
+}
+.switch > .switch-thumb:before,
+.switch > .switch-thumb:after {
+  display: block;
+  width: 61px;
+  height: 24px;
+  position: absolute;
+  z-index: -1;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 24px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+.switch > .switch-thumb:before {
+  content: "ON";
+  left: -50px;
+  text-indent: -6px;
+  color: #ffffff;
+}
+.switch > .switch-thumb[data-label-on]:before {
+  content: attr(data-label-on);
+}
+.switch > .switch-thumb:after {
+  content: "OFF";
+  left: 11px;
+  text-indent: 6px;
+  color: #555555;
+}
+.switch > .switch-thumb[data-label-off]:after {
+  content: attr(data-label-off);
+}
+.switch > input[type="checkbox"] {
+  display: none;
+}
+
+/*
+.switch > input[type="checkbox"]:checked ~ .switch-track {
+  opacity: 1;
+  filter: alpha(opacity=100);
+  width: 61px;
+}
+.switch > input[type="checkbox"]:checked ~ .switch-thumb {
+  left: 49px;
+​​}
+*/
+/* ######################################## */
+/* # Rotated table                          */
+/* ######################################## */
+.table-header-rotated th.row-header{
+  width: auto;
+}
+
+.table-header-rotated td{
+  width: 40px;
+  border-top: 1px solid #dddddd;
+  border-left: 1px solid #dddddd;
+  border-right: 1px solid #dddddd;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.table-header-rotated th.rotate-45{
+  height: 80px;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  position: relative;
+  vertical-align: bottom;
+  padding: 0;
+  font-size: 12px;
+  line-height: 0.8;
+}
+
+.table-header-rotated th.rotate-45 > div{
+  position: relative;
+  top: 0px;
+  left: 40px; /* 80 * tan(45) / 2 = 40 where 80 is the height on the cell and 45 is the transform angle*/
+  height: 100%;
+  -ms-transform:skew(-45deg,0deg);
+  -moz-transform:skew(-45deg,0deg);
+  -webkit-transform:skew(-45deg,0deg);
+  -o-transform:skew(-45deg,0deg);
+  transform:skew(-45deg,0deg);
+  overflow: hidden;
+  border-left: 1px solid #dddddd;
+  border-right: 1px solid #dddddd;
+  border-top: 1px solid #dddddd;
+}
+
+.table-header-rotated th.rotate-45 span {
+  -ms-transform:skew(45deg,0deg) rotate(315deg);
+  -moz-transform:skew(45deg,0deg) rotate(315deg);
+  -webkit-transform:skew(45deg,0deg) rotate(315deg);
+  -o-transform:skew(45deg,0deg) rotate(315deg);
+  transform:skew(45deg,0deg) rotate(315deg);
+  position: absolute;
+  bottom: 30px; /* 40 cos(45) = 28 with an additional 2px margin*/
+  left: -25px; /*Because it looked good, but there is probably a mathematical link here as well*/
+  display: inline-block;
+  // width: 100%;
+  width: 85px; /* 80 / cos(45) - 40 cos (45) = 85 where 80 is the height of the cell, 40 the width of the cell and 45 the transform angle*/
+  text-align: left;
+  // white-space: nowrap; /*whether to display in one line or not*/
+}
+
+
+input{
+box-sizing:content-box;
+    
+    }
