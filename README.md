@@ -44,6 +44,7 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 
 ###Install dependencies
 * `cd pmacontrol`
+* `git config core.fileMode false`
 * `composer install`
 
 

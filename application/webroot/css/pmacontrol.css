@@ -16,20 +16,17 @@ color:#fff;
 body { padding-bottom: 70px;padding-top: 70px; font-size:12px}
 
 
-
-
-
 .pmacontrol {width:100%; }
 
 .pmacontrol > tbody > tr > th {padding: 2px 4px; border-bottom: #666 1px solid; line-height:30px; background:#fff }
 .pmacontrol > tbody > tr > td {padding: 2px 4px; cursor: pointer; }
-.pmacontrol > tbody > tr.highlight {border: #666 1px solid ;}
+.pmacontrol > tbody > tr.highlight_row {border: #666 1px solid ;}
 
 .pmacontrol > tbody > tr:nth-child(odd){
   background-color:#eeeeee;
 }
 
-.highlight td{background-color: #ddd;}
+.highlight_row td{background-color: #ddd;}
 
 
 

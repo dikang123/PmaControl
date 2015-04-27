@@ -6,10 +6,11 @@
 
 $("#cleaner_main-id_mysql_server").change(function () {
     data = $(this).val();
-    $(this).parent().parent().next().find("select").load("http://dba-tools.photobox.com/en/cleaner/getDatabaseByServer/" + data + "/ajax>true/");
+    
+    $(this).parent().parent().next().find("select").load(GLIAL_LINK+"cleaner/getDatabaseByServer/" + data + "/ajax>true/");
 
     $(".table").find("select.schema").each(function () {
-        $(this).load("http://dba-tools.photobox.com/en/cleaner/getDatabaseByServer/" + data + "/ajax>true/");
+        $(this).load(GLIAL_LINK+"cleaner/getDatabaseByServer/" + data + "/ajax>true/");
     });
 });
 
@@ -23,61 +24,50 @@ $("#cleaner_main-id_mysql_database").change(function () {
     $(".table").find("select.schema").each(function () {
         $(this).val(valueSelected);
     });
-
+    
     server = $("#cleaner_main-id_mysql_server").val();
     schema = data;
     
     $(".table").find("select.tables").each(function () {
-        $(this).load("http://dba-tools.photobox.com/en/cleaner/getTableByDatabase/" + schema + "/id_mysql_server:" + server + "/ajax>true/");
+        $(this).load(GLIAL_LINK+"cleaner/getTableByDatabase/" + schema + "/id_mysql_server:" + server + "/ajax>true/");
     });
-    $("#cleaner_main-main_table").load("http://dba-tools.photobox.com/en/cleaner/getTableByDatabase/" + schema + "/id_mysql_server:" + server + "/ajax>true/");
-
+    $("#cleaner_main-main_table").load(GLIAL_LINK+"cleaner/getTableByDatabase/" + schema + "/id_mysql_server:" + server + "/ajax>true/");
 });
 
 $(".table").on('change','.constraint.schema', function() {
-    
-    //alert("xfghxfg");
-    
     data = $(this).val();
     server = $("#cleaner_main-id_mysql_server").val();
 
-    $(this).parents('.cleaner-line').find(".constraint.tables").load("http://dba-tools.photobox.com/en/cleaner/getTableByDatabase/" + data + "/id_mysql_server:" + server + "/ajax>true/");
+    $(this).parents('.cleaner-line').find(".constraint.tables").load(GLIAL_LINK+"cleaner/getTableByDatabase/" + data + "/id_mysql_server:" + server + "/ajax>true/");
 });
-
 
 $(".table").on('change','.constraint.tables', function() {
     table = $(this).val();
     server = $("#cleaner_main-id_mysql_server").val();
     schema = $(this).parents('.cleaner-line').find(".constraint.schema").val();
-    $(this).parents('.cleaner-line').find(".constraint.column").load("http://dba-tools.photobox.com/en/cleaner/getColumnByTable/" + table + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
+    $(this).parents('.cleaner-line').find(".constraint.column").load(GLIAL_LINK+"cleaner/getColumnByTable/" + table + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
 });
-
 
 $(".table").on('change','.referenced.schema', function() {
     data = $(this).val();
     server = $("#cleaner_main-id_mysql_server").val();
 
-    $(this).parents('.cleaner-line').find(".referenced.tables").load("http://dba-tools.photobox.com/en/cleaner/getTableByDatabase/" + data + "/id_mysql_server:" + server + "/ajax>true/");
+    $(this).parents('.cleaner-line').find(".referenced.tables").load(GLIAL_LINK+"cleaner/getTableByDatabase/" + data + "/id_mysql_server:" + server + "/ajax>true/");
 });
-
 
 $(".table").on('change','.referenced.tables', function() {
     data = $(this).val();
     server = $("#cleaner_main-id_mysql_server").val();
     schema = $(this).parents('.cleaner-line').find(".referenced.schema").val();
-    $(this).parents('.cleaner-line').find(".referenced.column").load("http://dba-tools.photobox.com/en/cleaner/getColumnByTable/" + data + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
+    $(this).parents('.cleaner-line').find(".referenced.column").load(GLIAL_LINK+"cleaner/getColumnByTable/" + data + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
 });
-
-
 
 $("#cleaner_foreign_key-referenced_table").change(function () {
     data = $(this).val();
     server = $("#cleaner_main-id_mysql_server").val();
     schema = $("#cleaner_foreign_key-referenced_schema").val();
-    $("#cleaner_foreign_key-referenced_column").load("http://dba-tools.photobox.com/en/cleaner/getColumnByTable/" + data + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
+    $("#cleaner_foreign_key-referenced_column").load(GLIAL_LINK+"cleaner/getColumnByTable/" + data + "/id_mysql_server:" + server + "/schema:" + schema + "/ajax>true/");
 });
-
-
 
 $(function () {
     var nbline = 1;
@@ -104,7 +94,6 @@ $(function () {
 
         //$(".table").append(clone);
 
-
         $(".cleaner-line:last-child").after(clone);
 
         if (nbline > 1)
@@ -114,8 +103,6 @@ $(function () {
 
         return false;
     });
-
-
 
     $(".table").on("click", ".delete-row", function () {
         if (nbline > minLine) {
@@ -127,8 +114,4 @@ $(function () {
         }
         return false;
     });
-
-
-
-
 });
