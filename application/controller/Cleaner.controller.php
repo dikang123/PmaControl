@@ -1008,7 +1008,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 
         if ($this->isRunning($ob->pid)) {
-            $msg = I18n::getTranslation(__("The cleaner with id : '" . $id_cleaner . "' successfully stopped "));
+            $msg = I18n::getTranslation(__("The cleaner with pid : '" . $ob->pid . "' successfully stopped "));
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
 
