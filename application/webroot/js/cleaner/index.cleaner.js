@@ -16,8 +16,11 @@ $(document).ready(function () {
         var selected = $(this).hasClass("highlight_row");
         $("tr.clickable-row").removeClass("highlight_row");
         if (!selected)
+        {
             $(this).addClass("highlight_row");
-        
-        $(location).attr('href',LINK+"Cleaner/index/"+$(this).data("id"));
+        }
+
+        var id = $(this).data("id");
+        $(location).attr('href',GLIAL_LINK+"Cleaner/index/"+id);
     });
 });

@@ -7,6 +7,7 @@
 use Glial\Synapse\Controller;
 use Glial\Neuron\PmaCli\PmaCliDraining;
 use Glial\Cli\Table;
+use \Glial\I18n\I18n;
 
 /*
   declare(ticks = 1);
@@ -43,299 +44,9 @@ use Glial\Cli\Table;
   }
   } */
 
-class Cleaner extends Controller
-{
-    private $NB_ELEM = 100; //nombre de commande a effacer en même temps
-    private $NB_DAYS = 14; // définit le nombre de jour avant de cleaner une commande quand celle ci est terminé.
-    private $WAIT_TIME = 3;
+class Cleaner extends Controller {
 
-    public function ifactory_fr()
-    {
-        /*
-         * table a cleaner par date :
-         * 
-         * PROD_STATS_TRANSFERT_SAVOYE => INSERTTIME
-         * 
-         * 
-         */
-
-        $this->view = false;
-        $this->layout_name = false;
-        $this->checkPid('/var/run/cleaner-ifactory-fr.pid');
-
-        $purge = new PmaCliDraining($this->di['db']);
-
-        $purge->link_to_purge = "ifactory_sart_db_node_02";
-//$purge->link_to_purge = "itprod_dba_test_sa_01";
-
-        $purge->schema_to_purge = "PRODUCTION";
-        $purge->table_to_purge = array("PROD_ENVELOPPES", "PROD_ITEMS");
-
-        $purge->main_field = array("ID_PROD_COMMANDE" => "PROD_COMMANDES",
-            "ID_PROD_ITEM" => "PROD_ITEMS",
-            "ID_PROD_ENVELOPPE" => "PROD_ENVELOPPES");
-
-        $purge->main_table = "PROD_COMMANDES";
-        $default = $this->di['db']->sql(DB_DEFAULT);
-
-        $i = 1;
-
-        $this->NB_ELEM = 100;
-        $this->WAIT_TIME = 10;
-
-        $this->getMsgStartDaemon($purge);
-
-        while (true) {
-//posix_kill(posix_getpid(), SIGUSR1);
-            $purge->init_where = "(ETAT = 'PO' OR ETAT = 'QO') and DATE_PASSAGE <= DATE_ADD(now(), INTERVAL - " . $this->NB_DAYS . " DAY) LIMIT " . $this->NB_ELEM . ";";
-            $date_start = date("Y-m-d H:i:s");
-            $time_start = microtime(true);
-            $ret = $purge->start();
-
-            if (empty($ret[$purge->main_table])) {
-                $ret[$purge->main_table] = 0;
-            }
-
-            $time_end = microtime(true);
-            $date_end = date("Y-m-d H:i:s");
-            $id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
-            $data = array();
-            $data['pmacli_drain_process']['id_mysql_server'] = $id_mysql_server;
-            $data['pmacli_drain_process']['date_start'] = $date_start;
-            $data['pmacli_drain_process']['date_end'] = $date_end;
-            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
-            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
-            $data['pmacli_drain_process']['name'] = __FUNCTION__;
-            $data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
-
-            $res = $default->sql_save($data);
-
-            if (!$res) {
-                debug($default->sql_error());
-                debug($data);
-
-                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner FR");
-            } else {
-
-                $id_pmacli_drain_process = $default->sql_insert_id();
-
-                foreach ($ret as $table => $val) {
-
-                    if (!empty($val)) {
-
-                        $data = [];
-                        $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
-                        $data['pmacli_drain_item']['row'] = $val;
-                        $data['pmacli_drain_item']['table'] = $table;
-
-                        $res = $default->sql_save($data);
-
-                        if (!$res) {
-                            debug($default->sql_error());
-                            debug($data);
-
-                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner FR");
-                        }
-                    }
-                }
-            }
-            $i++;
-
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
-            sleep($this->WAIT_TIME);
-        }
-    }
-
-    public function ifactory_uk()
-    {
-
-        $this->view = false;
-        $this->layout_name = false;
-
-        $this->checkPid('/var/run/cleaner-ifactory-uk.pid');
-
-        $purge = new PmaCliDraining($this->di['db']);
-        $purge->link_to_purge = "ifactory_wfr_db_01";
-        $purge->schema_to_purge = "PRODUCTION";
-        $purge->table_to_purge = array("PROD_ENVELOPPES", "PROD_ITEMS");
-
-        $purge->main_field = array("ID_PROD_COMMANDE" => "PROD_COMMANDES",
-            "ID_PROD_ITEM" => "PROD_ITEMS",
-            "ID_PROD_ENVELOPPE" => "PROD_ENVELOPPES");
-
-        $purge->main_table = "PROD_COMMANDES";
-
-        $default = $this->di['db']->sql(DB_DEFAULT);
-
-        $i = 1;
-
-
-        $this->NB_ELEM = 1000;
-        $this->WAIT_TIME = 5;
-
-        $this->getMsgStartDaemon($purge);
-
-        while (true) {
-//posix_kill(posix_getpid(), SIGUSR1);
-            $purge->init_where = "(ETAT = 'PO' OR ETAT = 'QO') and DATE_PASSAGE <= DATE_ADD(now(), INTERVAL - " . $this->NB_DAYS . " DAY) LIMIT " . $this->NB_ELEM . ";";
-            $date_start = date("Y-m-d H:i:s");
-            $time_start = microtime(true);
-            $ret = $purge->start();
-
-            if (empty($ret[$purge->main_table])) {
-                $ret[$purge->main_table] = 0;
-            }
-
-            $time_end = microtime(true);
-            $date_end = date("Y-m-d H:i:s");
-            $id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
-            $data = array();
-            $data['pmacli_drain_process']['id_mysql_server'] = $id_mysql_server;
-            $data['pmacli_drain_process']['date_start'] = $date_start;
-            $data['pmacli_drain_process']['date_end'] = $date_end;
-            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
-            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
-            $data['pmacli_drain_process']['name'] = __FUNCTION__;
-            $data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
-
-
-            $res = $default->sql_save($data);
-
-            if (!$res) {
-                debug($default->sql_error());
-                debug($data);
-
-                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner FR");
-            } else {
-
-                $id_pmacli_drain_process = $default->sql_insert_id();
-
-                foreach ($ret as $table => $val) {
-
-                    if (!empty($val)) {
-
-                        $data = [];
-                        $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
-                        $data['pmacli_drain_item']['row'] = $val;
-                        $data['pmacli_drain_item']['table'] = $table;
-
-                        $res = $default->sql_save($data);
-
-                        if (!$res) {
-                            debug($default->sql_error());
-                            debug($data);
-
-                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner FR");
-                        }
-                    }
-                }
-            }
-            $i++;
-
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
-
-            sleep($this->WAIT_TIME);
-        }
-    }
-
-    public function iways()
-    {
-        $this->view = false;
-        $this->layout_name = false;
-        $this->checkPid('/var/run/cleaner-' . __FUNCTION__ . '.pid');
-
-        $purge = new PmaCliDraining($this->di['db']);
-        $purge->link_to_purge = "itprod_dba_test_sa_02";
-
-        $purge->schema_to_purge = "iways_core";
-
-//$purge->table_to_purge = array("PROD_ENVELOPPES", "PROD_ITEMS");
-        $purge->table_to_purge = array();
-
-        $purge->main_field = array();
-
-        /*
-          $purge->main_field = array("ID_PROD_COMMANDE" => "PROD_COMMANDES",
-          "ID_PROD_ITEM" => "PROD_ITEMS",
-          "ID_PROD_ENVELOPPE" => "PROD_ENVELOPPES");
-         * 
-         */
-
-        $purge->main_table = "IWAYS_ORDER";
-        $default = $this->di['db']->sql(DB_DEFAULT);
-
-        $i = 1;
-
-        $this->NB_ELEM = 100;
-        $this->WAIT_TIME = 10;
-        $this->NB_DAYS = 14;
-
-
-        $this->getMsgStartDaemon($purge);
-
-        while (true) {
-//posix_kill(posix_getpid(), SIGUSR1);
-            $purge->init_where = "(STATUS = 'CANCELLED' OR STATUS = 'COMPLETED' OR STATUS = 'REDONE') and COMPLETED_DATE <= DATE_ADD(now(), INTERVAL - " . $this->NB_DAYS . " DAY) AND COMPLETED_DATE IS NOT NULL LIMIT " . $this->NB_ELEM . ";";
-            $date_start = date("Y-m-d H:i:s");
-            $time_start = microtime(true);
-            $ret = $purge->start();
-
-            if (empty($ret[$purge->main_table])) {
-                $ret[$purge->main_table] = 0;
-            }
-
-            $time_end = microtime(true);
-            $date_end = date("Y-m-d H:i:s");
-            $id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
-            $data = array();
-            $data['pmacli_drain_process']['id_mysql_server'] = $id_mysql_server;
-            $data['pmacli_drain_process']['date_start'] = $date_start;
-            $data['pmacli_drain_process']['date_end'] = $date_end;
-            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
-            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
-            $data['pmacli_drain_process']['name'] = __FUNCTION__;
-            $data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
-
-            $res = $default->sql_save($data);
-
-            if (!$res) {
-                debug($default->sql_error());
-                debug($data);
-
-                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner FR");
-            } else {
-
-                $id_pmacli_drain_process = $default->sql_insert_id();
-
-                foreach ($ret as $table => $val) {
-
-                    if (!empty($val)) {
-
-                        $data = [];
-                        $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
-                        $data['pmacli_drain_item']['row'] = $val;
-                        $data['pmacli_drain_item']['table'] = $table;
-
-                        $res = $default->sql_save($data);
-
-                        if (!$res) {
-                            debug($default->sql_error());
-                            debug($data);
-
-                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner FR");
-                        }
-                    }
-                }
-            }
-            $i++;
-
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
-            sleep($this->WAIT_TIME);
-        }
-    }
-
-    private function anonymous()
-    {
+    private function anonymous() {
         $fct = function() {
             $default = $this->di['db']->sql(DB_DEFAULT);
 
@@ -343,8 +54,7 @@ class Cleaner extends Controller
         };
     }
 
-    public function statistics($param)
-    {
+    public function statistics($param) {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
@@ -614,8 +324,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    function getIdMysqlServer($name)
-    {
+    function getIdMysqlServer($name) {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
 
@@ -631,8 +340,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         return $id_mysql_server;
     }
 
-    function getMsgStartDaemon($ob)
-    {
+    function getMsgStartDaemon($ob) {
         $table = new Table(0);
 
         echo "Starting deamon for cleaner ..." . PHP_EOL;
@@ -643,15 +351,13 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $table->addLine(array("DATABASE_TO_PURGE", $ob->schema_to_purge));
         $table->addLine(array("TABLES_TO_SET_FIRST", implode(",", $ob->table_to_purge)));
         $table->addLine(array("INIT_DATA_WITH", $ob->main_table));
-        $table->addLine(array("MAX_ROW_TO_DELETE", $this->NB_ELEM));
-        $table->addLine(array("NB_DAYS_BEFORE_DELETE", $this->NB_DAYS));
-        $table->addLine(array("WAIT_TIME", $this->WAIT_TIME));
+        $table->addLine(array("QUERY", $ob->query));
+        $table->addLine(array("WAIT_TIME", $ob->wait_time_in_sec));
 
         echo $table->display();
     }
 
-    private function checkPid($path_file_pid)
-    {
+    private function checkPid($path_file_pid) {
 
         if (file_exists($path_file_pid)) {
             $pid = file_get_contents($path_file_pid);
@@ -664,8 +370,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         }
     }
 
-    public function showDaemon()
-    {
+    public function showDaemon() {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $sql = "SELECT * FROM `pmacli_drain_process` order by date_start DESC LIMIT 5000";
@@ -676,8 +381,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function index($param)
-    {
+    public function index($param) {
 
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -695,32 +399,13 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $data['cleaner_name'] = iterator_to_array($data['cleaner_name']);
 
-        
-        $data['id_cleaner'] = empty($param[0])? 0: $param[0];
-        
-        
-        
-        
-        /*
-        if (empty($param[0])) {
-            $data['cleaner'] = $data['cleaner_name'][0]['name'];
-        } else {
-            $data['cleaner'] = $param[0];
-        }
 
-        if (empty($param[1])) {
+        $data['id_cleaner'] = empty($param[0]) ? 0 : $param[0];
+        $data['menu'] = empty($param[1]) ? "log" : $param[1];
 
-            $data['menu'] = "log";
-        } else {
-            $data['menu'] = $param[1];
-        }
 
-        empty($param[0])? $param[0] = "index": $param[0] = $param[0];
-        */
-        
-        
         $this->title = __("Cleaner");
-        $this->ariane = " > " . $this->title . " > " . $param[0];
+        $this->ariane = " > " . $this->title . " > " . $data['id_cleaner'];
         $this->layout_name = 'pmacontrol';
 
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
@@ -740,6 +425,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 
 
+        /*
         $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
 
 
@@ -764,14 +450,13 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 
         $hour = $db->sql_fetch_yield($sql);
-
+*/
 
 
         $this->set('data', $data);
     }
 
-    public function treatment($param)
-    {
+    public function treatment($param) {
 
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -781,8 +466,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function removeOldData($db_name)
-    {
+    public function removeOldData($db_name) {
 
         $name = str_replace('-', '_', $db_name[0]);
 
@@ -849,132 +533,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         } while (true);
     }
 
-    public function removeOldDataUK()
-    {
-        $this->view = false;
-
-        $db = $this->di['db']->sql("ifactory_wfr_db_01");
-
-        $sql = "USE PRODUCTION";
-        $db->sql_query($sql);
-
-        $total = 0;
-        do {
-
-            $sql = "SET @@skip_replication = ON;";
-            $db->sql_query($sql);
-
-            $sql = "DELETE from PROD_TRACES WHERE DATE_PASSAGE < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-
-            $deleted = $db->sql_affected_rows();
-
-            $total += $deleted;
-            echo "number line deleted : " . $total . "\n";
-
-            sleep(1);
-        } while ($deleted != 0);
-    }
-
-    public function ifactory_test()
-    {
-        /*
-         * table a cleaner par date :
-         * 
-         * PROD_STATS_TRANSFERT_SAVOYE => INSERTTIME
-         * 
-         * 
-         */
-
-        $this->view = false;
-        $this->layout_name = false;
-        $this->checkPid('/var/run/cleaner-ifactory-test.pid');
-
-        $purge = new PmaCliDraining($this->di['db']);
-
-        $purge->link_to_purge = "itprod_dba_test_sa_03";
-//$purge->link_to_purge = "itprod_dba_test_sa_01";
-
-        $purge->schema_to_purge = "PRODUCTION";
-        $purge->table_to_purge = array("PROD_ENVELOPPES", "PROD_ITEMS");
-
-        $purge->main_field = array("ID_PROD_COMMANDE" => "PROD_COMMANDES",
-            "ID_PROD_ITEM" => "PROD_ITEMS",
-            "ID_PROD_ENVELOPPE" => "PROD_ENVELOPPES");
-
-        $purge->main_table = "PROD_COMMANDES";
-        $default = $this->di['db']->sql(DB_DEFAULT);
-
-        $i = 1;
-
-        $this->NB_ELEM = 1000;
-        $this->WAIT_TIME = 1;
-
-        $this->getMsgStartDaemon($purge);
-
-        while (true) {
-//posix_kill(posix_getpid(), SIGUSR1);
-            $purge->init_where = "(ETAT = 'PO' OR ETAT = 'QO') and DATE_PASSAGE <= DATE_ADD(now(), INTERVAL - " . $this->NB_DAYS . " DAY) LIMIT " . $this->NB_ELEM . ";";
-            $date_start = date("Y-m-d H:i:s");
-            $time_start = microtime(true);
-            $ret = $purge->start();
-
-            if (empty($ret[$purge->main_table])) {
-                $ret[$purge->main_table] = 0;
-            }
-
-            $time_end = microtime(true);
-            $date_end = date("Y-m-d H:i:s");
-            $id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
-            $data = array();
-            $data['pmacli_drain_process']['id_mysql_server'] = $id_mysql_server;
-            $data['pmacli_drain_process']['date_start'] = $date_start;
-            $data['pmacli_drain_process']['date_end'] = $date_end;
-            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
-            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
-            $data['pmacli_drain_process']['name'] = __FUNCTION__;
-            $data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
-
-            $res = $default->sql_save($data);
-
-            if (!$res) {
-                debug($default->sql_error());
-                debug($data);
-
-                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner FR");
-            } else {
-
-                $id_pmacli_drain_process = $default->sql_insert_id();
-
-                foreach ($ret as $table => $val) {
-
-                    if (!empty($val)) {
-
-                        $data = [];
-                        $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
-                        $data['pmacli_drain_item']['row'] = $val;
-                        $data['pmacli_drain_item']['table'] = $table;
-
-                        $res = $default->sql_save($data);
-
-                        if (!$res) {
-                            debug($default->sql_error());
-                            debug($data);
-
-                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner FR");
-                        }
-                    }
-                }
-            }
-            $i++;
-
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
-            sleep($this->WAIT_TIME);
-        }
-    }
-
-    public function detail($param)
-    {
+    public function detail($param) {
 
 
 
@@ -996,15 +555,13 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function deleteOrphans($server_name)
-    {
+    public function deleteOrphans($server_name) {
         $server_name = str_replace('-', '_', $server_name);
 
         $db = $this->di['db']->sql($server_name);
     }
 
-    public function add($param)
-    {
+    public function add($param) {
         $this->layout_name = 'pmacontrol';
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -1018,7 +575,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
 
-            var_dump($_POST);
+            //var_dump($_POST);
 
 
             $data['cleaner_main'] = $_POST['cleaner_main'];
@@ -1032,10 +589,9 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
                     $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
                 }
-                
-                
-                if ($id_cleaner_foreign_key)
-                {
+
+
+                if ($id_cleaner_foreign_key) {
                     header('location: ' . LINK . 'Cleaner/index/');
                 }
             }
@@ -1070,13 +626,10 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $this->set('data', $data);
     }
-    
-    
-    
-    function getDatabaseByServer($param)
-    {
-        
-        
+
+    function getDatabaseByServer($param) {
+
+
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -1084,19 +637,14 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($param[0]) . "';";
         $res = $db->sql_query($sql);
 
-        while ($ob = $db->sql_fetch_object($res))
-        {
+        while ($ob = $db->sql_fetch_object($res)) {
             $db_to_get_db = $this->di['db']->sql($ob->name);
         }
 
-        
-        
-        
-        
         $sql = "SHOW DATABASES";
         $res = $db_to_get_db->sql_query($sql);
-        
-        
+
+
         $data['databases'] = [];
         while ($ob = $db_to_get_db->sql_fetch_object($res)) {
             $tmp = [];
@@ -1107,13 +655,11 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         }
 
         $this->set("data", $data);
-        
     }
-    
-    function getTableByDatabase($param)
-    {
+
+    function getTableByDatabase($param) {
         $database = $param[0];
-        
+
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -1127,7 +673,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         }
 
         $sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '" . $database . "' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
-        
+
         $res = $db_clean->sql_query($sql);
 
         $data['table'] = [];
@@ -1142,8 +688,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set("data", $data);
     }
 
-    function getColumnByTable($param)
-    {
+    function getColumnByTable($param) {
 
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -1174,14 +719,272 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $this->set("data", $data);
     }
-    
-    
 
-    function delete($param)
-    {
+    function delete($param) {
         $db = $this->di['db']->sql(DB_DEFAULT);
         $sql = "DELETE FROM cleaner_main where id ='" . $param[0] . "'";
         $db->sql_query($sql);
+    }
+
+    public function settings($param) {
+        $this->layout_name = 'pmacontrol';
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $this->di['js']->addJavascript(array("jquery-latest.min.js", "jquery.browser.min.js", "jquery.autocomplete.min.js", "cleaner/add.cleaner.js"));
+
+        $this->title = __('Add a cleaner');
+
+        $this->ariane = " > " . '<a href="' . LINK . 'Cleaner/index/">' . __('Cleaner') . "</a> > " . $this->title;
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+
+
+            $data['cleaner_main'] = $_POST['cleaner_main'];
+
+            $id_cleaner_main = $db->sql_save($data);
+
+            if ($id_cleaner_main) {
+                foreach ($_POST['cleaner_foreign_key'] as $data) {
+                    $cleaner_foreign_key['cleaner_foreign_key'] = $data;
+                    $cleaner_foreign_key['cleaner_foreign_key']['id_cleaner_main'] = $id_cleaner_main;
+
+                    $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
+                }
+
+
+                if ($id_cleaner_foreign_key) {
+                    header('location: ' . LINK . 'Cleaner/index/');
+                }
+            }
+        }
+
+
+        $sql = "SELECT * FROM mysql_server order by `name`";
+        $servers = $db->sql_fetch_yield($sql);
+
+
+        $data['server'] = [];
+        foreach ($servers as $server) {
+            $tmp = [];
+
+            $tmp['id'] = $server['id'];
+            $tmp['libelle'] = str_replace('_', '-', $server['name']) . " (" . $server['ip'] . ")";
+
+            $data['server'][] = $tmp;
+        }
+
+
+        $data['wait_time'] = [];
+        for ($i = 1; $i < 101; $i++) {
+            $tmp = [];
+
+            $tmp['id'] = $i;
+            $tmp['libelle'] = $i;
+
+            $data['wait_time'][] = $tmp;
+        }
+
+
+        $this->set('data', $data);
+    }
+
+    public function daemon($param) {
+
+        $id_cleaner = $param[0];
+        $command = $param[1];
+
+
+        switch ($command) {
+            case 'stop':
+
+                break;
+
+            case 'start':
+
+                break;
+
+            case 'restart':
+
+                break;
+
+            default:
+        }
+    }
+
+    public function launch($param) {
+        $id_cleaner = $param[0];
+        $default = $this->di['db']->sql(DB_DEFAULT);
+        $this->view = false;
+        $this->layout_name = false;
+
+        $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
+            FROM cleaner_main a
+                INNER JOIN mysql_server b ON a.id_mysql_server = b.id
+                WHERE a.id = '" . $id_cleaner . "'";
+
+        $res = $default->sql_query($sql);
+
+        while ($ob = $default->sql_fetch_object($res)) {
+            $cleaner = $ob;
+        }
+
+        if (empty($cleaner)) {
+            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '" . $id_cleaner . "'");
+        }
+
+        $purge = new PmaCliDraining($this->di['db']);
+
+        $purge->link_to_purge = $cleaner->nameserver;
+        $purge->schema_to_purge = $cleaner->database;
+        $purge->schema_delete = $cleaner->cleaner_db;
+        $purge->prefix = $cleaner->prefix;
+        $purge->debug = false;
+
+
+
+        //get and set virtual Foreign keys.
+        $sql = "SELECT * FROM cleaner_foreign_key WHERE id_cleaner_main = '" . $id_cleaner . "'";
+        $foreign_keys = $default->sql_fetch_yield($sql);
+
+        foreach ($foreign_keys as $line) {
+            $fk[$line['constraint_schema']][$line['constraint_table']][$line['constraint_column']] = $line['referenced_schema'] . "-" . $line['referenced_table'] . "-" . $line['referenced_column'];
+        }
+        $purge->foreign_keys = $fk;
+
+
+        $purge->main_table = $cleaner->main_table;
+
+        $i = 1;
+
+        $this->WAIT_TIME = $cleaner->wait_time_in_sec;
+        //$this->getMsgStartDaemon($purge);
+
+        echo "Stating Cleaner with id : $id_cleaner\n";
+        echo $cleaner->query."\n";
+        
+        $default->sql_close();
+
+        while (true) {
+
+//posix_kill(posix_getpid(), SIGUSR1);
+            $purge->init_where = $cleaner->query;
+
+            $date_start = date("Y-m-d H:i:s");
+            $time_start = microtime(true);
+            $ret = $purge->start();
+
+            if (empty($ret[$purge->main_table])) {
+                $ret[$purge->main_table] = 0;
+            }
+
+            $time_end = microtime(true);
+            $date_end = date("Y-m-d H:i:s");
+
+
+//$id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
+
+
+            $default = $this->di['db']->sql(DB_DEFAULT);
+
+            $data = array();
+            $data['pmacli_drain_process']['id_mysql_server'] = $cleaner->id_mysql_server;
+            $data['pmacli_drain_process']['date_start'] = $date_start;
+            $data['pmacli_drain_process']['date_end'] = $date_end;
+            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
+            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
+            $data['pmacli_drain_process']['id_cleaner_main'] = $id_cleaner;
+            $data['pmacli_drain_process']['name'] = $cleaner->libelle;
+            //$data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
+
+            $res = $default->sql_save($data);
+
+            if (!$res) {
+                debug($default->sql_error());
+                debug($data);
+
+                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner (ID : " . $id_cleaner . ")");
+            } else {
+
+                $id_pmacli_drain_process = $default->sql_insert_id();
+
+                foreach ($ret as $table => $val) {
+
+                    if (!empty($val)) {
+
+                        $data = [];
+                        $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
+                        $data['pmacli_drain_item']['row'] = $val;
+                        $data['pmacli_drain_item']['table'] = $table;
+
+                        $res = $default->sql_save($data);
+
+                        if (!$res) {
+                            debug($default->sql_error());
+                            debug($data);
+
+                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner (ID : " . $id_cleaner . ")");
+                        }
+                    }
+                }
+            }
+
+            $i++;
+
+            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
+
+            $default->sql_close(); //to prevent mysql gone away
+
+            sleep($this->WAIT_TIME);
+        }
+    }
+
+    function start($param) {
+
+        $id_cleaner = $param[0];
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        $this->view = false;
+        $this->layout_name = false;
+
+
+        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $res = $db->sql_query($sql);
+
+
+        if ($db->sql_num_rows($res) !== 1) {
+            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the id : ") . "'" . $id_cleaner . "'");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+            header("location: " . LINK . "cleaner/index");
+            exit;
+        }
+
+        $ob = $db->sql_fetch_object($res);
+
+        if ($ob->pid === "0") {
+            
+            $php = explode(" ",shell_exec("whereis php"))[1];
+            
+            //todo add error flux in the log
+            $cmd = $php." ".GLIAL_INDEX." Cleaner launch ".$id_cleaner." >> ".TMP."log/cleaner_[".  str_replace(" ", "_", $ob->libelle)."].log & echo $!";
+            $pid = shell_exec($cmd);
+            
+
+            $sql = "UPDATE cleaner_main SET pid ='".$pid."' WHERE id = '".$id_cleaner."'";
+            $db->sql_query($sql);
+
+            $msg = I18n::getTranslation(__("The cleaner id (".$id_cleaner.") successfully started with") . " pid : ".$pid);
+            $title = I18n::getTranslation(__("Success"));
+            set_flash("success", $title, $msg);
+            header("location: " . LINK . "cleaner/index");
+        } else {
+            
+            $msg = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ") . "'" . $id_cleaner . "'" . " (" . __("Already running !") . ")");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("caution", $title, $msg);
+            header("location: " . LINK . "cleaner/index");
+        }
     }
 
 }
