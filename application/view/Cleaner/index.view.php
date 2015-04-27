@@ -7,13 +7,12 @@
         <th><?= __('Main table') ?> </th>
         <th><?= __('Tools') ?> </th>
         <th><?= __('Status') ?> </th>
+        <th><?= __('Remove') ?> </th>
 
     </tr>
 
     <?php
     foreach ($data['cleaner_main'] as $cleaner) {
-
-
 
         $hightlight = ($cleaner['id_cleaner_main'] === $data['id_cleaner']) ? "highlight_row" : "";
 
@@ -28,21 +27,42 @@
         echo '<div class="btn-group" role="group" aria-label="Default button group">';
 
         //
-        echo '<a href="' . LINK . 'cleaner/stop/'.$cleaner['id_cleaner_main'].'" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-stop aria-hidden="true" style="font-size:13px"></span> ' . __("Stop Daemon") . '</a>';
-        echo '<a href="' . LINK . 'cleaner/start/'.$cleaner['id_cleaner_main'].'" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-play aria-hidden="true" style="font-size:13px"></span> ' . __("Start Daemon") . '</a>';
-        echo '<a href="' . LINK . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-refresh aria-hidden="true" style="font-size:13px"></span> ' . __("Restart Daemon") . '</a>';
+        echo '<a href="' . LINK . 'cleaner/stop/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-stop aria-hidden="true" style="font-size:13px"></span> ' . __("Stop Daemon") . '</a>';
+        echo '<a href="' . LINK . 'cleaner/start/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-play aria-hidden="true" style="font-size:13px"></span> ' . __("Start Daemon") . '</a>';
+        //echo '<a href="' . LINK . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-refresh aria-hidden="true" style="font-size:13px"></span> ' . __("Restart Daemon") . '</a>';
 
         echo '</div>';
 
+        
+        echo '</td>';
+        echo '<td>';
+        // . '<span class="label label-success" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">Running</span>' 
+        // . ' <span class="label label-danger" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Error</span>' 
+
+
+        if (empty($cleaner['pid'])) {
+            echo ' <span class="label label-warning" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">' . __("Stopped") . '</span>';
+        } elseif (!empty($cleaner['pid'])) {
+
+
+            //put in controller, use anonymous function
+            $cmd = "ps -p " . $cleaner['pid'];
+            $alive = shell_exec($cmd);
+
+            if (strpos($alive, $cleaner['pid']) !== false) {
+                echo ' <span class="label label-success" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">' . __("Running") . ' (PID : '.$cleaner['pid'].')</span>';
+            } else {
+                echo ' <span class="label label-danger" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">' . __("Error") . '</span>';
+            }
+        }
+
+        echo '</td>';
+        echo '<td>';
+        
         echo ' <a href="' . LINK . 'Cleaner/delete/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-danger" style="font-size:12px">' . ' <span class="glyphicon glyphicon-remove aria-hidden="true" style="font-size:13px"></span> ' . __("Delete cleaner") . '</a>';
 
         echo '</td>';
-        echo '<td>'
-        // . '<span class="label label-success" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">Running</span>' 
-        // . ' <span class="label label-danger" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Error</span>' 
-        . ' <span class="label label-warning" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;">Stopped</span>'
-        . '</td>';
-
+        
 
         echo '</tr>';
     }

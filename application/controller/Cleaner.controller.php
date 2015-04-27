@@ -426,31 +426,31 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 
         /*
-        $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
+          $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
 
 
-        $sql = "SELECT `item_deleted`, time as avg, `date_end` as date_end
-                FROM `pmacli_drain_process` 
-                WHERE name='" . $param[0] . "' 
-                GROUP BY 
-                ;";
+          $sql = "SELECT `item_deleted`, time as avg, `date_end` as date_end
+          FROM `pmacli_drain_process`
+          WHERE name='" . $param[0] . "'
+          GROUP BY
+          ;";
 
 
-        $sql = "SELECT max(date_end) as date_end,
-            HOUR(date_end) as hour,
-                 avg(time) as avg,
-                 max(time) as max,
-                 min(time) as min,
-                "
-                . " sum(item_deleted) as item_deleted "
-                . "FROM `pmacli_drain_process` "
-                . "where name='" . $param[0] . "' and date_end >= ADDDATE(now(), INTERVAL -1 DAY) GROUP BY HOUR(date_end) order by max(date_end)";
+          $sql = "SELECT max(date_end) as date_end,
+          HOUR(date_end) as hour,
+          avg(time) as avg,
+          max(time) as max,
+          min(time) as min,
+          "
+          . " sum(item_deleted) as item_deleted "
+          . "FROM `pmacli_drain_process` "
+          . "where name='" . $param[0] . "' and date_end >= ADDDATE(now(), INTERVAL -1 DAY) GROUP BY HOUR(date_end) order by max(date_end)";
 
-//echo $sql;
+          //echo $sql;
 
 
-        $hour = $db->sql_fetch_yield($sql);
-*/
+          $hour = $db->sql_fetch_yield($sql);
+         */
 
 
         $this->set('data', $data);
@@ -862,8 +862,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         //$this->getMsgStartDaemon($purge);
 
         echo "Stating Cleaner with id : $id_cleaner\n";
-        echo $cleaner->query."\n";
-        
+        echo $cleaner->query . "\n";
+
         $default->sql_close();
 
         while (true) {
@@ -963,28 +963,92 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $ob = $db->sql_fetch_object($res);
 
         if ($ob->pid === "0") {
-            
-            $php = explode(" ",shell_exec("whereis php"))[1];
-            
-            //todo add error flux in the log
-            $cmd = $php." ".GLIAL_INDEX." Cleaner launch ".$id_cleaner." >> ".TMP."log/cleaner_[".  str_replace(" ", "_", $ob->libelle)."].log & echo $!";
-            $pid = shell_exec($cmd);
-            
 
-            $sql = "UPDATE cleaner_main SET pid ='".$pid."' WHERE id = '".$id_cleaner."'";
+            $php = explode(" ", shell_exec("whereis php"))[1];
+
+            //todo add error flux in the log
+            $cmd = $php . " " . GLIAL_INDEX . " Cleaner launch " . $id_cleaner . " >> " . TMP . "log/cleaner_[" . str_replace(" ", "_", $ob->libelle) . "].log & echo $!";
+            $pid = shell_exec($cmd);
+
+
+            $sql = "UPDATE cleaner_main SET pid ='" . $pid . "' WHERE id = '" . $id_cleaner . "'";
             $db->sql_query($sql);
 
-            $msg = I18n::getTranslation(__("The cleaner id (".$id_cleaner.") successfully started with") . " pid : ".$pid);
+            $msg = I18n::getTranslation(__("The cleaner id (" . $id_cleaner . ") successfully started with") . " pid : " . $pid);
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
             header("location: " . LINK . "cleaner/index");
         } else {
-            
+
             $msg = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ") . "'" . $id_cleaner . "'" . " (" . __("Already running !") . ")");
             $title = I18n::getTranslation(__("Error"));
             set_flash("caution", $title, $msg);
             header("location: " . LINK . "cleaner/index");
         }
+    }
+
+    function stop($param) {
+        $id_cleaner = $param[0];
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        $this->view = false;
+        $this->layout_name = false;
+
+        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $res = $db->sql_query($sql);
+
+        if ($db->sql_num_rows($res) !== 1) {
+            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the id : ") . "'" . $id_cleaner . "'");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+            header("location: " . LINK . "cleaner/index");
+            exit;
+        }
+
+        $ob = $db->sql_fetch_object($res);
+
+
+        if ($this->isRunning($ob->pid)) {
+            $msg = I18n::getTranslation(__("The cleaner with id : '" . $id_cleaner . "' successfully stopped "));
+            $title = I18n::getTranslation(__("Success"));
+            set_flash("success", $title, $msg);
+
+
+            $cmd = "kill " . $ob->pid;
+            shell_exec($cmd);
+            shell_exec("echo '[" . date("Y-m-d") . "] CLEANER STOPED !' >> " . TMP . "log/cleaner_[" . str_replace(" ", "_", $ob->libelle) . "].log");
+
+        } else {
+            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ") . "'" . $ob->pid . "'");
+            $title = I18n::getTranslation(__("Cleaner was already stopped or in error"));
+            set_flash("caution", $title, $msg);
+        }
+
+        if (!$this->isRunning($ob->pid)) {
+            $sql = "UPDATE cleaner_main SET pid ='0' WHERE id = '" . $id_cleaner . "'";
+            $db->sql_query($sql);
+        }
+        else
+        {
+            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "'.$ob->pid.'"');
+        }
+        
+        header("location: " . LINK . "cleaner/index");
+    }
+
+    private function isRunning($pid) {
+        
+        if (empty($pid))
+        {
+            return false;
+        }
+        
+        $cmd = "ps -p " . $pid;
+        $alive = shell_exec($cmd);
+
+        if (strpos($alive, $pid) !== false) {
+            return true;
+        }
+        return false;
     }
 
 }
