@@ -28,7 +28,7 @@ use Glial\Html\Form\Form;
 
         <div class="row">
             <div class="col-md-4"><?= __("Database") ?></div>
-            <div class="col-md-4"><?= Form::select("cleaner_main", "id_mysql_database", array(), "", array("class" => "form-control")) ?></div>
+            <div class="col-md-4"><?= Form::select("cleaner_main", "database", array(), "", array("class" => "form-control")) ?></div>
             <div class="col-md-4"></div>
         </div>
 

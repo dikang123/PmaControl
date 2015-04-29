@@ -14,7 +14,7 @@ $("#cleaner_main-id_mysql_server").change(function () {
     });
 });
 
-$("#cleaner_main-id_mysql_database").change(function () {
+$("#cleaner_main-database").change(function () {
     data = $(this).val();
 
     var optionSelected = $(this).find("option:selected");

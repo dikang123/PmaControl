@@ -17,7 +17,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> PmaControl <span class="badge badge-info" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">v0.4 beta (2015-03-18)</span></a> 
+                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> PmaControl <span class="badge badge-info" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2014-10-29">v0.7 beta (2015-04-29)</span></a> 
                 </div>
                 <?php
             endif;

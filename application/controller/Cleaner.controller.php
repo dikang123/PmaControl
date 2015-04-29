@@ -564,20 +564,14 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
     public function add($param) {
         $this->layout_name = 'pmacontrol';
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-
         $this->di['js']->addJavascript(array("jquery-latest.min.js", "jquery.browser.min.js", "jquery.autocomplete.min.js", "cleaner/add.cleaner.js"));
-
         $this->title = __('Add a cleaner');
-
         $this->ariane = " > " . '<a href="' . LINK . 'Cleaner/index/">' . __('Cleaner') . "</a> > " . $this->title;
 
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
-
             //var_dump($_POST);
-
 
             $data['cleaner_main'] = $_POST['cleaner_main'];
 
@@ -591,25 +585,20 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
                     $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
                 }
 
-
                 if ($id_cleaner_foreign_key) {
                     header('location: ' . LINK . 'Cleaner/index/');
                 }
             }
         }
 
-
         $sql = "SELECT * FROM mysql_server order by `name`";
         $servers = $db->sql_fetch_yield($sql);
-
 
         $data['server'] = [];
         foreach ($servers as $server) {
             $tmp = [];
-
             $tmp['id'] = $server['id'];
             $tmp['libelle'] = str_replace('_', '-', $server['name']) . " (" . $server['ip'] . ")";
-
             $data['server'][] = $tmp;
         }
 
@@ -617,23 +606,18 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $data['wait_time'] = [];
         for ($i = 1; $i < 101; $i++) {
             $tmp = [];
-
             $tmp['id'] = $i;
             $tmp['libelle'] = $i;
-
             $data['wait_time'][] = $tmp;
         }
-
 
         $this->set('data', $data);
     }
 
     function getDatabaseByServer($param) {
 
-
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
-
 
         $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($param[0]) . "';";
         $res = $db->sql_query($sql);
