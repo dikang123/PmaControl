@@ -63,10 +63,16 @@ class Monitoring extends Controller
         $this->title = __("Query Analyzer");
         $this->ariane = " > " . __("Monitoring") . " > " . $this->title;
 
-
         $this->layout_name = 'pmacontrol';
 
-
+        $default = $this->di['db']->sql(DB_DEFAULT);
+        $sql = "SELECT * FROM mysql_server limit 1";
+        $res = $default->sql_query($sql);
+        
+        $ob = $default->sql_fetch_object($res);
+        
+        $param[0] = $ob->id;
+        
         if (!empty($param[0])) {
             $data['id_server'] = $param[0];
             $_GET['mysql_server']['id'] = $data['id_server'];
@@ -146,8 +152,6 @@ class Monitoring extends Controller
             }
         }
 
-
-
         $db = $this->di['db']->sql(str_replace('-', '_', $link));
 
 
@@ -204,10 +208,6 @@ class Monitoring extends Controller
             $data['orderby'][1]['libelle'] = 'DESC';
 
 
-
-
-
-
             $sql1 = "SELECT * ";
             $sql2 = "SELECT count(1) as cpt ";
 
@@ -233,9 +233,7 @@ class Monitoring extends Controller
                 {
                     $_GET['orderby']['id'] =  "ASC";
                 }
-                
-                
-                
+
                 $sql3 = " ORDER BY a.`".$_GET['field']['id']."` ". $_GET['orderby']['id']." ";
             }
             
@@ -266,7 +264,7 @@ class Monitoring extends Controller
                         . "/database:id:" . $_GET['database']['id'] 
                     . "/field:id:".$_GET['field']['id']
                     ."/database:filter:" . $_GET['database']['filter'] ."/orderby:id:".$_GET['orderby']['id']
-                        , $_GET['page'], $data['count'], 50, 30);
+                        , $_GET['page'], $data['count'], 100, 30);
 
                 $tab = $pagination->get_sql_limit();
 

@@ -18,7 +18,7 @@ echo '</tr>';
 foreach ($data['treatment'] as $treatment) {
 
     echo '<tr>';
-    echo '<td><a href="'.LINK.'Cleaner/index/'.$data['process'].'/detail/'.$treatment['id'].'">' . $treatment['id'] . '</a></td>';
+    echo '<td><a href="'.LINK.'Cleaner/index/'.$data['id_cleaner'].'/detail/'.$treatment['id'].'">' . $treatment['id'] . '</a></td>';
     echo '<td>' . $treatment['date_start'] . '</td>';
     echo '<td>' . $treatment['date_end'] . '</td>';
     echo '<td>' . $treatment['time'] . '</td>';

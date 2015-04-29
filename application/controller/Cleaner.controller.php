@@ -8,6 +8,7 @@ use Glial\Synapse\Controller;
 use Glial\Neuron\PmaCli\PmaCliDraining;
 use Glial\Cli\Table;
 use \Glial\I18n\I18n;
+use \Glial\Cli\Color;
 
 /*
   declare(ticks = 1);
@@ -343,7 +344,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
     function getMsgStartDaemon($ob) {
         $table = new Table(0);
 
-        echo "Starting deamon for cleaner ..." . PHP_EOL;
+        echo "[" . date("Y-m-d H:i:s") . "] Starting deamon for cleaner ..." . PHP_EOL;
 
 
         $table->addHeader(array("Parameter", "Value"));
@@ -458,11 +459,11 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
     public function treatment($param) {
 
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM `pmacli_drain_process` WHERE `name`='" . $param[0] . "' ORDER BY date_start DESC LIMIT 100";
+        
+        $sql = "SELECT * FROM `pmacli_drain_process` WHERE `id_cleaner_main`='" . $param[0] . "' ORDER BY date_start DESC LIMIT 100";
         $data['treatment'] = $db->sql_fetch_yield($sql);
-        $data['process'] = $param[0];
+        $data['id_cleaner'] = $param[0];
         $this->set('data', $data);
     }
 
@@ -547,7 +548,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $sql = "SELECT a.`table`, avg(row) as row FROM pmacli_drain_item a
         INNER JOIN pmacli_drain_process b ON a.id_pmacli_drain_process = b.id
-        WHERE name = '" . $param[0] . "'
+        WHERE b.id_cleaner_main = '" . $param[0] . "'
         GROUP BY a.`table`";
         $data['avg'] = $db->sql_fetch_yield($sql);
         //var_dump($sql);
@@ -650,7 +651,6 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $tmp = [];
             $tmp['id'] = $ob->Database;
             $tmp['libelle'] = $ob->Database;
-
             $data['databases'][] = $tmp;
         }
 
@@ -721,9 +721,35 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
     }
 
     function delete($param) {
+
+        $this->view = false;
+        $this->layout_name = false;
+
+
+        $id_cleaner = $param[0];
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "DELETE FROM cleaner_main where id ='" . $param[0] . "'";
-        $db->sql_query($sql);
+
+        $sql = "SELECT * FROM cleaner_main WHERE id ='" . $id_cleaner . "'";
+        $res = $db->sql_query($sql);
+
+
+        if ($db->sql_num_rows($res) !== 1) {
+            $msg = I18n::getTranslation(__("The cleaner with the id :") . " '" . $id_cleaner . "' " . __("doesn't exist"));
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+        } else {
+
+            $ob = $db->sql_fetch_object($res);
+
+            $res = $sql = "DELETE FROM cleaner_main where id ='" . $id_cleaner . "'";
+            $db->sql_query($sql);
+
+            $msg = I18n::getTranslation(__("The cleaner has been deleted : ") . "'" . $ob->libelle . "'");
+            $title = I18n::getTranslation(__("Cleaner deleted"));
+            set_flash("success", $title, $msg);
+        }
+
+        header("location: " . LINK . "cleaner/index");
     }
 
     public function settings($param) {
@@ -861,8 +887,11 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->WAIT_TIME = $cleaner->wait_time_in_sec;
         //$this->getMsgStartDaemon($purge);
 
-        echo "Stating Cleaner with id : $id_cleaner\n";
-        echo $cleaner->query . "\n";
+
+        echo "[" . date("Y-m-d H:i:s") . "] Starting Cleaner with id : $id_cleaner\n";
+        $sql = "SELECT PK FROM `" . $purge->schema_to_purge . "`.`" . $purge->main_table . "` \nWHERE " . $cleaner->query . "\n";
+
+        echo \SqlFormatter::format($sql) . PHP_EOL;
 
         $default->sql_close();
 
@@ -878,6 +907,9 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             if (empty($ret[$purge->main_table])) {
                 $ret[$purge->main_table] = 0;
             }
+
+
+            $this->stats_for_log($ret);
 
             $time_end = microtime(true);
             $date_end = date("Y-m-d H:i:s");
@@ -932,7 +964,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
             $i++;
 
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " - Comandes deleted : " . $ret[$purge->main_table] . "\n";
+            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " sec - Comandes deleted : " . $ret[$purge->main_table] . "\n";
 
             $default->sql_close(); //to prevent mysql gone away
 
@@ -967,11 +999,14 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $php = explode(" ", shell_exec("whereis php"))[1];
 
             //todo add error flux in the log
-            $cmd = $php . " " . GLIAL_INDEX . " Cleaner launch " . $id_cleaner . " >> " . TMP . "log/cleaner_[" . str_replace(" ", "_", $ob->libelle) . "].log & echo $!";
+
+            $log_file = TMP . "log/cleaner_" . $ob->id . ".log";
+
+            $cmd = $php . " " . GLIAL_INDEX . " Cleaner launch " . $id_cleaner . " >> " . $log_file . " & echo $!";
             $pid = shell_exec($cmd);
 
 
-            $sql = "UPDATE cleaner_main SET pid ='" . $pid . "' WHERE id = '" . $id_cleaner . "'";
+            $sql = "UPDATE cleaner_main SET pid ='" . $pid . "',log_file='" . $log_file . "' WHERE id = '" . $id_cleaner . "'";
             $db->sql_query($sql);
 
             $msg = I18n::getTranslation(__("The cleaner id (" . $id_cleaner . ") successfully started with") . " pid : " . $pid);
@@ -1015,8 +1050,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
             $cmd = "kill " . $ob->pid;
             shell_exec($cmd);
-            shell_exec("echo '[" . date("Y-m-d") . "] CLEANER STOPED !' >> " . TMP . "log/cleaner_[" . str_replace(" ", "_", $ob->libelle) . "].log");
-
+            shell_exec("echo '[" . date("Y-m-d H:i:s") . "] CLEANER STOPED !' >> " . $ob->log_file);
         } else {
             $msg = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ") . "'" . $ob->pid . "'");
             $title = I18n::getTranslation(__("Cleaner was already stopped or in error"));
@@ -1026,22 +1060,19 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         if (!$this->isRunning($ob->pid)) {
             $sql = "UPDATE cleaner_main SET pid ='0' WHERE id = '" . $id_cleaner . "'";
             $db->sql_query($sql);
+        } else {
+            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "' . $ob->pid . '"');
         }
-        else
-        {
-            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "'.$ob->pid.'"');
-        }
-        
+
         header("location: " . LINK . "cleaner/index");
     }
 
     private function isRunning($pid) {
-        
-        if (empty($pid))
-        {
+
+        if (empty($pid)) {
             return false;
         }
-        
+
         $cmd = "ps -p " . $pid;
         $alive = shell_exec($cmd);
 
@@ -1049,6 +1080,35 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             return true;
         }
         return false;
+    }
+
+    public function log($param) {
+        $id_cleaner = $param[0];
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        $this->layout_name = false;
+
+        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $res = $db->sql_query($sql);
+
+        $ob = $db->sql_fetch_object($res);
+
+        $data['log'] = shell_exec("tail -n200 " . $ob->log_file);
+        $data['log_file'] = $ob->log_file;
+
+        $this->set('data', $data);
+    }
+
+    public function stats_for_log($data) {
+        $table = new Table(0);
+
+
+        $table->addHeader(array("Table", "Rows deleted"));
+
+        foreach ($data as $table_name => $row_deleted) {
+            $table->addLine(array($table_name, $row_deleted));
+        }
+
+        echo $table->display();
     }
 
 }

@@ -3,15 +3,12 @@
 use Glial\Html\Form\Form;
 ?>
 
-
-
 <form action="" method="post">
     <div class="well">
 
         <div class="row">
             <h3><?= __("General's infos") ?></h3>
         </div>
-
 
         <div class="row">
             <div class="col-md-4"><?= __("Cleaner's name") ?></div>

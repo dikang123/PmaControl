@@ -53,8 +53,8 @@ try {
             define('ROOT', dirname(dirname(dirname(htmlspecialchars($_SERVER["SCRIPT_FILENAME"], ENT_QUOTES, "utf-8")))));
             define('APP_DIR', dirname(dirname(htmlspecialchars($_SERVER["SCRIPT_FILENAME"], ENT_QUOTES, "utf-8"))));
         } else {
-            define('ROOT', dirname(dirname(dirname($_SERVER["PWD"] . "/" . $_SERVER["SCRIPT_FILENAME"]))));
-            define('APP_DIR', dirname(dirname($_SERVER["PWD"] . "/" . $_SERVER["SCRIPT_FILENAME"])));
+            define('ROOT', dirname(dirname(dirname($_SERVER["PWD"] . DS . $_SERVER["SCRIPT_FILENAME"]))));
+            define('APP_DIR', dirname(dirname($_SERVER["PWD"] . DS . $_SERVER["SCRIPT_FILENAME"])));
         }
     } else {
         define('ROOT', dirname(dirname(dirname(htmlspecialchars($_SERVER["SCRIPT_FILENAME"], ENT_QUOTES, "utf-8")))));
@@ -98,11 +98,7 @@ try {
         }
     }
 } catch (Exception $e) {
-
-
-    echo $e->getMessage(), "\n";
-
-
+    echo "[".date("Y-m-d H:i:s")."][ERROR] ".$e->getMessage(), "\n";
     //debug($e);
 }
 finally {

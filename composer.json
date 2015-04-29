@@ -18,6 +18,7 @@
         "ext-mysqlnd" : "*",
         "glial/glial": "4.1.2",
         "phpunit/phpunit": "3.7.*",
- 	"crodas/influx-php": ">0.0.1"
+        "sensiolabs/ansi-to-html": "1.1.1",
+        "crodas/influx-php": ">0.0.1"
     }
 }

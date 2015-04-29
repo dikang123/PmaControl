@@ -81,7 +81,7 @@ foreach ($data['avg'] as $detail) {
     echo '<tr>';
     echo '<td>' . $i . '</td>';
     echo '<td>' . $detail['table'] . '</td>';
-    echo '<td>' . $detail['row'] . '</td>';
+    echo '<td>' . round($detail['row'],2) . '</td>';
 
     echo '</tr>';
 

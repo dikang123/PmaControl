@@ -21,12 +21,8 @@ if ($data['performance_schema']) {
     echo ' ';
     echo Form::select('database', 'id', $data['databases'], "", array('style' => 'margin-bottom:0px', 'class'=>'form-control'));
     echo ' ';
-
     echo Form::input('database', 'filter', array('style' => 'margin-bottom:0px', 'placeholder' => __("Filter"), 'class'=>'form-control'));
-
-
     echo '<b> '.__("ORDER BY").' </b>';
-
     echo Form::select('field', 'id', $data['fields'], "", array('style' => 'margin-bottom:0px', 'class'=>'form-control'));
 
     echo ' ';
@@ -61,9 +57,9 @@ if ($data['performance_schema']) {
 
     echo '<th>Top</th>';
     echo '<th>Database</th>';
-    echo '<th>DIGEST</th>';
+    //echo '<th>DIGEST</th>';
     echo '<th>count(1) <a href=""><i class="fa fa-arrow-down"></i></a> <a href=""><i class="fa fa-arrow-up"></i></a></th>';
-    echo '<th style="max-width:200px;overflow:hidden">Query</th>';
+    echo '<th style="max-width:200px;overflow:hidden;"><span class="inner">Query</span></th>';
     echo '<th>AVG rows affected/sent</th>';
     echo '<th>AVG execution time</th>';
     echo '<th>MIN execution time</th>';
@@ -105,8 +101,9 @@ if ($data['performance_schema']) {
         echo '<tr>';
         echo '<td>' . $i . '</td>';
         echo '<td>' . $event['SCHEMA_NAME'] . '</td>';
+        //echo '<td>' . $event['DIGEST'] . '</td>';
         echo '<td>' . number_format($event['COUNT_STAR'], 0, '.', ' ') . '</td>';
-        echo '<td>' . $event['DIGEST'] . '</td>';
+        
         echo '<td>' . \SqlFormatter::format($sql) . '</td>';
 
         if (!empty($event['SUM_ROWS_AFFECTED'])) {

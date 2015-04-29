@@ -28,6 +28,16 @@ body { padding-bottom: 70px;padding-top: 70px; font-size:12px}
 
 .highlight_row td{background-color: #ddd;}
 
+.rotate {
+    margin: 0;
+    padding: 0;
+    -webkit-transform-origin: 0 0;
+        -ms-transform-origin: 0 0;
+            transform-origin: 0 0;
+    -webkit-transform: rotate(90deg);
+        -ms-transform: rotate(90deg);
+            transform: rotate(90deg);
+}
 
 
 
