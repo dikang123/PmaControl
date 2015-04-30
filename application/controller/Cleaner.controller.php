@@ -58,6 +58,10 @@ class Cleaner extends Controller {
     public function statistics($param) {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
+        
+        
+        
+        /*
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
             'jQplot/jquery.jqplot.min.js',
             'jQplot/plugins/jqplot.dateAxisRenderer.min.js',
@@ -318,7 +322,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 });");
 
-
+        /******/
 
 
 
@@ -822,20 +826,21 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             default:
         }
     }
-
+    
+    
     public function launch($param) {
         $id_cleaner = $param[0];
         $default = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
         $this->layout_name = false;
-
+        
         $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
             FROM cleaner_main a
                 INNER JOIN mysql_server b ON a.id_mysql_server = b.id
                 WHERE a.id = '" . $id_cleaner . "'";
 
         $res = $default->sql_query($sql);
-
+        
         while ($ob = $default->sql_fetch_object($res)) {
             $cleaner = $ob;
         }
@@ -900,7 +905,6 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
 
 //$id_mysql_server = $this->getIdMysqlServer($purge->link_to_purge);
-
 
             $default = $this->di['db']->sql(DB_DEFAULT);
 
@@ -1079,6 +1083,15 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $data['log'] = shell_exec("tail -n200 " . $ob->log_file);
         $data['log_file'] = $ob->log_file;
 
+        
+        $this->di['js']->code_javascript( "var objDiv = document.getElementById('data_log');
+objDiv.scrollTop = objDiv.scrollHeight;
+
+");
+        
+        
+        
+        
         $this->set('data', $data);
     }
 

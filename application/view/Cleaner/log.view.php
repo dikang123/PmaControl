@@ -13,4 +13,4 @@ $html = $converter->convert($data['log']);
 ?>
 
 File log : <code><?=$data['log_file'] ?></code><br /><br />
-<pre style="background-color: black; overflow: auto; height:500px; padding: 10px 15px; font-family: monospace;"><?php echo $html ?></pre>
+<pre id="data_log" style="background-color: black; overflow: auto; height:500px; padding: 10px 15px; font-family: monospace;"><?php echo $html ?></pre>

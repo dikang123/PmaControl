@@ -24,7 +24,6 @@ foreach ($data['treatment'] as $treatment) {
     echo '<td>' . $treatment['time'] . '</td>';
     echo '<td>' . $treatment['item_deleted'] . '</td>';
     echo '</tr>';
-
 }
 
 

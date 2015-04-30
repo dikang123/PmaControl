@@ -10,12 +10,9 @@ use \Glial\Synapse\Controller;
 
 class Menu extends Controller
 {
-
     public function show($params)
     {
         $id_menu = $params[0];
-        
-        
         //debug($id_menu);
         
         
