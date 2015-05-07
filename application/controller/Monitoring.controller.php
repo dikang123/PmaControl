@@ -65,14 +65,18 @@ class Monitoring extends Controller
 
         $this->layout_name = 'pmacontrol';
 
-        $default = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM mysql_server limit 1";
-        $res = $default->sql_query($sql);
+
+	if (empty($param[0]))
+	{
+
+        	$default = $this->di['db']->sql(DB_DEFAULT);
+        	$sql = "SELECT * FROM mysql_server limit 1";
+        	$res = $default->sql_query($sql);
         
-        $ob = $default->sql_fetch_object($res);
+        	$ob = $default->sql_fetch_object($res);
         
-        $param[0] = $ob->id;
-        
+        	$param[0] = $ob->id;
+        }
         if (!empty($param[0])) {
             $data['id_server'] = $param[0];
             $_GET['mysql_server']['id'] = $data['id_server'];
