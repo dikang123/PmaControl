@@ -19,21 +19,18 @@
  * @since         Gliale(tm) v 0.1
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
-
-
-
 try {
 
     /*
-    function exception_error_handler($errno, $errstr, $errfile, $errline)
-    {
-        throw new Exception("GLI-100 : [ERROR SYSTEM:" . $errno . "] " . $errstr . " (" . $errfile . ":" . $errline . ")", 100);
-    }
+      function exception_error_handler($errno, $errstr, $errfile, $errline)
+      {
+      throw new Exception("GLI-100 : [ERROR SYSTEM:" . $errno . "] " . $errstr . " (" . $errfile . ":" . $errline . ")", 100);
+      }
 
-    set_error_handler("exception_error_handler");
-*/
-    
-    
+      set_error_handler("exception_error_handler");
+     */
+
+
     define("TIME_START", microtime(true));
 
 //to know if we are in cli
@@ -88,20 +85,45 @@ try {
     define('GLIAL_INDEX', __FILE__);
 
 
-	
-    if (isset($_GET['glial_path']) && strpos($_GET['glial_path'],'favicon.ico')) {
+
+    if (isset($_GET['glial_path']) && strpos($_GET['glial_path'], 'favicon.ico')) {
         //case where navigator ask favicon.ico even if it's not set in your html
         exit;
     } else {
-        if (!include(ROOT .DS . "vendor/glial/glial/Glial/Bootstrap.php")) {
+        if (!include(ROOT . DS . "vendor/glial/glial/Glial/Bootstrap.php")) {
             trigger_error("Gliale core could not be found. Check the value of CORE_PATH in application/webroot/index.php.  It should point to the directory containing your " . DS . "glial core directory and your " . DS . "vendors root directory.", E_USER_ERROR);
         }
     }
 } catch (Exception $e) {
-    echo "[".date("Y-m-d H:i:s")."][ERROR] ".$e->getMessage(), "\n";
+
+
+    echo "[" . date("Y-m-d H:i:s") . "][ERROR] " . $e->getMessage(), "\n";
+
+    $error_code = $e->getCode();
+    if ($error_code >= 80) {
+        $log->emergency($e->getMessage());
+    } elseif ($error_code >= 70) {
+        $log->alert($e->getMessage());
+    } elseif ($error_code >= 60) {
+        $log->critical($e->getMessage());
+    } elseif ($error_code >= 50) {
+        $log->error($e->getMessage());
+    } elseif ($error_code >= 40) {
+        $log->warning($e->getMessage());
+    } elseif ($error_code >= 30) {
+        $log->notice($e->getMessage());
+    } elseif ($error_code >= 20) {
+        $log->info($e->getMessage());
+    } elseif ($error_code >= 10) {
+        $log->debug($e->getMessage());
+    } else {
+        $log->log(1,$e->getMessage());
+    }
+
+
+
     //debug($e);
-}
-finally {
+} finally {
     if (!IS_CLI) {
         /*
           $stat = new Statistics;
