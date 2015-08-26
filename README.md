@@ -85,7 +85,7 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
  * Don't forget the final "/"
 
 
-### add right to write
+### Correct file permissions
 
 * `chown -R www-data:www-data tmp/`
 
