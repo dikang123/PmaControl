@@ -108,7 +108,7 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 
 * go to http://127.0.0.1/pmacontrol/
 
-## Screenshot
+## Screenshots
 
 
 ![Alt text](/documentation/images/tree.png?raw=true "Replication tree")
