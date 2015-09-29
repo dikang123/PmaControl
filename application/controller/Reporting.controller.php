@@ -22,23 +22,15 @@ class Reporting extends Controller
 
     public function detail_order()
     {
-
         $this->title = __("Details order");
         $this->ariane = " > " . __("Reporting") . " > " . $this->title;
-
 
         $this->di['js']->addJavascript(array("jquery-latest.min.js"));
 
         $default = $this->di['db']->sql(DB_DEFAULT);
 
-
         if ($_SERVER['REQUEST_METHOD'] === "POST") {
-
-
-
             if (!empty($_POST['PROD_TRACES']['ID_COMMANDE'])) {
-
-
 
                 $_POST['PROD_TRACES']['ID_COMMANDE'] = trim($_POST['PROD_TRACES']['ID_COMMANDE']);
 
@@ -68,9 +60,7 @@ class Reporting extends Controller
 
                 header("location: " . LINK . __CLASS__ . "/" . __FUNCTION__ . "/PROD_TRACES:ID_COMMANDE:" . implode(",", $full) . "/none:server:" . $_POST['none']['server']);
 
-
                 //die("location: " . LINK . __CLASS__ . "/".__FUNCTION__."/PROD_TRACES:ID_COMMANDE:" . implode(",", $full) . "/none:server:" . $_POST['none']['server']);
-
                 exit;
             }
         }

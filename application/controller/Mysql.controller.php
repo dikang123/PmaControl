@@ -938,7 +938,7 @@ class Mysql extends Controller
 //fwrite($fp, "\t size=\"10,1000\";");
 
             fwrite($fp, "\t edge [color=green];" . PHP_EOL);
-            fwrite($fp, "\t node [color=green shape=rect style=filled fontsize=8 ranksep=0 concentrate=true splines=true overlap=false];" . PHP_EOL);
+            fwrite($fp, "\t node [color=green shape=circo style=filled fontsize=8 ranksep=0 concentrate=true splines=true overlap=true];" . PHP_EOL);
 
 
             foreach ($tables as $table) {

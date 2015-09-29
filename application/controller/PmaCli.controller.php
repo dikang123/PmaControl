@@ -9,7 +9,4 @@ class PmaCli extends Controller {
     
     const TIME_BEHING_MAX = 120; // en secondes doit être compris entre 0 et inf (0 not allowed
     
-    
-    
-
 }
