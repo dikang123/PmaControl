@@ -2,6 +2,8 @@
 
 use \Glial\Synapse\Controller;
 use \Glial\Cli\SetTimeLimit;
+use \Glial\Cli\Color;
+
 
 class Agent extends Controller
 {
@@ -47,7 +49,7 @@ class Agent extends Controller
 		if ($elem == "--debug")
 		{
 			$this->debug = true;
-			echo "DEBUG activated !\n";
+			echo Color::getColoredString("DEBUG activated !","yellow")."\n";
 		}
 
 	}
