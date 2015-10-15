@@ -14,7 +14,6 @@
         "php": ">5.5",
         "ext-gd" : "*",
         "ext-mcrypt" : "*",
-        "ext-ssh2" : "*",
         "ext-mysqlnd" : "*",
         "glial/glial": "4.1.2.1",
         "phpunit/phpunit": "3.7.*",
