@@ -47,6 +47,10 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 * `git config core.fileMode false`
 * `composer install`
 
+### Auto install
+
+
+* `php application/webroot/index.php install index`
 
 ###Install Database
 
