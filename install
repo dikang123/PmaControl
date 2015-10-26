@@ -1,0 +1,5 @@
+#!/bin/bash
+touch configuration/db.ini.config.php
+touch configuration/developer.ini.config.php
+
+php application/webroot/index.php install index
