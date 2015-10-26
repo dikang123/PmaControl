@@ -75,13 +75,18 @@ try {
 //The absolute path to the webroot directory.
     define('WEBROOT_DIR', basename(dirname(__FILE__)) . DS);
 
-    require(CONFIG . "webroot.config.php");
 
+if (! IS_CLI)
+{
+    require(CONFIG . "webroot.config.php");
     define('IMG', WWW_ROOT . "image" . DS);
     define('CSS', WWW_ROOT . "css" . DS);
     define('FILE', WWW_ROOT . "file" . DS);
     define('VIDEO', WWW_ROOT . "video" . DS);
     define('JS', WWW_ROOT . "js" . DS);
+}   
+    
+    
     define('GLIAL_INDEX', __FILE__);
 
 
