@@ -1,5 +1,58 @@
 #!/bin/bash
-touch configuration/db.ini.config.php
-touch configuration/developer.ini.config.php
+
+
+workFolder=$(readlink -f $(dirname $0))
+path=`echo $workFolder | awk -F"/" ' { print $(NF) } '`
+
+
+cat > configuration/db.config.ini.php << EOF
+[noname]
+gg=fake_data
+gt=just the time to generate a good one
+EOF
+
+cat > configuration/db.config.php << EOF
+<?php
+ if (! defined('DB_DEFAULT'))
+ {
+     define("DB_DEFAULT", "pmacontrol");
+ }
+EOF
+
+
+cat >  configuration/webroot.config.php << EOF
+<?php
+
+/*
+ * if you use a direrct DNS set : define('WWW_ROOT', "/");
+ * if you dev in local or other use : define('WWW_ROOT', "/path_to_the_final_directory/");
+ * example : http://127.0.0.1/directory/myapplication/ => define('WWW_ROOT', "/directory/myapplication/");
+ * Don't forget the final "/"
+ */
+
+
+if (! defined('WWW_ROOT'))
+{
+    define('WWW_ROOT', "/$path/");
+}
+EOF
+
+cp -a config_sample/environement.config.php configuration/environement.config.php
+cp -a config_sample/router.config.php configuration/router.config.php
+cp -a config_sample/site.config.php configuration/site.config.php
+cp -a config_sample/acl.config.ini configuration/acl.config.ini
+cp -a config_sample/site.config.php configuration/site.config.php
+cp -a config_sample/auth.config.php configuration/auth.config.php
+cp -a config_sample/crypt.config.php configuration/crypt.config.php
+cp -a config_sample/developer.config.ini.php configuration/developer.config.ini.php
+cp -a config_sample/haproxy.config.ini.php configuration/haproxy.config.ini.php
+cp -a config_sample/history.config.php configuration/history.config.php
+cp -a config_sample/javascript.config.php configuration/javascript.config.php
+cp -a config_sample/language.config.php configuration/language.config.php
+cp -a config_sample/ldap.config.php configuration/ldap.config.php
+cp -a config_sample/photo.config.php configuration/photo.config.php
+cp -a config_sample/pmacontrol.config.php configuration/pmacontrol.config.php
+cp -a config_sample/translation.config.php configuration/translation.config.php
+
 
 php application/webroot/index.php install index

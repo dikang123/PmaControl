@@ -342,11 +342,13 @@ class Install extends Controller
     {
         $this->view = false;
 
-
+echo ROOT;
         $this->cadre("Select MySQL server for PmaControl");
         $server = $this->testMysqlServer();
 
         $this->importData($server);
+        $this->updateConfig($server);
+        $this->updateCache();
     }
 
     private function prompt($test)
@@ -417,6 +419,7 @@ class Install extends Controller
         } while ($good === false);
 
         // check database
+        wrong_password:
         $good = false;
         do {
             echo "Name of database who will be used by PmaConrol\n";
@@ -454,6 +457,7 @@ class Install extends Controller
         } else {
             echo Color::getColoredString('The database "'.mysqli_real_escape_string($link,
                     $database).'" couldn\'t be created', "black", "red")."\n";
+            goto wrong_password;
         }
         echo str_repeat("-", 80)."\n";
 
@@ -486,13 +490,36 @@ class Install extends Controller
 
             $cmd = "mysql -h ".$server["hostname"]." -u ".$server['user']." -P ".$server['port']." -p".$server['password']." ".$server['database']." < ".$filename."";
 
-            echo $cmd."\n";
-            shell_exec($cmd);
+
+            
+            //echo $cmd."\n";
+            //shell_exec($cmd);
         }
     }
 
-    private function updateConfig()
+    private function updateConfig($server)
     {
+        //update DB config
+        
+        $config = "
+;[name_of_connection] => will be acceded in framework with \$this->di['db']->sql('name_of_connection')->method()
+;driver => list of SGBD avaible {mysql, pgsql, sybase, oracle}
+;hostname => server_name of ip of server SGBD (better to put localhost or real IP)
+;user => user who will be used to connect to the SGBD
+;password => password who will be used to connect to the SGBD
+;database => database / schema witch will be used to access to datas
+
+[pmacontrol]
+driver=mysql
+hostname=".$server["hostname"]."
+user=".$server['user']."
+password='".$server['password']."'
+database=".$server['database']."";
+
+        $fp = fopen(CONFIG."/db.config.ini.php", 'w');
+        fwrite($fp, $config);
+        fclose($fp);
+
 
     }
 
