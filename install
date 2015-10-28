@@ -56,3 +56,4 @@ cp -a config_sample/translation.config.php configuration/translation.config.php
 
 
 php application/webroot/index.php install index
+php application/webroot/index.php install createAdmin

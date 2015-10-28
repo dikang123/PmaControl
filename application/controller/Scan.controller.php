@@ -4,7 +4,7 @@ use \Glial\Synapse\Controller;
 
 /*
  * this class is made to scan network and discover MySQL Server
- * 
+ * to parse result of nmap
  */
 
 class Scan extends Controller {

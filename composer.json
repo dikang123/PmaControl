@@ -20,6 +20,7 @@
         "sensiolabs/ansi-to-html": "1.1.1",
         "crodas/influx-php": ">0.0.1",
         "esysteme/graphviz": "1.0.2",
-	"alfallouji/php_multithread": "0.1.4"
+	"alfallouji/php_multithread": "0.1.4",
+        "hoa/console": "~2.0"
     }
 }
