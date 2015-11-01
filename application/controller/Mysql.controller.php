@@ -886,9 +886,6 @@ class Mysql extends Controller
         sort($data['dbs']);
 
 
-
-
-
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
             $data['ret'] = '';
 
