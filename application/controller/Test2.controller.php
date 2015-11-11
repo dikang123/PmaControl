@@ -9,6 +9,9 @@ class Test2 extends Controller
 
     public function test()
     {
+        $this->view = false;
+
+
         $graph = new Alom\Graphviz\Digraph('G');
 
 

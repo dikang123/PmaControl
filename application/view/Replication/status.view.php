@@ -12,7 +12,7 @@ use \Glial\Date\Date;
 
 echo '<div class="well" style="text-align: center;">';
 
-
+/*
 $filename = ROOT . '/tmp/img/replication.svg';
 if (file_exists($filename)) {
 
@@ -55,4 +55,7 @@ if ($handle) {
 
 
 echo '</div>';
+ *
+ * */
+ 
 echo '</div>';

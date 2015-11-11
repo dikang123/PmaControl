@@ -61,6 +61,7 @@ if ($data['performance_schema']) {
     echo '<th>count(1) <a href=""><i class="fa fa-arrow-down"></i></a> <a href=""><i class="fa fa-arrow-up"></i></a></th>';
     echo '<th style="max-width:200px;overflow:hidden;"><span class="inner">Query</span></th>';
     echo '<th>AVG rows affected/sent</th>';
+    echo '<th>AVG rows parsed</th>';
     echo '<th>AVG execution time</th>';
     echo '<th>MIN execution time</th>';
     echo '<th>MAX execution time</th>';
@@ -74,6 +75,7 @@ if ($data['performance_schema']) {
     $i = 0;
 
     foreach ($data['event_by_digest'] as $key => $event) {
+
 
         $i++;
 
@@ -116,6 +118,8 @@ if ($data['performance_schema']) {
             echo '<td>' . number_format(round($event['SUM_ROWS_SENT'] / $event['COUNT_STAR'], 2), 0, '.', ' ') . '</td>';
         }
 
+
+        echo '<td>' . round($event['SUM_ROWS_EXAMINED']) . '</td>';
         echo '<td>' . round($event['AVG_TIMER_WAIT'] / 1000000000000, 3) . ' sec</td>';
         echo '<td>' . round($event['MIN_TIMER_WAIT'] / 1000000000000, 3) . ' sec</td>';
         echo '<td>' . round($event['MAX_TIMER_WAIT'] / 1000000000000, 3) . ' sec</td>';
