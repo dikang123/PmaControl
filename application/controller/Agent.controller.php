@@ -412,4 +412,10 @@ GROUP BY table_schema ; ';
             echo "[Warning] Removed : ".$to_delete['name']." from monitoring\n";
         }
     }
+
+
+    private function addServerToConfig($name,$ip="")
+    {
+        
+    }
 }

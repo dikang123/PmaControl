@@ -539,11 +539,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
     }
 
     public function detail($param) {
-
-
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-
         $tmp = explode('/', $_GET['url']);
         $var = end($tmp);
 
