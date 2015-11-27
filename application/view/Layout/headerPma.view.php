@@ -14,7 +14,7 @@ echo "<meta name=\"robots\" content=\"index,follow,all\" />\n";
 echo "<meta name=\"generator\" content=\"GLIALE 1.1\" />\n";
 echo "<meta name=\"runtime\" content=\"[PAGE_GENERATION]\" />\n";
 echo "<link rel=\"shortcut icon\" href=\"favicon.ico\" />";
-echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.1</title>\n";
+echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.8</title>\n";
 //echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"\" />\n";
 ?>
 <!--
@@ -23,17 +23,18 @@ echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.1</title>\n";
 
 
 -->
-<link rel="stylesheet" href="<?= CSS ?>bootstrap.min.css">
-<link rel="stylesheet" href="http://getbootstrap.com/assets/css/docs.min.css">
-
+<link rel="stylesheet" type="text/css" href="<?= CSS ?>bootstrap.css">
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>autocomplete.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>notification.style.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>title.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>reporting.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>pmacontrol.css" />
 
-<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="<?= CSS ?>font-awesome.min.css" rel="stylesheet">
 
+
+<!--<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+<!-- -->
 </head>
 <body>
 
@@ -44,7 +45,3 @@ echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.1</title>\n";
 
         FactoryController::addNode("Menu", "show", array("3"));
     }
-
-
-
-

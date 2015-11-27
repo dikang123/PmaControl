@@ -3,28 +3,23 @@
 use Glial\Html\Form\Form;
 ?>
 
-
-
 <form action="" method="post">
     <div class="well">
 
         <div class="row">
             <div class="col-md-4"></div>
-            <div class="col-md-4"> <h3><?= __("Orginal") ?></h3></div>
-            <div class="col-md-4"> <h3><?= __("Compare") ?></h3></div>
+            <div class="col-md-4"> <b><?= __("Orginal") ?></b></div>
+            <div class="col-md-4"> <b><?= __("Compare") ?></b></div>
 
         </div>
-
 
         <div class="row">
             <div class="col-md-4"><?= __("Server") ?></div>
             <div class="col-md-4"><?=
-                Form::select("compare_main", "id_mysql_server__original",
-                    $data['server'], "", array("class" => "form-control"))
+                Form::select("compare_main", "id_mysql_server__original", $data['server'], "", array("class" => "form-control"))
                 ?></div>
             <div class="col-md-4"><?=
-                Form::select("compare_main", "id_mysql_server__compare",
-                    $data['server'], "", array("class" => "form-control"))
+                Form::select("compare_main", "id_mysql_server__compare", $data['server'], "", array("class" => "form-control"))
                 ?></div>
         </div>
 
@@ -32,14 +27,12 @@ use Glial\Html\Form\Form;
             <div class="col-md-4"><?= __("Database") ?></div>
             <div class="col-md-4">
                 <?=
-                Form::select("compare_main", "database__original", $data['listdb1'], "",
-                    array("class" => "form-control"))
+                Form::select("compare_main", "database__original", $data['listdb1'], "", array("class" => "form-control"))
                 ?>
             </div>
             <div class="col-md-4">
                 <?=
-                Form::select("compare_main", "database__compare", $data['listdb2'], "",
-                    array("class" => "form-control"))
+                Form::select("compare_main", "database__compare", $data['listdb2'], "", array("class" => "form-control"))
                 ?>
             </div>
         </div>
@@ -53,3 +46,153 @@ use Glial\Html\Form\Form;
         </div>
     </div>
 </form>
+
+<div class="well" style="border-left-color: #d9534f;   border-left-width: 5px;">
+    <p><b>IMPORTANT !!!</b></p>
+    This tool will not handle a case when the field was renamed. It will generate 2 queries, one to drop the column with the old name and one to create column with the new name, so if there is a data in the dropped column, it will be lost.
+</div>
+
+
+<?php
+if (!empty($data['BASE TABLE'])) {
+
+    //echo '<div class="well">';
+    echo '<table class="table table-condensed">';
+    echo '<tr>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%"><span style="font-size:12px" class="glyphicon glyphicon-list-alt"></span> Tables</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Orginal</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Compare</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Equality</a></th>';
+    echo '<th><a href="#" id="vers" class="btn btn-primary" style="width:100%"><span style="font-size:12px" class="glyphicon glyphicon-arrow-left"></span> <span style="font-size:12px" class="glyphicon glyphicon-arrow-right"></span> '.__("Switch").'</a></th>';
+
+    echo '</tr>';
+
+
+    foreach ($data['BASE TABLE'] as $tablename => $table) {
+
+        if (!empty($table[0])) {
+            $class_ori = "glyphicon glyphicon-ok";
+        } else {
+            $class_ori = "glyphicon glyphicon-remove";
+        }
+
+        if (!empty($table[1])) {
+            $class_cmp = "glyphicon glyphicon-ok";
+        } else {
+            $class_cmp = "glyphicon glyphicon-remove";
+        }
+
+        if (empty($table['script'])) {
+            $class_eq = "glyphicon glyphicon-ok";
+        } else {
+            $class_eq = "glyphicon glyphicon-remove";
+        }
+
+        echo '<tr>';
+        echo '<td>'.$tablename.'</td>';
+
+        echo '<td><span class="'.$class_ori.' danger"></span></td>';
+        echo '<td><span class="'.$class_cmp.'"></span></td>';
+        echo '<td><span class="'.$class_eq.'"></span></td>';
+        echo '<td class="vers2">';
+
+        if (count($table['script']) != 0) {
+            $queries = implode(';', $table['script']).";";
+            echo SqlFormatter::format($queries);
+        }
+        echo '</td>';
+
+        echo '<td style="display:none" class="vers1">';
+        if (count($table['script2']) != 0) {
+            $queries = implode(';', $table['script2']).";";
+            echo SqlFormatter::format($queries);
+        }
+        echo '</td>';
+        echo '</tr>';
+    }
+    echo '</table>';
+
+    ?>
+<div class="well" style="border-left-color: #5cb85c;   border-left-width: 5px;">
+    <p><b>Some features :</b></p>
+    <ul>
+        <li><code>AUTO_INCREMENT</code> value is ommited during the comparison and in resulting <code>CREATE TABLE</code> sql</li>
+        <li>Fields with definitions like <code>(var)char (255) NOT NULL default ''</code> and <code>(var)char (255) NOT NULL</code> are treated as equal, the same for <code>(big|tiny)int NOT NULL default 0;</code></li>
+        <li><code>IF NOT EXISTS</code> is automatically added to the resulting sql CREATE TABLE statement.</li>
+        <li>Fields updating queries always come before key modification ones for each table.</li>
+    </ul>
+     <p><b>Not implemented yet :</b></p>
+     <ul>
+         <li>This tool even does not try to insert or re-order fields in the same order as in the original table. Does order matter?</li>
+         <li>This tools don't take engine, charset and collation in consideration.</li>
+     </ul>
+</div>
+<?php
+
+
+}
+
+?>
+
+<!-- view -->
+
+
+
+<?php
+if (!empty($data['VIEW'])) {
+
+    //echo '<div class="well">';
+    echo '<table class="table table-condensed">';
+    echo '<tr>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%"><span style="font-size:12px" class="glyphicon glyphicon-list-alt"></span> Views</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Orginal</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Compare</a></th>';
+    echo '<th><a href="#" class="btn btn-default" style="width:100%">Equality</a></th>';
+    echo '<th><a href="#" id="vers" class="btn btn-primary" style="width:100%"><span style="font-size:12px" class="glyphicon glyphicon-arrow-left"></span> <span style="font-size:12px" class="glyphicon glyphicon-arrow-right"></span> '.__("Switch").'</a></th>';
+    echo '</tr>';
+
+    foreach ($data['VIEW'] as $tablename => $table) {
+
+        if (!empty($table[0])) {
+            $class_ori = "glyphicon glyphicon-ok";
+        } else {
+            $class_ori = "glyphicon glyphicon-remove";
+        }
+
+        if (!empty($table[1])) {
+            $class_cmp = "glyphicon glyphicon-ok";
+        } else {
+            $class_cmp = "glyphicon glyphicon-remove";
+        }
+
+        if (empty($table['script'])) {
+            $class_eq = "glyphicon glyphicon-ok";
+        } else {
+            $class_eq = "glyphicon glyphicon-remove";
+        }
+
+        echo '<tr>';
+        echo '<td>'.$tablename.'</td>';
+
+        echo '<td><span class="'.$class_ori.' danger"></span></td>';
+        echo '<td><span class="'.$class_cmp.'"></span></td>';
+        echo '<td><span class="'.$class_eq.'"></span></td>';
+        echo '<td class="vers2">';
+
+        if (count($table['script']) != 0) {
+            $queries = implode(';', $table['script']).";";
+            echo SqlFormatter::format($queries);
+        }
+        echo '</td>';
+
+        echo '<td style="display:none" class="vers1">';
+        if (count($table['script2']) != 0) {
+            $queries = implode(';', $table['script2']).";";
+            echo SqlFormatter::format($queries);
+        }
+        echo '</td>';
+        echo '</tr>';
+    }
+    echo '</table>';
+
+}
