@@ -50,62 +50,7 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 ### Auto install
 
 
-* `php application/webroot/index.php install index`
-
-###Install Database
-
-* `mysql> CREATE DATABASE pmacontrol;`
-* `mysql -h localhost -u root -p pmacontrol < sql/pmacontrol.sql`
-
-###Edit config files
-
-* `vi configuration/db.config.ini.php`
-
-  * [name_of_connection] => will be acceded in framework with $this->di['db']->sql('name_of_connection')->method(), please use hostname, the '-' hyphen are not allowed there.
-  * driver => list of SGBD avaible {mysql, postgresql, sybase, oracle}, Only MySQL's servers are monitored yet
-  * hostname => server_name of ip of server SGBD (better to put localhost or real IP)
-  * user => user who will be used to connect to the SGBD
-  * password => password who will be used to connect to the SGBD
-  * database => database / schema witch will be used to access to datas
-  * ssh_login => used for backup tools, monitoring system 
-  * ssh_password => passwd of ssh account
-  * is_sudo => if the user is sudo (if not considered as root user)
-  * tag ="production,france sartrouville" => tags must be seaprated by coma or space 
-  * The database have to exist, if not create it
-  
-
-* `vi configuration/db.config.php`
-
-  * DB_DEFAULT have to be the same used by [name_of_connection], if you set [pmacontrol]
-  * you should have : ```define("DB_DEFAULT", "pmacontrol");```
-  * it's made to determine what is the main connection to store data for pmacontrol
-
-
-* `vi configuration/webroot.config.php`
-
- * if you use a direrct DNS set : define('WWW_ROOT', "/");
- * if you dev in local or other use : define('WWW_ROOT', "/path_to_the_final_directory/");
- * example : http://127.0.0.1/directory/myapplication/ => define('WWW_ROOT', "/directory/myapplication/");
- * Don't forget the final "/"
-
-
-### Correct file permissions
-
-* `chown -R www-data:www-data tmp/`
-
-###Generate cash (table & rights)
-
-* `cd application/webroot`
-* `php index.php administration admin_table`
-* `php index.php administration generate_model`
-
-## Start to collect data
-
-* `php index.php pma_cli daemon`
-
-
-
-
+* ./install
 
 ##You are ready !
 

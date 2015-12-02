@@ -54,6 +54,7 @@ cp -a config_sample/photo.config.php configuration/photo.config.php
 cp -a config_sample/pmacontrol.config.php configuration/pmacontrol.config.php
 cp -a config_sample/translation.config.php configuration/translation.config.php
 
+chmod 777 -R tmp/
 
 php application/webroot/index.php install index
 php application/webroot/index.php install createAdmin
