@@ -10,6 +10,7 @@ use Glial\Cli\Table;
 use \Glial\I18n\I18n;
 use \Glial\Cli\Color;
 
+
 /*
   declare(ticks = 1);
   pcntl_signal(SIGTERM, "sig_handler");
@@ -45,9 +46,11 @@ use \Glial\Cli\Color;
   }
   } */
 
-class Cleaner extends Controller {
+class Cleaner extends Controller
+{
 
-    private function anonymous() {
+    private function anonymous()
+    {
         $fct = function() {
             $default = $this->di['db']->sql(DB_DEFAULT);
 
@@ -55,281 +58,283 @@ class Cleaner extends Controller {
         };
     }
 
-    public function statistics($param) {
+    public function statistics($param)
+    {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
-        
-        
-        
+
+
+
         /*
-        $this->di['js']->addJavascript(array('jquery-latest.min.js',
-            'jQplot/jquery.jqplot.min.js',
-            'jQplot/plugins/jqplot.dateAxisRenderer.min.js',
-            //  'jQplot/plugins/jqplot.barRenderer.min.js',
-//  'jQplot/plugins/jqplot.pointLabels.min.js',
-            'jQplot/plugins/jqplot.categoryAxisRenderer.min.js',
-            'jQplot/plugins/jqplot.canvasTextRenderer.min.js',
-            'jQplot/plugins/jqplot.canvasAxisTickRenderer.min.js',
-            'jQplot/plugins/jqplot.ohlcRenderer.min.js',
-            'jQplot/plugins/jqplot.highlighter.min.js',
-            'jQplot/plugins/jqplot.pointLabels.min.js',
-            'jqplot.categoryAxisRenderer.min.js'));
+          $this->di['js']->addJavascript(array('jquery-latest.min.js',
+          'jQplot/jquery.jqplot.min.js',
+          'jQplot/plugins/jqplot.dateAxisRenderer.min.js',
+          //  'jQplot/plugins/jqplot.barRenderer.min.js',
+          //  'jQplot/plugins/jqplot.pointLabels.min.js',
+          'jQplot/plugins/jqplot.categoryAxisRenderer.min.js',
+          'jQplot/plugins/jqplot.canvasTextRenderer.min.js',
+          'jQplot/plugins/jqplot.canvasAxisTickRenderer.min.js',
+          'jQplot/plugins/jqplot.ohlcRenderer.min.js',
+          'jQplot/plugins/jqplot.highlighter.min.js',
+          'jQplot/plugins/jqplot.pointLabels.min.js',
+          'jqplot.categoryAxisRenderer.min.js'));
 
 
-        $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
+          $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
 
 
-        $sql = "SELECT `item_deleted`, time as avg, `date_end` as date_end
-                FROM `pmacli_drain_process` 
-                WHERE name='" . $param[0] . "' 
-                GROUP BY 
-                ;";
+          $sql = "SELECT `item_deleted`, time as avg, `date_end` as date_end
+          FROM `pmacli_drain_process`
+          WHERE name='" . $param[0] . "'
+          GROUP BY
+          ;";
 
 
-        $sql = "SELECT max(date_end) as date_end,
-            HOUR(date_end) as hour,
-                 avg(time) as avg,
-                 max(time) as max,
-                 min(time) as min,
-                "
-                . " sum(item_deleted) as item_deleted "
-                . "FROM `pmacli_drain_process` "
-                . "where name='" . $param[0] . "' and date_end >= ADDDATE(now(), INTERVAL -1 DAY) GROUP BY HOUR(date_end) order by max(date_end)";
+          $sql = "SELECT max(date_end) as date_end,
+          HOUR(date_end) as hour,
+          avg(time) as avg,
+          max(time) as max,
+          min(time) as min,
+          "
+          . " sum(item_deleted) as item_deleted "
+          . "FROM `pmacli_drain_process` "
+          . "where name='" . $param[0] . "' and date_end >= ADDDATE(now(), INTERVAL -1 DAY) GROUP BY HOUR(date_end) order by max(date_end)";
 
-//echo $sql;
-
-
-        $hour = $default->sql_fetch_yield($sql);
-        $data = [];
-
-        $data['param'] = $param;
-
-        foreach ($hour as $line) {
-
-            $data['nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
-            $data['avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
-            $data['min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
-            $data['max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
-        }
+          //echo $sql;
 
 
-        $sql = "SELECT max(date_end) as date_end,
-            day(date_end) as day,
-                 avg(time) as avg,
-                 max(time) as max,
-                 min(time) as min,
-                "
-                . " sum(item_deleted) as item_deleted "
-                . "FROM `pmacli_drain_process` "
-                . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 WEEK) GROUP BY DAY(date_end) order by max(date_end)";
+          $hour = $default->sql_fetch_yield($sql);
+          $data = [];
 
-//echo $sql;
+          $data['param'] = $param;
 
-        $day = $default->sql_fetch_yield($sql);
+          foreach ($hour as $line) {
 
-        foreach ($day as $line) {
-            $data['day_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
-            $data['day_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
-            $data['day_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
-            $data['day_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
-        }
-
-        $sql = "SELECT max(date_end) as date_end,
-            month(date_end) as month,
-                 avg(time) as avg,
-                 max(time) as max,
-                 min(time) as min,
-                "
-                . " sum(item_deleted) as item_deleted "
-                . "FROM `pmacli_drain_process` "
-                . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 YEAR) GROUP BY month(date_end) order by max(date_end)";
-
-// echo $sql;
-
-        $day = $default->sql_fetch_yield($sql);
-
-        foreach ($day as $line) {
-            $data['year_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
-            $data['year_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
-            $data['year_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
-            $data['year_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
-        }
-
-        $sql = "SELECT max(date_end) as date_end,
-            day(date_end) as day2,
-                 avg(time) as avg,
-                 max(time) as max,
-                 min(time) as min,
-                "
-                . " sum(item_deleted) as item_deleted "
-                . "FROM `pmacli_drain_process` "
-                . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 MONTH) GROUP BY DAY(date_end) order by max(date_end)";
-
-// echo $sql;
-
-        $day = $default->sql_fetch_yield($sql);
-
-        foreach ($day as $line) {
-            $data['day2_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
-            $data['day2_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
-            $data['day2_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
-            $data['day2_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
-        }
+          $data['nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
+          $data['avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
+          $data['min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
+          $data['max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
+          }
 
 
+          $sql = "SELECT max(date_end) as date_end,
+          day(date_end) as day,
+          avg(time) as avg,
+          max(time) as max,
+          min(time) as min,
+          "
+          . " sum(item_deleted) as item_deleted "
+          . "FROM `pmacli_drain_process` "
+          . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 WEEK) GROUP BY DAY(date_end) order by max(date_end)";
 
-        $this->di['js']->code_javascript("$(document).ready(function(){
-            
+          //echo $sql;
 
-var line1=[" . implode(',', $data['nb_item']) . "];
-var line2=[" . implode(',', $data['avg']) . "];
-var line3=[" . implode(',', $data['min']) . "];
-var line4=[" . implode(',', $data['max']) . "];
+          $day = $default->sql_fetch_yield($sql);
 
-var line11=[" . implode(',', $data['day_nb_item']) . "];
-var line12=[" . implode(',', $data['day_avg']) . "];
-var line13=[" . implode(',', $data['day_min']) . "];
-var line14=[" . implode(',', $data['day_max']) . "];
-    
-var line21=[" . implode(',', $data['year_nb_item']) . "];
-var line22=[" . implode(',', $data['year_avg']) . "];
-var line23=[" . implode(',', $data['year_min']) . "];
-var line24=[" . implode(',', $data['year_max']) . "];
+          foreach ($day as $line) {
+          $data['day_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
+          $data['day_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
+          $data['day_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
+          $data['day_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
+          }
 
-var line31=[" . implode(',', $data['day2_nb_item']) . "];
-var line32=[" . implode(',', $data['day2_avg']) . "];
-var line33=[" . implode(',', $data['day2_min']) . "];
-var line34=[" . implode(',', $data['day2_max']) . "];
+          $sql = "SELECT max(date_end) as date_end,
+          month(date_end) as month,
+          avg(time) as avg,
+          max(time) as max,
+          min(time) as min,
+          "
+          . " sum(item_deleted) as item_deleted "
+          . "FROM `pmacli_drain_process` "
+          . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 YEAR) GROUP BY month(date_end) order by max(date_end)";
 
-var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run', 'Traitement minimum d\'un run', 'Traitement maximum d\'un run'];
+          // echo $sql;
+
+          $day = $default->sql_fetch_yield($sql);
+
+          foreach ($day as $line) {
+          $data['year_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
+          $data['year_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
+          $data['year_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
+          $data['year_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
+          }
+
+          $sql = "SELECT max(date_end) as date_end,
+          day(date_end) as day2,
+          avg(time) as avg,
+          max(time) as max,
+          min(time) as min,
+          "
+          . " sum(item_deleted) as item_deleted "
+          . "FROM `pmacli_drain_process` "
+          . "where name='" . $param[0] . "'  and date_end >= ADDDATE(now(), INTERVAL -1 MONTH) GROUP BY DAY(date_end) order by max(date_end)";
+
+          // echo $sql;
+
+          $day = $default->sql_fetch_yield($sql);
+
+          foreach ($day as $line) {
+          $data['day2_nb_item'][] = "['" . $line['date_end'] . "'," . $line['item_deleted'] . "]";
+          $data['day2_avg'][] = "['" . $line['date_end'] . "'," . $line['avg'] . "]";
+          $data['day2_min'][] = "['" . $line['date_end'] . "'," . $line['min'] . "]";
+          $data['day2_max'][] = "['" . $line['date_end'] . "'," . $line['max'] . "]";
+          }
 
 
-    
-  var plot1 = $.jqplot('chart1', [line1,line2,line3,line4], {
-      title:'La dernière journée', 
-       seriesDefaults: { 
-        showMarker:true
-      },
-      
-      legend:{
-    show:true, 
-    location: 'w',
-    labels: legendLabels,
-    rendererOptions:{numberRows: 4, placement: 'inside'}
-},    
-      axes:{
-        xaxis:{           
-         renderer:$.jqplot.DateAxisRenderer, 
-         // renderer:$.jqplot.BarRenderer,
+
+          $this->di['js']->code_javascript("$(document).ready(function(){
+
+
+          var line1=[" . implode(',', $data['nb_item']) . "];
+          var line2=[" . implode(',', $data['avg']) . "];
+          var line3=[" . implode(',', $data['min']) . "];
+          var line4=[" . implode(',', $data['max']) . "];
+
+          var line11=[" . implode(',', $data['day_nb_item']) . "];
+          var line12=[" . implode(',', $data['day_avg']) . "];
+          var line13=[" . implode(',', $data['day_min']) . "];
+          var line14=[" . implode(',', $data['day_max']) . "];
+
+          var line21=[" . implode(',', $data['year_nb_item']) . "];
+          var line22=[" . implode(',', $data['year_avg']) . "];
+          var line23=[" . implode(',', $data['year_min']) . "];
+          var line24=[" . implode(',', $data['year_max']) . "];
+
+          var line31=[" . implode(',', $data['day2_nb_item']) . "];
+          var line32=[" . implode(',', $data['day2_avg']) . "];
+          var line33=[" . implode(',', $data['day2_min']) . "];
+          var line34=[" . implode(',', $data['day2_max']) . "];
+
+          var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run', 'Traitement minimum d\'un run', 'Traitement maximum d\'un run'];
+
+
+
+          var plot1 = $.jqplot('chart1', [line1,line2,line3,line4], {
+          title:'La dernière journée',
+          seriesDefaults: {
+          showMarker:true
+          },
+
+          legend:{
+          show:true,
+          location: 'w',
+          labels: legendLabels,
+          rendererOptions:{numberRows: 4, placement: 'inside'}
+          },
+          axes:{
+          xaxis:{
+          renderer:$.jqplot.DateAxisRenderer,
+          // renderer:$.jqplot.BarRenderer,
           tickRenderer: $.jqplot.CanvasAxisTickRenderer,
           tickOptions:{formatString:'%H:00', angle:0}
-        }
-      },
-              series:[
-            {yaxis:'yaxis', label:'dataForAxis1'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'}
-        ]
-  });
+          }
+          },
+          series:[
+          {yaxis:'yaxis', label:'dataForAxis1'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'}
+          ]
+          });
 
-  var plot2 = $.jqplot('chart2', [line11,line12,line13,line14], {
-      title:'La dernière semaine', 
-       seriesDefaults: { 
-        showMarker:true,
-        pointLabels: { show:false } 
-      },
-      
-      legend:{
-    show:false, 
-    location: 'w',
-    labels: legendLabels,
-    rendererOptions:{numberRows: 4, placement: 'inside'}
-},    
-      axes:{
-        xaxis:{           
-         renderer:$.jqplot.DateAxisRenderer, 
-         // renderer:$.jqplot.BarRenderer,
+          var plot2 = $.jqplot('chart2', [line11,line12,line13,line14], {
+          title:'La dernière semaine',
+          seriesDefaults: {
+          showMarker:true,
+          pointLabels: { show:false }
+          },
+
+          legend:{
+          show:false,
+          location: 'w',
+          labels: legendLabels,
+          rendererOptions:{numberRows: 4, placement: 'inside'}
+          },
+          axes:{
+          xaxis:{
+          renderer:$.jqplot.DateAxisRenderer,
+          // renderer:$.jqplot.BarRenderer,
           tickRenderer: $.jqplot.CanvasAxisTickRenderer,
           tickOptions:{formatString:'%A', angle:30}
-        }
-      },
-              series:[
-            {yaxis:'yaxis', label:'dataForAxis1'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'}
-        ]
-  });
+          }
+          },
+          series:[
+          {yaxis:'yaxis', label:'dataForAxis1'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'}
+          ]
+          });
 
 
-  var plot3 = $.jqplot('chart3', [line21,line22,line23,line24], {
-      title:'La dernière année', 
-       seriesDefaults: { 
-        showMarker:true
-      },
-      
-      legend:{
-    show:false, 
-    location: 'w',
-    labels: legendLabels,
-    rendererOptions:{numberRows: 4, placement: 'inside'}
-},    
-      axes:{
-        xaxis:{           
-         renderer:$.jqplot.DateAxisRenderer, 
-         // renderer:$.jqplot.BarRenderer,
+          var plot3 = $.jqplot('chart3', [line21,line22,line23,line24], {
+          title:'La dernière année',
+          seriesDefaults: {
+          showMarker:true
+          },
+
+          legend:{
+          show:false,
+          location: 'w',
+          labels: legendLabels,
+          rendererOptions:{numberRows: 4, placement: 'inside'}
+          },
+          axes:{
+          xaxis:{
+          renderer:$.jqplot.DateAxisRenderer,
+          // renderer:$.jqplot.BarRenderer,
           tickRenderer: $.jqplot.CanvasAxisTickRenderer,
           tickOptions:{formatString:'%B', angle:30}
-        }
-      },
-              series:[
-            {yaxis:'yaxis', label:'dataForAxis1'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'}
-        ]
-  });
+          }
+          },
+          series:[
+          {yaxis:'yaxis', label:'dataForAxis1'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'}
+          ]
+          });
 
-  
-  var plot4 = $.jqplot('chart4', [line31,line32,line33,line34], {
-      title:'La dernier mois', 
-       seriesDefaults: { 
-        showMarker:true
-      },
-      
-      legend:{
-    show:false, 
-    location: 'w',
-    labels: legendLabels,
-    rendererOptions:{numberRows: 4, placement: 'inside'}
-},    
-      axes:{
-        xaxis:{           
-         renderer:$.jqplot.DateAxisRenderer, 
-         // renderer:$.jqplot.BarRenderer,
+
+          var plot4 = $.jqplot('chart4', [line31,line32,line33,line34], {
+          title:'La dernier mois',
+          seriesDefaults: {
+          showMarker:true
+          },
+
+          legend:{
+          show:false,
+          location: 'w',
+          labels: legendLabels,
+          rendererOptions:{numberRows: 4, placement: 'inside'}
+          },
+          axes:{
+          xaxis:{
+          renderer:$.jqplot.DateAxisRenderer,
+          // renderer:$.jqplot.BarRenderer,
           tickRenderer: $.jqplot.CanvasAxisTickRenderer,
           tickOptions:{formatString:'%d', angle:30}
-        }
-      },
-              series:[
-            {yaxis:'yaxis', label:'dataForAxis1'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'},
-            {yaxis:'y2axis', label:'dataForAxis2'}
-        ]
-  });
+          }
+          },
+          series:[
+          {yaxis:'yaxis', label:'dataForAxis1'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'},
+          {yaxis:'y2axis', label:'dataForAxis2'}
+          ]
+          });
 
-});");
+          });");
 
-        /******/
+          /***** */
 
 
 
         $this->set('data', $data);
     }
 
-    function getIdMysqlServer($name) {
+    function getIdMysqlServer($name)
+    {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
 
@@ -345,7 +350,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         return $id_mysql_server;
     }
 
-    function getMsgStartDaemon($ob) {
+    function getMsgStartDaemon($ob)
+    {
         $table = new Table(0);
 
         echo "[" . date("Y-m-d H:i:s") . "] Starting deamon for cleaner ..." . PHP_EOL;
@@ -362,7 +368,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         echo $table->display();
     }
 
-    private function checkPid($path_file_pid) {
+    private function checkPid($path_file_pid)
+    {
 
         if (file_exists($path_file_pid)) {
             $pid = file_get_contents($path_file_pid);
@@ -375,7 +382,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         }
     }
 
-    public function showDaemon() {
+    public function showDaemon()
+    {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $sql = "SELECT * FROM `pmacli_drain_process` order by date_start DESC LIMIT 5000";
@@ -386,7 +394,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function index($param) {
+    public function index($param)
+    {
 
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -414,18 +423,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->layout_name = 'pmacontrol';
 
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
-            'cleaner/index.cleaner.js',
-            'jQplot/jquery.jqplot.min.js',
-            'jQplot/plugins/jqplot.dateAxisRenderer.min.js',
-            //  'jQplot/plugins/jqplot.barRenderer.min.js',
-//  'jQplot/plugins/jqplot.pointLabels.min.js',
-            'jQplot/plugins/jqplot.categoryAxisRenderer.min.js',
-            'jQplot/plugins/jqplot.canvasTextRenderer.min.js',
-            'jQplot/plugins/jqplot.canvasAxisTickRenderer.min.js',
-            'jQplot/plugins/jqplot.ohlcRenderer.min.js',
-            'jQplot/plugins/jqplot.highlighter.min.js',
-            'jQplot/plugins/jqplot.pointLabels.min.js',
-            'jqplot.categoryAxisRenderer.min.js'));
+            'cleaner/index.cleaner.js'
+            ));
 
 
 
@@ -461,84 +460,19 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function treatment($param) {
+    public function treatment($param)
+    {
 
         $db = $this->di['db']->sql(DB_DEFAULT);
-        
+
         $sql = "SELECT * FROM `pmacli_drain_process` WHERE `id_cleaner_main`='" . $param[0] . "' ORDER BY date_start DESC LIMIT 100";
         $data['treatment'] = $db->sql_fetch_yield($sql);
         $data['id_cleaner'] = $param[0];
         $this->set('data', $data);
     }
 
-    public function removeOldData($db_name) {
-
-        $name = str_replace('-', '_', $db_name[0]);
-
-        $db = $this->di['db']->sql($name);
-
-        $sql = "USE PRODUCTION";
-        $db->sql_query($sql);
-
-        $total = 0;
-
-        $PROD_INTEGRATION_IPROD = 0;
-        $AFF_COLIS = 0;
-        $PROD_CTRL_POIDS_QO = 0;
-        $PROD_STAT_SHIPPING_COST = 0;
-        $PROD_TRACES = 0;
-
-
-        do {
-            $table = new Table(1);
-            $table->addHeader(array("Tables", "Current", "Total deleted"));
-
-            $sql = "SET @@skip_replication = ON;";
-            $db->sql_query($sql);
-
-
-            $sql = "DELETE from PROD_INTEGRATION_IPROD WHERE DATE_PASSAGE < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-            $deleted = $db->sql_affected_rows();
-            $PROD_INTEGRATION_IPROD += $deleted;
-            $table->addLine(array("PROD_INTEGRATION_IPROD", $deleted, $PROD_INTEGRATION_IPROD));
-
-
-            $sql = "DELETE from AFF_COLIS WHERE DATE_EXPEDITION  < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-            $deleted = $db->sql_affected_rows();
-            $AFF_COLIS += $deleted;
-            $table->addLine(array("AFF_COLIS", $deleted, $AFF_COLIS));
-
-            $sql = "DELETE from PROD_CTRL_POIDS_QO WHERE DATE_PASSAGE < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-            $deleted = $db->sql_affected_rows();
-            $PROD_CTRL_POIDS_QO += $deleted;
-            $table->addLine(array("PROD_CTRL_POIDS_QO", $deleted, $PROD_CTRL_POIDS_QO));
-
-
-            $sql = "DELETE from PROD_STAT_SHIPPING_COST WHERE DATE_CONTROLEUR  < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-            $deleted = $db->sql_affected_rows();
-            $PROD_STAT_SHIPPING_COST += $deleted;
-            $table->addLine(array("PROD_STAT_SHIPPING_COST", $deleted, $PROD_STAT_SHIPPING_COST));
-
-
-            $sql = "DELETE from PROD_TRACES WHERE DATE_PASSAGE < DATE_ADD(now(),INTERVAL -3 MONTH) LIMIT 1000;";
-            $db->sql_query($sql);
-
-            $deleted = $db->sql_affected_rows();
-            $PROD_TRACES += $deleted;
-            $table->addLine(array("PROD_TRACES", $deleted, $PROD_TRACES));
-
-            echo $table->display();
-
-            sleep(1);
-            echo "\033[9A";
-        } while (true);
-    }
-
-    public function detail($param) {
+    public function detail($param)
+    {
         $db = $this->di['db']->sql(DB_DEFAULT);
         $tmp = explode('/', $_GET['url']);
         $var = end($tmp);
@@ -556,13 +490,15 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function deleteOrphans($server_name) {
+    public function deleteOrphans($server_name)
+    {
         $server_name = str_replace('-', '_', $server_name);
 
         $db = $this->di['db']->sql($server_name);
     }
 
-    public function add($param) {
+    public function add($param)
+    {
         $this->layout_name = 'pmacontrol';
         $db = $this->di['db']->sql(DB_DEFAULT);
         $this->di['js']->addJavascript(array("jquery-latest.min.js", "jquery.browser.min.js", "jquery.autocomplete.min.js", "cleaner/add.cleaner.js"));
@@ -614,7 +550,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    function getDatabaseByServer($param) {
+    function getDatabaseByServer($param)
+    {
 
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -641,7 +578,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set("data", $data);
     }
 
-    function getTableByDatabase($param) {
+    function getTableByDatabase($param)
+    {
         $database = $param[0];
 
         $this->layout_name = false;
@@ -672,7 +610,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set("data", $data);
     }
 
-    function getColumnByTable($param) {
+    function getColumnByTable($param)
+    {
 
         $this->layout_name = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -704,7 +643,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set("data", $data);
     }
 
-    function delete($param) {
+    function delete($param)
+    {
 
         $this->view = false;
         $this->layout_name = false;
@@ -736,7 +676,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         header("location: " . LINK . "cleaner/index");
     }
 
-    public function settings($param) {
+    public function settings($param)
+    {
         $this->layout_name = 'pmacontrol';
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -800,7 +741,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $this->set('data', $data);
     }
 
-    public function daemon($param) {
+    public function daemon($param)
+    {
 
         $id_cleaner = $param[0];
         $command = $param[1];
@@ -822,21 +764,21 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             default:
         }
     }
-    
-    
-    public function launch($param) {
+
+    public function launch($param)
+    {
         $id_cleaner = $param[0];
         $default = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
         $this->layout_name = false;
-        
+
         $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
             FROM cleaner_main a
                 INNER JOIN mysql_server b ON a.id_mysql_server = b.id
                 WHERE a.id = '" . $id_cleaner . "'";
 
         $res = $default->sql_query($sql);
-        
+
         while ($ob = $default->sql_fetch_object($res)) {
             $cleaner = $ob;
         }
@@ -893,6 +835,7 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
                 $ret[$purge->main_table] = 0;
             }
 
+            debug($ret);
 
             $this->stats_for_log($ret);
 
@@ -953,10 +896,12 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             $default->sql_close(); //to prevent mysql gone away
 
             sleep($this->WAIT_TIME);
+            sleep(1);
         }
     }
 
-    function start($param) {
+    function start($param)
+    {
 
         $id_cleaner = $param[0];
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -1006,7 +951,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         }
     }
 
-    function stop($param) {
+    function stop($param)
+    {
         $id_cleaner = $param[0];
         $db = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
@@ -1025,7 +971,6 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
 
         $ob = $db->sql_fetch_object($res);
 
-
         if ($this->isRunning($ob->pid)) {
             $msg = I18n::getTranslation(__("The cleaner with pid : '" . $ob->pid . "' successfully stopped "));
             $title = I18n::getTranslation(__("Success"));
@@ -1041,6 +986,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
             set_flash("caution", $title, $msg);
         }
 
+        sleep(1);
+
         if (!$this->isRunning($ob->pid)) {
             $sql = "UPDATE cleaner_main SET pid ='0' WHERE id = '" . $id_cleaner . "'";
             $db->sql_query($sql);
@@ -1051,7 +998,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         header("location: " . LINK . "cleaner/index");
     }
 
-    private function isRunning($pid) {
+    private function isRunning($pid)
+    {
 
         if (empty($pid)) {
             return false;
@@ -1066,7 +1014,8 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         return false;
     }
 
-    public function log($param) {
+    public function log($param)
+    {
         $id_cleaner = $param[0];
         $db = $this->di['db']->sql(DB_DEFAULT);
         $this->layout_name = false;
@@ -1079,19 +1028,20 @@ var legendLabels = ['Commandes effacé par heure', 'Traitement moyen d\'un run',
         $data['log'] = shell_exec("tail -n200 " . $ob->log_file);
         $data['log_file'] = $ob->log_file;
 
-        
-        $this->di['js']->code_javascript( "var objDiv = document.getElementById('data_log');
+
+        $this->di['js']->code_javascript("var objDiv = document.getElementById('data_log');
 objDiv.scrollTop = objDiv.scrollHeight;
 
 ");
-        
-        
-        
-        
+
+
+
+
         $this->set('data', $data);
     }
 
-    public function stats_for_log($data) {
+    public function stats_for_log($data)
+    {
         $table = new Table(0);
 
 
@@ -1102,6 +1052,53 @@ objDiv.scrollTop = objDiv.scrollHeight;
         }
 
         echo $table->display();
+    }
+
+    public function getTableImpacted($param)
+    {
+        $id_cleaner= $param[0];
+        
+        $default = $this->di['db']->sql(DB_DEFAULT);
+        
+        $this->view = false;
+        
+        $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
+            FROM cleaner_main a
+                INNER JOIN mysql_server b ON a.id_mysql_server = b.id
+                WHERE a.id = '" . $id_cleaner . "'";
+
+        $res = $default->sql_query($sql);
+
+        while ($ob = $default->sql_fetch_object($res)) {
+            $cleaner = $ob;
+        }
+
+        if (empty($cleaner)) {
+            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '" . $id_cleaner . "'");
+        }
+
+        $purge = new PmaCliDraining($this->di['db']);
+
+        $purge->link_to_purge = $cleaner->nameserver;
+        $purge->schema_to_purge = $cleaner->database;
+        $purge->schema_delete = $cleaner->cleaner_db;
+        $purge->prefix = $cleaner->prefix;
+        $purge->debug = false;
+
+
+        //get and set virtual Foreign keys.
+        $sql = "SELECT * FROM cleaner_foreign_key WHERE id_cleaner_main = '" . $id_cleaner . "'";
+        $foreign_keys = $default->sql_fetch_yield($sql);
+
+        foreach ($foreign_keys as $line) {
+            $fk[$line['constraint_schema']][$line['constraint_table']][$line['constraint_column']] = $line['referenced_schema'] . "-" . $line['referenced_table'] . "-" . $line['referenced_column'];
+        }
+        $purge->foreign_keys = $fk;
+
+
+        $purge->main_table = $cleaner->main_table;
+        
+        return $purge->getImpactedTable();
     }
 
 }

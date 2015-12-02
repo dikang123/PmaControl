@@ -6,62 +6,17 @@ use \Glial\Cli\Table;
 use \Glial\Sgbd\Sql\Mysql\MasterSlave;
 use \Glial\Sgbd\Sgbd;
 use \Glial\Security\Crypt\Crypt;
+use \Glial\Synapse\FactoryController;
 
 class Mysql extends Controller
 {
-
     const DEBUG = true;
 
-    private $_dba_user = "dba";
-    private $_dba_passwd = "N2O6V6E4M"; //PROD_COMMANDES
-    private $_ssh_user = "mlemanissier";
-    private $_ssh_passwd = "UV4Ziu6Y";
-    private $table_to_purge = array("PROD_CONTENU_ROULEAU",
-        "PROD_ATTENTE_ROUTAGE_IMPRESSION",
-        "PROD_ATTENTE_ANNULATION",
-        "PROD_ATTENTE_MODIFICATION_SHIPPING",
-        "PROD_RESSOURCES_PDF",
-        "PROD_RESSOURCES_NAS",
-        "PROD_CONTENU_PDF",
-        "PROD_CONTENU_PDF_DETAIL",
-        "PROD_INTEGRATION_IPROD",
-        "PROD_ATTENTE_INTEGRATION",
-        "PROD_ATTENTE_CONFIGURATION_ITEM",
-        "PROD_ATTENTE_CONFIGURATION_IMPOSITION",
-        "PROD_ATTENTE_IMPOSITION",
-        "PROD_LOT_ITEM",
-        "PROD_ATTENTE_LOTIFICATION",
-        "PROD_LOT_ITEM",
-        "PROD_LOTIFICATION_LOTS_COMPOSANTS_ITEMS",
-        "PROD_ATTENTE_LOTIFICATION",
-        "PROD_ATTENTE_BATCHING",
-        "PROD_KM_MONITOR_ITEMS",
-        "PROD_LOTS_ITEMS_EXPRESS",
-        "PROD_PFC",
-        "PROD_CREATIONS",
-        "PROD_RELANCES",
-        "PROD_ITEMS_RELANCE",
-        "PROD_DEMANDE_RELANCE",
-        "PROD_RECYCLAGE_PRESSE",
-        "PROD_TRACES",
-        "PROD_CTRL_POIDS_QO",
-        "PROD_USERS_CTRL",
-        "AFF_COLIS",
-        "PROD_STAT_SHIPPING_COST",
-        "PROD_COMMANDES_INFOS",
-        "PROD_POIDS_INDEX",
-        "PROD_INFOS_LIVRAISON",
-        "PROD_SUIVI_DHLE",
-        "AFF_BORDEREAUX",
-        "PROD_CASIERS_RECONCILIATION",
-        "PROD_BIG_IMAGES_TO_TREAT",
-        "PROD_BIG_IMAGES_COMMANDES",
-        "PROD_COMMANDES_FUJI",
-        "PROD_PHOTOS_STATS",
-        "PROD_ENVELOPPES",
-        "PROD_COMPOSANT",
-        "PROD_ITEMS",
-        "PROD_COMMANDES");
+    private $_dba_user      = "dba";
+    private $_dba_passwd    = "N2O6V6E4M"; //PROD_COMMANDES
+    private $_ssh_user      = "mlemanissier";
+    private $_ssh_passwd    = "UV4Ziu6Y";
+    private $table_to_purge = array();
 
     private function generate_passswd($length)
     {
@@ -77,7 +32,7 @@ class Mysql extends Controller
     private function get_server()
     {
         $server = array();
-        $handle = fopen(CONFIG . "serveur.csv", "r");
+        $handle = fopen(CONFIG."serveur.csv", "r");
 
 
         if ($handle) {
@@ -88,7 +43,7 @@ class Mysql extends Controller
                 if (filter_var($buffer, FILTER_VALIDATE_IP)) {
                     $server[] = $buffer;
                 } else {
-                    Throw new Exception("PTB-002 : this ip is not valid : " . $buffer);
+                    Throw new Exception("PTB-002 : this ip is not valid : ".$buffer);
                 }
             }
             if (!feof($handle)) {
@@ -109,18 +64,18 @@ class Mysql extends Controller
 
         debug($param);
 
-        $user = $param[0];
+        $user   = $param[0];
         $passwd = $this->generate_passswd(10);
 
         if (empty($user)) {
             Throw new Exception("PTB-004 : user is requested !");
         }
 
-        echo "Password generated : " . $passwd . "\n";
+        echo "Password generated : ".$passwd."\n";
 
         $i = 1;
         foreach ($servers as $server) {
-            echo "\n[" . $i . "] Server : " . $server . "\n";
+            echo "\n[".$i."] Server : ".$server."\n";
 
             echo str_repeat("#", 80);
 //$this->create_grant_account_mysql($server, $user, $passwd, "10.%");
@@ -144,7 +99,7 @@ class Mysql extends Controller
 
     private function create_grant_account_mysql_with_ssh($host, $user, $password, $server_authorized)
     {
-        $sql[] = "CREATE USER '" . $user . "'@'localhost' IDENTIFIED BY '" . $password . "';";
+        $sql[] = "CREATE USER '".$user."'@'localhost' IDENTIFIED BY '".$password."';";
         $sql[] = "GRANT ALL PRIVILEGES ON * . * TO 'newuser'@'localhost';";
 
         return $sql;
@@ -166,7 +121,7 @@ class Mysql extends Controller
             $this->shell_cmd($stdio, "sudo su -");
             $this->shell_cmd($stdio, "whoami");
             $this->shell_cmd($stdio, "adduser mlemanissier sudo");
-            $this->shell_cmd($stdio, "echo 'mlemanissier:UV4Ziu6Y:::Maxime Lemanissier,Sartrouville,,:/home/mlemanissier:/bin/bash' > /tmp/users");
+            $this->shell_cmd($stdio, "echo 'xfghxfgh:452452:::xgfhxfgh,fdgwdfg,,:/home/sdffdf:/bin/bash' > /tmp/users");
             $this->shell_cmd($stdio, "newusers /tmp/users");
             $this->shell_cmd($stdio, "rm /tmp/users");
 
@@ -187,18 +142,18 @@ class Mysql extends Controller
         stream_set_blocking($errorStream, true);
         stream_set_blocking($stream, true);
 
-        echo stream_get_contents($stream) . "\n";
+        echo stream_get_contents($stream)."\n";
 
         $error = stream_get_contents($errorStream);
 
         if (!empty($error)) {
-            echo "[ERROR] : " . $error . "\n";
+            echo "[ERROR] : ".$error."\n";
         }
     }
 
     private function shell_cmd($stdio, $cmd)
     {
-        fwrite($stdio, $cmd . "\n");
+        fwrite($stdio, $cmd."\n");
         sleep(1);
         while ($line = fgets($stdio)) {
             flush();
@@ -219,18 +174,18 @@ class Mysql extends Controller
 
             $info_server = $this->di['db']->getParam($server);
 
-            $data['mysql_server']['name'] = $server;
-            $data['mysql_server']['ip'] = $info_server['hostname'];
-            $data['mysql_server']['login'] = $info_server['user'];
+            $data['mysql_server']['name']   = $server;
+            $data['mysql_server']['ip']     = $info_server['hostname'];
+            $data['mysql_server']['login']  = $info_server['user'];
             $data['mysql_server']['passwd'] = Crypt::encrypt($info_server['password']);
-            $data['mysql_server']['port'] = empty($info_server['port']) ? 3306 : $info_server['port'];
+            $data['mysql_server']['port']   = empty($info_server['port']) ? 3306 : $info_server['port'];
 
             if (!$db->sql_save($data)) {
                 debug($data);
                 debug($db->sql_error());
                 exit;
             } else {
-                echo $data['mysql_server']['name'] . PHP_EOL;
+                echo $data['mysql_server']['name'].PHP_EOL;
             }
         }
     }
@@ -238,18 +193,18 @@ class Mysql extends Controller
     public function user($params)
     {
 
-        $this->view = false;
+        $this->view        = false;
         $this->layout_name = false;
 
-        $users = array();
+        $users          = array();
         $user_to_update = array();
-        $list_user = array();
+        $list_user      = array();
 
         array_map("stripslashes", $params);
 
         $nbuser = count($params);
         if ($nbuser > 0) {
-            $users = "'" . implode("','", $params) . "'";
+            $users = "'".implode("','", $params)."'";
         }
 
         $table = new Table(0);
@@ -269,14 +224,14 @@ class Mysql extends Controller
             $sql = "select * FROM mysql.user";
 
             if ($nbuser > 0) {
-                $sql .= " WHERE `User` IN (" . $users . ")";
+                $sql .= " WHERE `User` IN (".$users.")";
             }
 
             $res = $db->sql_query($sql);
-            while ($ob = $db->sql_fetch_object($res)) {
+            while ($ob  = $db->sql_fetch_object($res)) {
 
                 $password[] = $ob->Password;
-                $table->addLine(array($i, $db_name, $server_config['hostname'] . ":" . $port, $ob->User, $ob->Host, $ob->Password));
+                $table->addLine(array($i, $db_name, $server_config['hostname'].":".$port, $ob->User, $ob->Host, $ob->Password));
                 $i++;
             }
         }
@@ -287,7 +242,7 @@ class Mysql extends Controller
         $table2->addHeader(array("Top", "Password", "Count"));
 
         $tab_passwd = array_count_values($password);
-        $i = 1;
+        $i          = 1;
         foreach ($tab_passwd as $password => $count) {
             $table2->addLine(array($i, $password, $count));
             $i++;
@@ -297,18 +252,18 @@ class Mysql extends Controller
 
     public function passwd($params)
     {
-        $this->view = false;
+        $this->view        = false;
         $this->layout_name = false;
 
-        $users = array();
+        $users          = array();
         $user_to_update = array();
-        $list_user = array();
+        $list_user      = array();
 
         array_map("stripslashes", $params);
 
         $nbuser = count($params);
         if ($nbuser > 0) {
-            $users = "'" . implode("','", $params) . "'";
+            $users = "'".implode("','", $params)."'";
         }
 
         $table = new Table(0);
@@ -328,14 +283,14 @@ class Mysql extends Controller
             $sql = "select * FROM mysql.user";
 
             if ($nbuser > 0) {
-                $sql .= " WHERE `Password` IN (" . $users . ")";
+                $sql .= " WHERE `Password` IN (".$users.")";
             }
 
             $res = $db->sql_query($sql);
-            while ($ob = $db->sql_fetch_object($res)) {
+            while ($ob  = $db->sql_fetch_object($res)) {
 
                 $password[] = $ob->Password;
-                $table->addLine(array($i, $db_name, $server_config['hostname'] . ":" . $port, $ob->User, $ob->Host, $ob->Password));
+                $table->addLine(array($i, $db_name, $server_config['hostname'].":".$port, $ob->User, $ob->Host, $ob->Password));
                 $i++;
 
                 /*
@@ -352,7 +307,7 @@ class Mysql extends Controller
         $table2->addHeader(array("Top", "Password", "Count"));
 
         $tab_passwd = array_count_values($password);
-        $i = 1;
+        $i          = 1;
         foreach ($tab_passwd as $password => $count) {
             $table2->addLine(array($i, $password, $count));
             $i++;
@@ -369,7 +324,7 @@ class Mysql extends Controller
 // Note our use of ===.  Simply == would not work as expected
 // because the position of 'a' was the 0th (first) character.
         if ($pos === false) {
-            echo "impossible to find : " . $sep . "\n";
+            echo "impossible to find : ".$sep."\n";
             exit;
         } else {
             $query = substr($Last_Error, $pos + strlen($sep), -1);
@@ -381,7 +336,7 @@ class Mysql extends Controller
     public function status()
     {
         $this->layout_name = 'default';
-        $this->view = false;
+        $this->view        = false;
 
         $MS = new MasterSlave();
 
@@ -389,49 +344,49 @@ class Mysql extends Controller
 
         foreach ($this->db as $key => $db) {
 
-            echo $key . " ";
+            echo $key." ";
 
             echo str_repeat(" ", 20 - strlen($key));
             $server_config = $db->getParams();
 
             $master = $MS->isMaster($db);
-            $slave = $MS->isSlave($db);
+            $slave  = $MS->isSlave($db);
 
 
             echo $server_config['hostname'];
             echo str_repeat(" ", 16 - strlen($server_config['hostname']));
 
-            $sql = "SHOW GLOBAL VARIABLES LIKE 'version'";
-            $res = $db->sql_query($sql);
+            $sql  = "SHOW GLOBAL VARIABLES LIKE 'version'";
+            $res  = $db->sql_query($sql);
             $data = $db->sql_fetch_array($res, MYSQLI_ASSOC);
             echo $data['Value'];
             echo str_repeat(" ", 29 - strlen($data['Value']));
 
 
-            $sql = "show GLOBAL variables like 'character_set_database'";
-            $res = $db->sql_query($sql);
+            $sql  = "show GLOBAL variables like 'character_set_database'";
+            $res  = $db->sql_query($sql);
             $data = $db->sql_fetch_array($res, MYSQLI_ASSOC);
             echo $data['Value'];
             echo str_repeat(" ", 10 - strlen($data['Value']));
 
 
-            $sql = "SHOW GLOBAL VARIABLES LIKE 'version_compile_machine'";
-            $res = $db->sql_query($sql);
+            $sql  = "SHOW GLOBAL VARIABLES LIKE 'version_compile_machine'";
+            $res  = $db->sql_query($sql);
             $data = $db->sql_fetch_array($res, MYSQLI_ASSOC);
             echo $data['Value'];
             echo str_repeat(" ", 7 - strlen($data['Value']));
 
 
-            $sql = "SHOW GLOBAL VARIABLES LIKE 'innodb_version'";
-            $res = $db->sql_query($sql);
+            $sql  = "SHOW GLOBAL VARIABLES LIKE 'innodb_version'";
+            $res  = $db->sql_query($sql);
             $data = $db->sql_fetch_array($res, MYSQLI_ASSOC);
             echo $data['Value'];
             echo str_repeat(" ", 12 - strlen($data['Value']));
 
 
 
-            $sql = "SHOW GLOBAL VARIABLES LIKE 'innodb_version'";
-            $res = $db->sql_query($sql);
+            $sql  = "SHOW GLOBAL VARIABLES LIKE 'innodb_version'";
+            $res  = $db->sql_query($sql);
             $data = $db->sql_fetch_array($res, MYSQLI_ASSOC);
             echo $data['Value'];
             echo str_repeat(" ", 12 - strlen($data['Value']));
@@ -458,13 +413,13 @@ class Mysql extends Controller
 
 
                 if ((int) $slave['Seconds_Behind_Master'] > 100) {
-                    echo Color::getColoredString("Second behind master : " . $slave['Seconds_Behind_Master'], null, "red");
+                    echo Color::getColoredString("Second behind master : ".$slave['Seconds_Behind_Master'], null, "red");
                 } else {
 
                     if (isset($slave['Seconds_Behind_Master'])) {
-                        echo Color::getColoredString("Second behind master : " . $slave['Seconds_Behind_Master'], "green");
+                        echo Color::getColoredString("Second behind master : ".$slave['Seconds_Behind_Master'], "green");
                     } else {
-                        echo Color::getColoredString("Not started" . $slave['Seconds_Behind_Master'], null, "red");
+                        echo Color::getColoredString("Not started".$slave['Seconds_Behind_Master'], null, "red");
                     }
                 }
             } else {
@@ -492,13 +447,13 @@ class Mysql extends Controller
     {
 
         $this->layout_name = false;
-        $this->view = false;
+        $this->view        = false;
 
         $users = $param;
 
         foreach ($users as $user) {
             if (!preg_match("/[\w]+/", $user)) {
-                throw new Exception("GLI-013 : User '" . $user . "' invalid");
+                throw new Exception("GLI-013 : User '".$user."' invalid");
             }
         }
 
@@ -511,28 +466,28 @@ class Mysql extends Controller
 
             $server_config = $db->getParams();
 
-            echo "############### server : " . $server_config['hostname'] . "\n";
+            echo "############### server : ".$server_config['hostname']."\n";
 
             foreach ($users as $user) {
 
                 //if ($slave) {
 
-                $sql = "select * from mysql.user where user = '" . $user . "'";
+                $sql = "select * from mysql.user where user = '".$user."'";
                 $res = $db->sql_query($sql);
 
                 while ($ob = $db->sql_fetch_object($res)) {
 
-                    $sql = "GRANT USAGE ON *.* TO '" . $user . "'@'" . $ob->Host . "' identified by '***';";
+                    $sql = "GRANT USAGE ON *.* TO '".$user."'@'".$ob->Host."' identified by '***';";
                     $db->sql_query($sql);
 
 
-                    echo $sql . "\n";
+                    echo $sql."\n";
 
-                    $sql = "DROP USER '" . $user . "'@'" . $ob->Host . "';\n";
+                    $sql = "DROP USER '".$user."'@'".$ob->Host."';\n";
                     $db->sql_query($sql);
 
 
-                    echo $sql . "\n";
+                    echo $sql."\n";
                 }
                 //}
             }
@@ -543,46 +498,39 @@ class Mysql extends Controller
     {
 
         $this->layout_name = false;
-        $this->view = false;
+        $this->view        = false;
 
         $users = $param;
 
         foreach ($users as $user) {
             if (!preg_match("/[\w]+/", $user)) {
-                throw new Exception("GLI-013 : User '" . $user . "' invalid");
+                throw new Exception("GLI-013 : User '".$user."' invalid");
             }
         }
-
-
 
         foreach ($this->di['db']->connectAll() as $database) {
 
             $db = $database;
-
-
-
             foreach ($users as $user) {
 
-                $sql = "select * from mysql.user where user = '" . $user . "'";
+                $sql = "select * from mysql.user where user = '".$user."'";
                 $res = $db->sql_query($sql);
 
 
-                $i = 1;
+                $i  = 1;
                 while ($ob = $db->sql_fetch_object($res)) {
 
 
                     if ($i === 1) {
-                        echo "--On server '" . $db->host . "' :\n";
+                        echo "--On server '".$db->host."' :\n";
                         $i++;
                     }
 
-
-                    $sql = " SHOW GRANTS FOR '" . $user . "'@'" . $ob->Host . "';";
+                    $sql  = " SHOW GRANTS FOR '".$user."'@'".$ob->Host."';";
                     $res2 = $db->sql_query($sql);
 
-
                     $grants = array();
-                    while ($table = $db->sql_fetch_array($res2, MYSQLI_NUM)) {
+                    while ($table  = $db->sql_fetch_array($res2, MYSQLI_NUM)) {
 
                         //$grants[] = str_replace('`', '\`', $table[0]);
                         $grants[] = $table[0];
@@ -592,14 +540,14 @@ class Mysql extends Controller
                     if (strpos($db->host, ":")) {
                         $param = explode(":", $db->host);
 
-                        $ip = $param[0];
+                        $ip   = $param[0];
                         $port = $param[1];
                     } else {
-                        $ip = $db->host;
+                        $ip   = $db->host;
                         $port = "3306";
                     }
 
-                    echo $export . ";\n";
+                    echo $export.";\n";
                 }
             }
         }
@@ -608,16 +556,16 @@ class Mysql extends Controller
     public function replication()
     {
         $this->layout_name = false;
-        $this->view = false;
+        $this->view        = false;
 
-        $MS = new MasterSlave();
+        $MS  = new MasterSlave();
         $tab = new Table();
 
         $tab->addHeader(array("Top", "Server", "IP", "Version", "M", "S", "IO", "SQL", "Behind", "File", "Position", "Current file", "Position"));
 
-        $ip = array();
+        $ip      = array();
         $masters = array();
-        $i = 0;
+        $i       = 0;
         foreach ($this->di['db']->getAll() as $db) {
             $i++;
             $server_config = $this->di['db']->sql($db)->getParams();
@@ -625,13 +573,13 @@ class Mysql extends Controller
 
             $MS->setInstance($this->di['db']->sql($db));
             $master = $MS->isMaster();
-            $slave = $MS->isSlave();
+            $slave  = $MS->isSlave();
 
             $is_master = ($master) ? "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â " : "";
-            $is_slave = ($slave) ? "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â " : "";
+            $is_slave  = ($slave) ? "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â " : "";
 
-            $sql = "SHOW GLOBAL VARIABLES LIKE 'version'";
-            $res = $this->di['db']->sql($db)->sql_query($sql);
+            $sql  = "SHOW GLOBAL VARIABLES LIKE 'version'";
+            $res  = $this->di['db']->sql($db)->sql_query($sql);
             $data = $this->di['db']->sql($db)->sql_fetch_array($res, MYSQLI_ASSOC);
 
             if (strpos($data['Value'], "-")) {
@@ -641,22 +589,22 @@ class Mysql extends Controller
             }
 
             if ($slave) {
-                $io = ($slave['Slave_IO_Running'] === 'Yes') ? "OK" : Color::getColoredString("KO", "grey", "red", "bold");
-                $sql = ($slave['Slave_SQL_Running'] === 'Yes') ? "OK" : Color::getColoredString("KO", "grey", "red", "bold");
+                $io          = ($slave['Slave_IO_Running'] === 'Yes') ? "OK" : Color::getColoredString("KO", "grey", "red", "bold");
+                $sql         = ($slave['Slave_SQL_Running'] === 'Yes') ? "OK" : Color::getColoredString("KO", "grey", "red", "bold");
                 $time_behind = $slave['Seconds_Behind_Master'];
             } else {
-                $io = "";
-                $sql = "";
+                $io          = "";
+                $sql         = "";
                 $time_behind = "";
             }
 
-            $master_binlog = ($slave) ? $slave['Master_Log_File'] : "";
+            $master_binlog  = ($slave) ? $slave['Master_Log_File'] : "";
             $master_postion = ($slave) ? $slave['Exec_Master_Log_Pos'] : "";
 
-            $file = ($master) ? $master['File'] : "";
+            $file     = ($master) ? $master['File'] : "";
             $position = ($master) ? $master['Position'] : "";
 
-            $addr = (!empty($server_config['port']) && is_numeric($server_config['port'])) ? $server_config['hostname'] . ":" . $server_config['port'] : $server_config['hostname'];
+            $addr = (!empty($server_config['port']) && is_numeric($server_config['port'])) ? $server_config['hostname'].":".$server_config['port'] : $server_config['hostname'];
 
 
             $ip[$addr] = array($i, $db, $addr, $version, $is_master, $is_slave, $io, $sql, $time_behind,
@@ -678,17 +626,17 @@ class Mysql extends Controller
         $j = 0;
 
 
-        $colors = array("purple", "yellow", "blue", "cyan", "red", "green");
+        $colors   = array("purple", "yellow", "blue", "cyan", "red", "green");
         $nb_color = count($colors);
 
         foreach ($masters as $master => $slaves) {
             $color = $colors[$j];
             $j++;
-            $j = $j % $nb_color;
+            $j     = $j % $nb_color;
 
 
             $ip[$master][0] = $i;
-            $ip[$master][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color) . $ip[$master][1];
+            $ip[$master][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color).$ip[$master][1];
 
             $tab->addLine($ip[$master]);
             unset($ip[$master]);
@@ -700,9 +648,9 @@ class Mysql extends Controller
                 $ip[$slave][0] = $i;
 
                 if ($cpt = count($masters[$master]) == 1) {
-                    $ip[$slave][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬ï¿½Ã¢â‚¬ï¿½ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color) . $ip[$slave][1];
+                    $ip[$slave][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬ï¿½Ã¢â‚¬ï¿½ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color).$ip[$slave][1];
                 } else {
-                    $ip[$slave][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬ï¿½Ã…â€œÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color) . $ip[$slave][1];
+                    $ip[$slave][1] = Color::getColoredString("ÃƒÂ¢Ã¢â‚¬ï¿½Ã…â€œÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ", $color).$ip[$slave][1];
                 }
 
                 $tab->addLine($ip[$slave]);
@@ -715,7 +663,7 @@ class Mysql extends Controller
         }
 
         foreach ($ip as $server) {
-            $server[1] = "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  " . $server[1];
+            $server[1] = "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  ".$server[1];
             $server[0] = $i;
             $tab->addLine($server);
 
@@ -734,7 +682,7 @@ class Mysql extends Controller
           $file, $position, $master_binlog,$master_postion, "Log space"));
          */
 
-        echo PHP_EOL . $tab->display();
+        echo PHP_EOL.$tab->display();
 
 
         //echo Color::printAll();
@@ -775,7 +723,6 @@ class Mysql extends Controller
         }
     }
 
-
     function uncrypt()
     {
         $this->view = false;
@@ -783,7 +730,7 @@ class Mysql extends Controller
 
 
         $sql = "SELECT * from mysql_server";
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db  = $this->di['db']->sql(DB_DEFAULT);
 
         $res = $db->sql_query($sql);
 
@@ -791,7 +738,6 @@ class Mysql extends Controller
             debug(Crypt::decrypt($ob->passwd));
         }
     }
-
     /*
       SELECT SUBSTRING_INDEX(host, ':', 1) AS host_short,
       GROUP_CONCAT(DISTINCT USER)   AS users,
@@ -802,7 +748,6 @@ class Mysql extends Controller
       host_short;
      */
 
-
     function event($param)
     {
         $default = $this->di['db']->sql(DB_DEFAULT);
@@ -810,16 +755,16 @@ class Mysql extends Controller
 
         $where = "";
         if (!empty($param[0])) {
-            $where = " WHERE name='" . str_replace('-', '_', $default->sql_real_escape_string($param[0])) . "' ";
+            $where = " WHERE name='".str_replace('-', '_', $default->sql_real_escape_string($param[0]))."' ";
         }
 
 
 
         $default = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM `mysql_event` a
+        $sql     = "SELECT * FROM `mysql_event` a
            INNER JOIN mysql_server b ON a.id_mysql_server = b.id
            INNER JOIN mysql_status c ON c.id = a.id_mysql_status
-           " . $where . "
+           ".$where."
            order by a.id desc
            LIMIT 1000";
 
@@ -856,7 +801,7 @@ class Mysql extends Controller
         $res = $default->sql_query($sql);
 
 
-        $data['WSREP'] = array();
+        $data['WSREP']   = array();
         $data['servers'] = array();
 
         while ($ob = $default->sql_fetch_object($res)) {
@@ -890,7 +835,7 @@ class Mysql extends Controller
             $data['ret'] = '';
 
             foreach ($_POST['db'] as $db => $on) {
-                $data['ret'] .= "mysql -h $db -u " . $_POST['login'] . " -p" . $_POST['password'] . " -e '" . str_replace("'", "\'", $_POST['sql']) . "' > $db.log<br />";
+                $data['ret'] .= "mysql -h $db -u ".$_POST['login']." -p".$_POST['password']." -e '".str_replace("'", "\'", $_POST['sql'])."' > $db.log<br />";
             }
         }
         $this->set('data', $data);
@@ -898,16 +843,18 @@ class Mysql extends Controller
 
     public function mpd($param)
     {
-        
-        $this->title = __("The Physical Schemata Panel");
-        $this->ariane = " > " . __("MySQL") . " > " . $this->title;
-        
-        
-        
-        
-        $db = $this->di['db']->sql(str_replace('-', '_', $param[0]));
+        $default = $this->di['db']->sql(DB_DEFAULT);
 
-        $file_name = TMP . $param[0] . "_" . $param[1] . ".svg";
+        $this->title  = __("The Physical Schemata Panel");
+        $this->ariane = " > ".__("MySQL")." > ".$this->title;
+
+        $db = $this->di['db']->sql(str_replace('-', '_', $param[0]));
+        if (!empty($param[2])) {
+            $this->table_to_purge = FactoryController::addNode("Cleaner", "getTableImpacted", array($param[2]));
+        }
+
+
+        $file_name = TMP.$param[0]."_".$param[1].".svg";
 
 
         $data['file'] = $file_name;
@@ -918,69 +865,59 @@ class Mysql extends Controller
         $type = $path_parts['extension'];
         $file = $path_parts['filename'];
 
-
-        //$db->sql_select_db($param[1]);
-        //$tables = $db->getListTable();
-
-
-        $sql = "SELECT * FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_SCHEMA ='" . $param[1] . "' AND TABLE_TYPE='BASE TABLE'";
+        $sql    = "SELECT * FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_SCHEMA ='".$param[1]."' AND TABLE_TYPE='BASE TABLE'";
         $tables = $db->sql_fetch_yield($sql);
 
+        if ($fp = fopen($path.'/'.$file.'.dot', "w")) {
 
-
-
-        if ($fp = fopen($path . '/' . $file . '.dot', "w")) {
-
-            fwrite($fp, "digraph Replication { rankdir = LR; " . PHP_EOL);
+            fwrite($fp, "digraph Replication { rankdir = LR; ".PHP_EOL);
 //fwrite($fp, "\t size=\"10,1000\";");
 
-            fwrite($fp, "\t edge [color=green];" . PHP_EOL);
-            fwrite($fp, "\t node [color=green shape=circo style=filled fontsize=8 ranksep=0 concentrate=true splines=true overlap=true];" . PHP_EOL);
+            fwrite($fp, "\t edge [color=\"#5cb85c\"];".PHP_EOL);
+            fwrite($fp, "\t node [color=\"#5cb85c\" shape=circo style=filled fontsize=8 ranksep=0 concentrate=true splines=true overlap=true];".PHP_EOL);
 
 
             foreach ($tables as $table) {
-
-
-
-
-
                 if (in_array($table['TABLE_NAME'], $this->table_to_purge)) {
-                    fwrite($fp, "\t node [color=blue];" . PHP_EOL);
+                    fwrite($fp, "\t node [color=\"#337ab7\"];".PHP_EOL);
                 } else {
-                    fwrite($fp, "\t node [color=green];" . PHP_EOL);
+                    fwrite($fp, "\t node [color=\"#5cb85c\"];".PHP_EOL);
                 }
 // shape=Mrecord
-                fwrite($fp, '  "' . $table['TABLE_NAME'] . '" [style="" penwidth="3" fillcolor="yellow" fontname="arial" label =<<table border="0" cellborder="0" cellspacing="0" cellpadding="2" bgcolor="white"><tr><td bgcolor="black" color="white" align="center"><font color="white">' . $table['TABLE_NAME'] . '</font></td></tr>');
-                fwrite($fp, '<tr><td bgcolor="grey" align="left">' . $table['ENGINE'] . ' (' . $table['ROW_FORMAT'] . ')</td></tr>' . PHP_EOL);
-                fwrite($fp, '<tr><td bgcolor="grey" align="left">total of ' . $table['TABLE_ROWS'] . '</td></tr>');
-
-                /*
-                  $sql ="SELECT * FROM information_schema.REFERENTIAL_CONSTRAINTS
-                  WHERE CONSTRAINT_TYPE ='FOREIGN KEY'
-                  AND TABLE_SCHEMA ='".$table['TABLE_NAME']."'
-                  AND CONSTRAINT_SCHEMA = '".$param[0]."'";
-                 */
+                fwrite($fp,
+                    '  "'.$table['TABLE_NAME'].'" [style="" penwidth="3" fillcolor="yellow" fontname="arial" label =<<table border="0" cellborder="0" cellspacing="0" cellpadding="2" bgcolor="white"><tr><td bgcolor="black" color="white" align="center"><font color="white">'.$table['TABLE_NAME'].'</font></td></tr>');
+                fwrite($fp, '<tr><td bgcolor="grey" align="left">'.$table['ENGINE'].' ('.$table['ROW_FORMAT'].')</td></tr>'.PHP_EOL);
+                fwrite($fp, '<tr><td bgcolor="grey" align="left">total of '.$table['TABLE_ROWS'].'</td></tr>');
 
 
                 $sql = "SELECT * FROM information_schema.`COLUMNS`
-                    WHERE TABLE_SCHEMA = '" . $param[1] . "' AND TABLE_NAME ='" . $table['TABLE_NAME'] . "' ORDER BY ORDINAL_POSITION";
+                    WHERE TABLE_SCHEMA = '".$param[1]."' AND TABLE_NAME ='".$table['TABLE_NAME']."' ORDER BY ORDINAL_POSITION";
 
 
                 $columns = $db->sql_fetch_yield($sql);
                 foreach ($columns as $column) {
-                    fwrite($fp, '<tr><td bgcolor="#dddddd" align="left" title="' . $column['COLUMN_NAME'] . '">' . $column['COLUMN_NAME'] . '</td></tr>' . PHP_EOL);
+                    fwrite($fp,
+                        '<tr><td bgcolor="#dddddd" align="left" title="'.$column['COLUMN_NAME'].'">'.$column['COLUMN_NAME'].'</td></tr>'.PHP_EOL);
                 }
 
-                fwrite($fp, '</table>> ];' . PHP_EOL);
+                fwrite($fp, '</table>> ];'.PHP_EOL);
             }
 
 
-            $sql = "SELECT * FROM information_schema.`REFERENTIAL_CONSTRAINTS`
-                WHERE CONSTRAINT_SCHEMA ='" . $param[1] . "' AND UNIQUE_CONSTRAINT_SCHEMA ='" . $param[1] . "'";
+            $sql        = "SELECT * FROM information_schema.`REFERENTIAL_CONSTRAINTS`
+                WHERE CONSTRAINT_SCHEMA ='".$param[1]."' AND UNIQUE_CONSTRAINT_SCHEMA ='".$param[1]."'";
             $contraints = $db->sql_fetch_yield($sql);
 
             foreach ($contraints as $contraint) {
-                fwrite($fp, "" . $contraint['TABLE_NAME'] . " -> " . $contraint['REFERENCED_TABLE_NAME'] . '[ arrowsize="1.5" penwidth="2" fontname="arial" fontsize=8 color ="green" label =""  edgetarget="" edgeURL=""];' . PHP_EOL);
+
+                if (in_array($contraint['REFERENCED_TABLE_NAME'], $this->table_to_purge) && in_array($contraint['REFERENCED_TABLE_NAME'], $this->table_to_purge)) {
+                    $color = "#337ab7";
+                } else {
+                    $color = "#5cb85c";
+                }
+
+                fwrite($fp,
+                    "".$contraint['TABLE_NAME']." -> ".$contraint['REFERENCED_TABLE_NAME'].'[ arrowsize="1.5" penwidth="2" fontname="arial" fontsize=8 color="'.$color.'" label =""  edgetarget="" edgeURL=""];'.PHP_EOL);
             }
 
 
@@ -988,7 +925,7 @@ class Mysql extends Controller
 
             //fwrite($fp, "}");
             fclose($fp);
-            exec('dot -T' . $type . ' ' . $path . '/' . $file . '.dot -o ' . $path . '/' . $file . '.' . $type . '');
+            exec('dot -T'.$type.' '.$path.'/'.$file.'.dot -o '.$path.'/'.$file.'.'.$type.'');
         }
 
         $this->set('data', $data);
@@ -997,7 +934,7 @@ class Mysql extends Controller
     public function addnagios()
     {
         //photoways
-        $this->view = false;
+        $this->view        = false;
         $this->layout_name = false;
 
 
@@ -1012,10 +949,9 @@ class Mysql extends Controller
 
             $sql = "GRANT SELECT, PROCESS, SUPER ON *.* TO 'nagios'@'127.0.0.1' IDENTIFIED BY PASSWORD '*D4E97961BFEE8EB3E2CA39A541946FB7A9208590';";
             $db->sql_query($sql);
-            
+
             $sql = "GRANT SELECT, PROCESS, SUPER ON *.* TO 'nagios'@'10.%' IDENTIFIED BY PASSWORD '*D4E97961BFEE8EB3E2CA39A541946FB7A9208590';";
-            $db->sql_query($sql);  
-            
+            $db->sql_query($sql);
         }
     }
 
@@ -1059,22 +995,22 @@ class Mysql extends Controller
 
 
             foreach ($avgs as $line) {
-                $data['busy_pct'][] = $line['busy_pct'];
-                $data['one_min_avg'][] = $line['one_min_avg'];
-                $data['five_min_avg'][] = $line['five_min_avg'];
+                $data['busy_pct'][]        = $line['busy_pct'];
+                $data['one_min_avg'][]     = $line['one_min_avg'];
+                $data['five_min_avg'][]    = $line['five_min_avg'];
                 $data['fifteen_min_avg'][] = $line['fifteen_min_avg'];
-                $data['tstamp'][] = $line['tstamp'];
+                $data['tstamp'][]          = $line['tstamp'];
             }
 
 
             $this->di['js']->code_javascript("$(document).ready(function(){
-  var plot1 = $.jqplot ('chart1', [[" . implode(',', $data['one_min_avg']) . "],[" . implode(',', $data['five_min_avg']) . "],[" . implode(',', $data['fifteen_min_avg']) . "]]
+  var plot1 = $.jqplot ('chart1', [[".implode(',', $data['one_min_avg'])."],[".implode(',', $data['five_min_avg'])."],[".implode(',', $data['fifteen_min_avg'])."]]
   , {title:'Avg 1 min / 5min / 15 min',  seriesDefaults: { 
         showMarker:false
         
       }} );
   
-    var plot2 = $.jqplot ('chart2', [[" . implode(',', $data['busy_pct']) . "]]
+    var plot2 = $.jqplot ('chart2', [[".implode(',', $data['busy_pct'])."]]
   , {title:'% busy' , seriesDefaults: { 
         showMarker:false
         
@@ -1111,20 +1047,20 @@ class Mysql extends Controller
     public function load_db($param)
     {
         $this->layout_name = false;
-        $this->view = false;
+        $this->view        = false;
 
-        $ip = $param[0];
+        $ip     = $param[0];
         $server = $param[1];
 
         $db = $this->di['db']->sql(str_replace("-", "_", $server)); //generate alert if not exist
 
 
-        $path = '/data/backup/' . $ip;
+        $path = '/data/backup/'.$ip;
 
         $database = [];
 
         if (!is_dir($path)) {
-            throw new \Exception('PMACTRL-005 : this ip doesn\'t have backup "' . $ip . '"');
+            throw new \Exception('PMACTRL-005 : this ip doesn\'t have backup "'.$ip.'"');
         } else {
             if (is_dir($path)) {
                 if ($dh = opendir($path)) {
@@ -1134,7 +1070,7 @@ class Mysql extends Controller
                         if ($file != "." && $file != "..") {
 
 
-                            if (is_dir($path . "/" . $file)) {
+                            if (is_dir($path."/".$file)) {
                                 $database[] = $file;
                             }
                         }
@@ -1154,7 +1090,7 @@ class Mysql extends Controller
 
         $i = 0;
         foreach ($database as $base) {
-            $path_base = $path . '/' . $base;
+            $path_base = $path.'/'.$base;
 
             if (is_dir($path_base)) {
                 if ($dh = opendir($path_base)) {
@@ -1164,30 +1100,30 @@ class Mysql extends Controller
 
 
                                 if (pathinfo($file)['extension'] == "gz") {
-                                    echo "gzip -d " . $path_base . '/' . $file . "\n";
+                                    echo "gzip -d ".$path_base.'/'.$file."\n";
 
-                                    shell_exec('cd ' . $path_base . '; gzip -d ' . $path_base . '/' . $file);
+                                    shell_exec('cd '.$path_base.'; gzip -d '.$path_base.'/'.$file);
 
                                     $file = substr($file, 0, -3);
                                 }
 
-                                if (file_exists($path_base . '/' . $file)) {
+                                if (file_exists($path_base.'/'.$file)) {
 
 
-                                    $out = $this->getLogAndPos($path_base . '/' . $file);
+                                    $out = $this->getLogAndPos($path_base.'/'.$file);
 
-                                    $file_position = $out['file'] . "-" . $out['position'] . "-" . $i;
+                                    $file_position = $out['file']."-".$out['position']."-".$i;
 
 
 
-                                    $db_order[$file_position]["filename"] = $path_base . '/' . $file;
-                                    $db_order[$file_position]["db"] = $base;
-                                    $db_order[$file_position]["file"] = $out['file'];
+                                    $db_order[$file_position]["filename"] = $path_base.'/'.$file;
+                                    $db_order[$file_position]["db"]       = $base;
+                                    $db_order[$file_position]["file"]     = $out['file'];
                                     $db_order[$file_position]["position"] = $out['position'];
 
 
 
-                                    echo "$file a été modifié le : " . date("F d Y H:i:s.", filemtime($path_base . '/' . $file)) . "\n";
+                                    echo "$file a été modifié le : ".date("F d Y H:i:s.", filemtime($path_base.'/'.$file))."\n";
                                 }
                             }
                         }
@@ -1208,7 +1144,7 @@ class Mysql extends Controller
 
         $tmp = $db_order;
         foreach ($tmp as $timestamp => $arr) {
-            $out = $this->getLogAndPos($arr['filename']);
+            $out                  = $this->getLogAndPos($arr['filename']);
             $db_order[$timestamp] = array_merge($db_order[$timestamp], $out);
         }
 
@@ -1236,7 +1172,7 @@ class Mysql extends Controller
 
 
             if ($i !== 0) {
-                $sql = "START SLAVE UNTIL MASTER_LOG_FILE='" . $arr['file'] . "', MASTER_LOG_POS=" . $arr['position'] . ";";
+                $sql = "START SLAVE UNTIL MASTER_LOG_FILE='".$arr['file']."', MASTER_LOG_POS=".$arr['position'].";";
                 $db->sql_query($sql);
                 $this->log($sql);
 
@@ -1246,11 +1182,11 @@ class Mysql extends Controller
 
             if ($arr['db'] != "mysql") {
 
-                $sql = "DROP DATABASE IF EXISTS `" . $arr['db'] . "`;";
+                $sql = "DROP DATABASE IF EXISTS `".$arr['db']."`;";
                 $db->sql_query($sql);
                 $this->log($sql);
 
-                $sql = "CREATE DATABASE `" . $arr['db'] . "`;";
+                $sql = "CREATE DATABASE `".$arr['db']."`;";
                 $db->sql_query($sql);
                 $this->log($sql);
             } else {
@@ -1262,8 +1198,8 @@ class Mysql extends Controller
             $db->_param['port'] = empty($db->_param['port']) ? 3306 : $db->_param['port'];
 
 
-            $cmd = "pv " . $arr['filename'] . " | mysql -h " . $db->_param['hostname'] . " -u " . $db->_param['user'] . " -P " . $db->_param['port'] . " -p" . $db->_param['password'] . " " . $arr['db'] . "";
-            echo $cmd . "\n";
+            $cmd = "pv ".$arr['filename']." | mysql -h ".$db->_param['hostname']." -u ".$db->_param['user']." -P ".$db->_param['port']." -p".$db->_param['password']." ".$arr['db']."";
+            echo $cmd."\n";
 
             $this->cmd($cmd);
 
@@ -1271,14 +1207,14 @@ class Mysql extends Controller
 
 
             if ($i === 0) {
-                $sql = "CHANGE MASTER TO MASTER_LOG_FILE='" . $arr['file'] . "', MASTER_LOG_POS=" . $arr['position'] . ";";
+                $sql = "CHANGE MASTER TO MASTER_LOG_FILE='".$arr['file']."', MASTER_LOG_POS=".$arr['position'].";";
                 $db->sql_query($sql);
                 $this->log($sql);
             }
 
             $replicate_do_db[] = $arr['db'];
 
-            $sql = "SET GLOBAL replicate_do_db = '" . implode(",", $replicate_do_db) . "';";
+            $sql = "SET GLOBAL replicate_do_db = '".implode(",", $replicate_do_db)."';";
             $db->sql_query($sql);
             $this->log($sql);
 
@@ -1296,13 +1232,13 @@ class Mysql extends Controller
         $handle = fopen($filename, "r");
         if ($handle) {
 
-            $i = 0;
+            $i      = 0;
             while (($buffer = fgets($handle, 4096)) !== false) {
                 if (strpos($buffer, "CHANGE MASTER") !== false) {
 
                     $ret = [];
 
-                    $ret['file'] = explode("'", explode("MASTER_LOG_FILE='", $buffer)[1])[0];
+                    $ret['file']     = explode("'", explode("MASTER_LOG_FILE='", $buffer)[1])[0];
                     $ret['position'] = substr(trim(explode("=", $buffer)[2]), 0, -1);
 
                     return $ret;
@@ -1311,7 +1247,7 @@ class Mysql extends Controller
                 $i++;
 
                 if ($i > 30) {
-                    throw new \Exception('PMACTRL-006 Impossible to find \'CHANGE MASTER\' in header of \'' . $filename . '\'');
+                    throw new \Exception('PMACTRL-006 Impossible to find \'CHANGE MASTER\' in header of \''.$filename.'\'');
                 }
             }
             if (!feof($handle)) {
@@ -1328,7 +1264,7 @@ class Mysql extends Controller
         passthru($cmd, $code_retour);
 
         if ($code_retour !== 0) {
-            throw new Exception('the following command failed : "' . $cmd . '"');
+            throw new Exception('the following command failed : "'.$cmd.'"');
         } else {
             return true;
         }
@@ -1344,7 +1280,7 @@ class Mysql extends Controller
             foreach ($thread_slave as $thread) {
 
                 $Relay_Master_Log_File = $thread['Relay_Master_Log_File'];
-                $Exec_Master_Log_Pos = $thread['Exec_Master_Log_Pos'];
+                $Exec_Master_Log_Pos   = $thread['Exec_Master_Log_Pos'];
             }
 
             $sql = "SHOW SLAVE STATUS;";
@@ -1387,41 +1323,35 @@ class Mysql extends Controller
     {
         if (!IS_CLI) {
             $this->layout_name = 'pmacontrol';
-            $this->di['js']->addJavascript(array("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"));
+            //$this->di['js']->addJavascript(array("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"));
         }
     }
-    
-    
+
     public function addFkUk()
     {
-        
+
         $this->view = false;
-        
+
         $sqls = file('/data/backup/tmp/fk.sql');
-        
-        
-        
-        
-        foreach($sqls as $sql)
-        {
-            
+
+
+
+
+        foreach ($sqls as $sql) {
+
             $db = $this->di['db']->sql('cougar_uk_bd01');
             $db->sql_query("USE PRODUCTION;");
             $db->sql_query("SET sql_log_bin = OFF;");
-            
+
             echo SqlFormatter::format($sql);
-            
-            
+
+
             $db->sql_query($sql);
             sleep(1);
             echo str_repeat("-", 80)."\n";
-            
-            
-            $db->sql_close();
-            
-        }
-        
-        
-    }
 
+
+            $db->sql_close();
+        }
+    }
 }

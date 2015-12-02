@@ -10,41 +10,30 @@ use \Glial\Synapse\Controller;
 
 class Menu extends Controller
 {
+
     public function show($params)
     {
         $id_menu = $params[0];
         //debug($id_menu);
-        
-        
+
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM `menu_group` a INNER JOIN `menu` b ON a.id = b.group_id WHERE a.id='".$id_menu."' ORDER BY b.bg";
-        
+        $sql = "SELECT * FROM `menu_group` a INNER JOIN `menu` b ON a.id = b.group_id WHERE a.id='" . $id_menu . "' ORDER BY b.bg";
         $data['sql'] = $sql;
-        
         $data['menu'] = $db->sql_fetch_yield($sql);
-        
-        switch ($id_menu)
-        {
+
+        switch ($id_menu) {
             case 1:
                 $data['position'] = "top";
                 break;
-            
+
             case 2:
                 $data['position'] = "bottom";
                 break;
             case 3:
                 $data['position'] = "top";
                 break;
-            
-            
         }
-        
-        
-        
-        
-        
-        
-        
-        $this->set('data',$data);   
+        $this->set('data', $data);
     }
+
 }

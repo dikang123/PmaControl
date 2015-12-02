@@ -12,21 +12,21 @@ echo '<div class="well">';
 echo '<form action="" method="post" class="form-inline">';
 echo '<div class="form-group">';
 
-echo Form::select('mysql_server', 'id', $data['server_mysql'], "", array('style' => 'margin-bottom:0px','class'=>'form-control'));
+echo Form::select('mysql_server', 'id', $data['server_mysql'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
 
 //class="form-control"
 
 
 if ($data['performance_schema']) {
     echo ' ';
-    echo Form::select('database', 'id', $data['databases'], "", array('style' => 'margin-bottom:0px', 'class'=>'form-control'));
+    echo Form::select('database', 'id', $data['databases'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
     echo ' ';
-    echo Form::input('database', 'filter', array('style' => 'margin-bottom:0px', 'placeholder' => __("Filter"), 'class'=>'form-control'));
-    echo '<b> '.__("ORDER BY").' </b>';
-    echo Form::select('field', 'id', $data['fields'], "", array('style' => 'margin-bottom:0px', 'class'=>'form-control'));
+    echo Form::input('database', 'filter', array('style' => 'margin-bottom:0px', 'placeholder' => __("Filter"), 'class' => 'form-control'));
+    echo '<b> ' . __("ORDER BY") . ' </b>';
+    echo Form::select('field', 'id', $data['fields'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
 
     echo ' ';
-    echo Form::select('orderby', 'id', $data['orderby'], "", array('style' => 'margin-bottom:0px', 'class'=>'form-control'));
+    echo Form::select('orderby', 'id', $data['orderby'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
 }
 echo ' <button type="submit" class="btn btn-primary">Submit</button>';
 
@@ -38,36 +38,52 @@ if (!empty($data['pagination'])) {
     echo '<br />';
 
     echo $data['pagination'];
-
 }
 echo '</div>';
 
 
 
 
-echo '<div class="well">';
+
 if ($data['performance_schema']) {
 
+    echo '<div class="well">';
 
-    echo __("Results found : ") . "<b>" . $data['count'] . "</b><br /><br />";
+    echo __("Results found : ") . "<b>" . $data['count'] . "</b>";
 
-    echo '<table class="table">';
+    echo '</div>';
+
+
+    echo '<table class="table table-condensed">';
+
 
     echo '<tr>';
 
-    echo '<th>Top</th>';
-    echo '<th>Database</th>';
-    //echo '<th>DIGEST</th>';
-    echo '<th>count(1) <a href=""><i class="fa fa-arrow-down"></i></a> <a href=""><i class="fa fa-arrow-up"></i></a></th>';
-    echo '<th style="max-width:200px;overflow:hidden;"><span class="inner">Query</span></th>';
-    echo '<th>AVG rows affected/sent</th>';
-    echo '<th>AVG rows parsed</th>';
-    echo '<th>AVG execution time</th>';
-    echo '<th>MIN execution time</th>';
-    echo '<th>MAX execution time</th>';
+    echo '<th rowspan="2">Top</th>';
+    echo '<th rowspan="2">Database</th>';
 
-    echo '<th>First seen</th>';
-    echo '<th>Last seen</th>';
+    //echo '<th>DIGEST</th>';
+    echo '<th rowspan="2">Count</th>';
+    echo '<th rowspan="2" style="max-width:200px;overflow:auto;"><span class="inner">Query</span></th>';
+    echo '<th colspan="2">AVG rows</th>';
+
+    echo '<th colspan="3">Execution time</th>';
+
+
+    echo '<th rowspan="2">First seen</th>';
+    echo '<th rowspan="2">Last seen</th>';
+
+
+    echo '</tr>';
+    
+    echo '<tr>';
+
+    echo '<th>affected/sent</th>';
+    echo '<th>parsed</th>';
+    echo '<th>AVG</th>';
+    echo '<th>MIN</th>';
+    echo '<th>MAX</th>';
+
 
 
     echo '</tr>';
@@ -105,7 +121,7 @@ if ($data['performance_schema']) {
         echo '<td>' . $event['SCHEMA_NAME'] . '</td>';
         //echo '<td>' . $event['DIGEST'] . '</td>';
         echo '<td>' . number_format($event['COUNT_STAR'], 0, '.', ' ') . '</td>';
-        
+
         echo '<td>' . \SqlFormatter::format($sql) . '</td>';
 
         if (!empty($event['SUM_ROWS_AFFECTED'])) {
@@ -133,13 +149,11 @@ if ($data['performance_schema']) {
     echo "performance_schema is not activated or not disponible, to activate add in my.cnf : <code>performance_schema = ON</code> and restart Mysql";
 }
 
-echo '</div>';
 
 echo '<div class="well">';
 if (!empty($data['pagination'])) {
     echo '<br />';
 
     echo $data['pagination'];
-
 }
 echo '</div>';

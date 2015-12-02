@@ -13,6 +13,8 @@
 
     <?php
     foreach ($data['cleaner_main'] as $cleaner) {
+        
+
         $hightlight = ($cleaner['id_cleaner_main'] === $data['id_cleaner']) ? "highlight_row" : "";
         echo '<tr class="cleaner_main clickable-row ' . $hightlight . '" data-id="' . $cleaner['id_cleaner_main'] . '" data-href="' . LINK . 'Cleaner/index/' . $cleaner['id_cleaner_main'] . '">';
         echo '<td>' . $cleaner['id_cleaner_main'] . '</td>';
@@ -21,11 +23,16 @@
         echo '<td>' . $cleaner['ip'] . '</td>';
         echo '<td>' . $cleaner['main_table'] . '</td>';
         echo '<td>';
-        echo '<div class="btn-group" role="group" aria-label="Default button group">';
+
+        echo '<a href="' . LINK . 'mysql/mpd/' . str_replace("_", "-", $cleaner['mysql_server_name']) . '/' . $cleaner['database'] . '/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-screenshot" aria-hidden="true" style="font-size:13px"></span> ' . __("View tables impacted") . '</a>';
+
+
+        echo ' <div class="btn-group" role="group" aria-label="Default button group">';
 
         //
-        echo '<a href="' . LINK . 'cleaner/stop/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-stop aria-hidden="true" style="font-size:13px"></span> ' . __("Stop Daemon") . '</a>';
-        echo '<a href="' . LINK . 'cleaner/start/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-play aria-hidden="true" style="font-size:13px"></span> ' . __("Start Daemon") . '</a>';
+
+        echo '<a href="' . LINK . 'cleaner/stop/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-stop" aria-hidden="true" style="font-size:13px"></span> ' . __("Stop Daemon") . '</a>';
+        echo '<a href="' . LINK . 'cleaner/start/' . $cleaner['id_cleaner_main'] . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-play" aria-hidden="true" style="font-size:13px"></span> ' . __("Start Daemon") . '</a>';
         //echo '<a href="' . LINK . '" type="button" class="btn btn-primary" style="font-size:12px">' . ' <span class="glyphicon glyphicon-refresh aria-hidden="true" style="font-size:13px"></span> ' . __("Restart Daemon") . '</a>';
         echo '</div>';
 
@@ -104,21 +111,21 @@ if (!empty($data['id_cleaner'])) {
 </div>
 
 
-    <!--
-    
-    <div class="jumbotron">
-    <h1>Hello, world!</h1>
-    <p>This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
-    <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
-    </div>
-    
-    <div class="bs-callout bs-callout-warning" id="callout-navbar-overflow">
-    <h4 id="overflowing-content">Overflowing content<a class="anchorjs-link" href="#overflowing-content"><span class="anchorjs-icon"></span></a></h4>
-    <p>Since Bootstrap doesn't know how much space the content in your navbar needs, you might run into issues with content wrapping into a second row. To resolve this, you can:</p>
-    <ol type="a">
-      <li>Reduce the amount or width of navbar items.</li>
-      <li>Hide certain navbar items at certain screen sizes using <a href="../css/#responsive-utilities">responsive utility classes</a>.</li>
-      <li>Change the point at which your navbar switches between collapsed and horizontal mode. Customize the <code>@grid-float-breakpoint</code> variable or add your own media query.</li>
-    </ol>
-    
-    -->
+<!--
+
+<div class="jumbotron">
+<h1>Hello, world!</h1>
+<p>This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+<p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
+</div>
+
+<div class="bs-callout bs-callout-warning" id="callout-navbar-overflow">
+<h4 id="overflowing-content">Overflowing content<a class="anchorjs-link" href="#overflowing-content"><span class="anchorjs-icon"></span></a></h4>
+<p>Since Bootstrap doesn't know how much space the content in your navbar needs, you might run into issues with content wrapping into a second row. To resolve this, you can:</p>
+<ol type="a">
+  <li>Reduce the amount or width of navbar items.</li>
+  <li>Hide certain navbar items at certain screen sizes using <a href="../css/#responsive-utilities">responsive utility classes</a>.</li>
+  <li>Change the point at which your navbar switches between collapsed and horizontal mode. Customize the <code>@grid-float-breakpoint</code> variable or add your own media query.</li>
+</ol>
+
+-->

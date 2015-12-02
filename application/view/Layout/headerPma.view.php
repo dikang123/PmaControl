@@ -20,8 +20,6 @@ echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.8</title>\n";
 <!--
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>bootstrap.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>iprod.css" />
-
-
 -->
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>bootstrap.css">
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>autocomplete.css" />

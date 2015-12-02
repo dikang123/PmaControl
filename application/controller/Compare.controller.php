@@ -16,6 +16,7 @@ class Compare extends Controller
     var $db_origin;
     var $db_target;
     var $db_default;
+    var $object = array("TABLE", "VIEW", "TRIGGER", "FUNCTION", "PROCEDURE", "EVENT");
 
     function index($params)
     {
@@ -24,11 +25,15 @@ class Compare extends Controller
          * SHOW COLUMNS FROM table_name
          *
          */
+
+
         $this->layout_name = 'pmacontrol';
         $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->db_default  = $db;
         $this->title       = __("Compare");
         $this->ariane      = "> ".'<a href="'.LINK.'Plugins/index/">'.__('Plugins')."</a> > ".$this->title;
+
+
 
         $redirect = false;
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
@@ -66,43 +71,45 @@ class Compare extends Controller
         $sql     = "SELECT * FROM mysql_server order by `name`";
         $servers = $db->sql_fetch_yield($sql);
 
-        $this->data['server'] = [];
+        $data['server'] = [];
         foreach ($servers as $server) {
-            $tmp                    = [];
-            $tmp['id']              = $server['id'];
-            $tmp['libelle']         = str_replace('_', '-', $server['name'])." (".$server['ip'].")";
-            $this->data['server'][] = $tmp;
+            $tmp              = [];
+            $tmp['id']        = $server['id'];
+            $tmp['libelle']   = str_replace('_', '-', $server['name'])." (".$server['ip'].")";
+            $data['server'][] = $tmp;
         }
 
-        $this->data['listdb1'] = array();
+        $data['listdb1'] = array();
         if (!empty($_GET['compare_main']['id_mysql_server__original'])) {
-            $select1               = $this->getDatabaseByServer(array($_GET['compare_main']['id_mysql_server__original']));
-            $this->data['listdb1'] = $select1['databases'];
+            $select1         = $this->getDatabaseByServer(array($_GET['compare_main']['id_mysql_server__original']));
+            $data['listdb1'] = $select1['databases'];
         }
 
-        $this->data['listdb2'] = array();
+        $data['listdb2'] = array();
         if (!empty($_GET['compare_main']['id_mysql_server__compare'])) {
-            $select1               = $this->getDatabaseByServer(array($_GET['compare_main']['id_mysql_server__compare']));
-            $this->data['listdb2'] = $select1['databases'];
+            $select1         = $this->getDatabaseByServer(array($_GET['compare_main']['id_mysql_server__compare']));
+            $data['listdb2'] = $select1['databases'];
         }
 
 
-        $this->data['display'] = false;
+        $data['display'] = false;
 
-        if (count($this->data['listdb2']) != 0 && count($this->data['listdb1']) != 0) {
+        if (count($data['listdb2']) != 0 && count($data['listdb1']) != 0) {
             if (!empty($_GET['compare_main']['database__original']) && !empty($_GET['compare_main']['database__compare'])) {
 
-                $this->analyse($_GET['compare_main']['id_mysql_server__original'], $_GET['compare_main']['database__original'],
+
+                $data['resultat'] = $this->analyse($_GET['compare_main']['id_mysql_server__original'], $_GET['compare_main']['database__original'],
                     $_GET['compare_main']['id_mysql_server__compare'], $_GET['compare_main']['database__compare']);
 
-                $this->data['display'] = true;
+                $data['display'] = true;
 
+                //log
                 $this->di['log']->warning('[Compare] '.$_GET['compare_main']['id_mysql_server__original'].":".$_GET['compare_main']['database__original']." vs ".
                     $_GET['compare_main']['id_mysql_server__compare'].":".$_GET['compare_main']['database__compare']."(".$_SERVER["REMOTE_ADDR"].")");
             }
         }
 
-        $this->set('data', $this->data);
+        $this->set('data', $data);
     }
 
     function getDatabaseByServer($param)
@@ -204,22 +211,15 @@ class Compare extends Controller
         $this->db_target  = $db_compare;
         $this->db_default = $db;
 
-        $data = $this->compareTableList($db1, $db2, "BASE TABLE");
-        $this->compareTable($db1, $db2, $data);
-
-
-        $data2 = $this->compareTableList($db1, $db2, "VIEW");
-        $this->compareView($db1, $db2, $data2);
-
-
-        $this->compareListObject($db1, $db2, "TRIGGER");
-        $this->compareListObject($db1, $db2, "FUNCTION");
-        $this->compareListObject($db1, $db2, "PROCEDURE");
+        foreach ($this->object as $object) {
+            $data[$object] = $this->compareListObject($db1, $db2, $object);
+        }
+        return $data;
     }
 
     private function compareTable($original, $compare, $data)
     {
-        $dbs = [$this->db_origin, $this->db_target];
+        //$dbs = [$this->db_origin, $this->db_target];
 
         $queries = array();
 
@@ -236,115 +236,46 @@ class Compare extends Controller
                 $queries2[$table] = "SHOW CREATE TABLE `".$compare."`.`".$table."`";
             }
         }
+
         $resultat2 = $this->execMulti($queries2, $this->db_target);
 
         foreach ($data as $table => $elem) {
             if (!empty($elem[0])) {
-                $this->data['BASE TABLE'][$table]['ori'] = $resultat[$table][0]['Create Table'];
+                $data[$table]['ori'] = $resultat[$table][0]['Create Table'];
             } else {
-                $this->data['BASE TABLE'][$table]['ori'] = "";
+                $data[$table]['ori'] = "";
             }
 
             if (!empty($elem[1])) {
-                $this->data['BASE TABLE'][$table]['cmp'] = $resultat2[$table][0]['Create Table'];
+                $data[$table]['cmp'] = $resultat2[$table][0]['Create Table'];
             } else {
-                $this->data['BASE TABLE'][$table]['cmp'] = "";
+                $data[$table]['cmp'] = "";
             }
 
             /* fine optim else we compare every thing even when not required */
-            if ($this->data['BASE TABLE'][$table]['cmp'] === $this->data['BASE TABLE'][$table]['ori']) {
-                $this->data['BASE TABLE'][$table]['script']  = array();
-                $this->data['BASE TABLE'][$table]['script2'] = array();
-            } elseif (empty($this->data['BASE TABLE'][$table]['cmp'])) {
-                $this->data['BASE TABLE'][$table]['script2'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS",
-                    $this->data['BASE TABLE'][$table]['ori']);
-                $this->data['BASE TABLE'][$table]['script'][0]  = "DROP TABLE IF EXISTS `".$table."`";
-            } elseif (empty($this->data['BASE TABLE'][$table]['ori'])) {
-                $this->data['BASE TABLE'][$table]['script'][0]  = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS",
-                    $this->data['BASE TABLE'][$table]['cmp']);
-                $this->data['BASE TABLE'][$table]['script2'][0] = "DROP TABLE IF EXISTS `".$table."`";
+            if ($data[$table]['cmp'] === $data[$table]['ori']) {
+                $data[$table]['script']  = array();
+                $data[$table]['script2'] = array();
+            } elseif (empty($data[$table]['cmp'])) {
+                $data[$table]['script2'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['ori']);
+                $data[$table]['script'][0]  = "DROP TABLE IF EXISTS `".$table."`";
+            } elseif (empty($data[$table]['ori'])) {
+                $data[$table]['script'][0]  = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['cmp']);
+                $data[$table]['script2'][0] = "DROP TABLE IF EXISTS `".$table."`";
             } else {
-                $updater                                     = new CompareTable;
-                $this->data['BASE TABLE'][$table]['script']  = $updater->getUpdates($this->data['BASE TABLE'][$table]['cmp'],
-                    $this->data['BASE TABLE'][$table]['ori']);
-                $updater                                     = new CompareTable;
-                $this->data['BASE TABLE'][$table]['script2'] = $updater->getUpdates($this->data['BASE TABLE'][$table]['ori'],
-                    $this->data['BASE TABLE'][$table]['cmp']);
+                $updater                 = new CompareTable;
+                $data[$table]['script']  = $updater->getUpdates($data[$table]['cmp'], $data[$table]['ori']);
+                $updater                 = new CompareTable;
+                $data[$table]['script2'] = $updater->getUpdates($data[$table]['ori'], $data[$table]['cmp']);
                 unset($updater);
             }
         }
 
+        return $data;
         //check table name
         //check collation
         //check charactere set
         //check engine
-    }
-
-    function tst()
-    {
-
-        $this->view = false;
-
-        $struct1 = "CREATE TABLE `orphan_order` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `external_client_code` varchar(128) NOT NULL,
-  `external_id` varchar(128) NOT NULL,
-  `raw` varchar(4096) NOT NULL,
-  `amount` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `tried` int(11) DEFAULT NULL,
-  `origin` varchar(2) DEFAULT NULL,
-  `sicli` char(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `IDX_ORPHEAN_ORDER_EXTERNAL_ID` (`external_id`),
-  KEY `IDX_ORPHEAN_EXTERNAL_CLIENT_CODE` (`external_client_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
-
-
-        $struct4 = "CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `symwis`.`payment_methods` AS select `p`.`id` AS `id`,`p`.`client_id` AS `client_id`,`p`.`bank_account_id` AS `bank_account_id`,`p`.`card_id` AS `card_id`,if((`p`.`bank_account_id` is not null),'direct_debit',if((`p`.`card_id` is not null),'credit_card','unknown')) AS `type`,if(((`p`.`bank_account_id` is not null) and (`bm`.`active` <> 0) and (`bm`.`signature_date` is not null) and (`bm`.`signature_date` < now())),1,if(((`symwis`.`card`.`active` <> 0) and (`symwis`.`card`.`definitely_unactive` = 0)),1,0)) AS `active`,`p`.`created_at` AS `created_at`,`p`.`updated_at` AS `updated_at` from ((`symwis`.`payment` `p` left join `symwis`.`bank_mandate` `bm` on((`p`.`bank_account_id` = `bm`.`bank_account_id`))) left join `symwis`.`card` on((`p`.`card_id` = `symwis`.`card`.`id`)));";
-        $struct3 = "CREATE ALGORITHM=UNDEFINED DEFINER=`fghfg`@`localhost` SQL SECURITY DEFINER VIEW `symwis`.`payment_methods` AS select `p`.`id` AS `id`,`p`.`client_id` AS `client_id`,`p`.`bank_account_id` AS `bank_account_id`,`p`.`card_id` AS `card_id`,if((`p`.`bank_account_id` is not null),'direct_debit',if((`p`.`card_idkj` is not null),'credit_card','unknown')) AS `type`,if(((`p`.`bank_account_id` is not null) and (`bm`.`active` <> 0) and (`bm`.`signature_date` is not null) and (`bm`.`signature_date` < now())),1,if(((`symwis`.`card`.`active` <> 0) and (`symwis`.`card`.`definitely_unactive` = 0)),1,0)) AS `active`,`p`.`created_at` AS `created_at`,`p`.`updated_at` AS `updated_at` from ((`symwis`.`payment` `p` left join `symwis`.`bank_mandate` `bm` on((`p`.`bank_account_id` = `bm`.`bank_account_id`))) inner join `symwis`.`card` on((`p`.`card_id` = `symwis`.`card`.`id`)));";
-
-        $struct2 = "CREATE TABLE `orphan_order` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `external_client_code` varchar(128) NOT NULL,
-  `external_id` varchar(128) NOT NULL,
-  `raw` varchar(4096) NOT NULL,
-  `amount` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `tried` int(11) DEFAULT NULL,
-  `origin` varchar(32) DEFAULT NULL,
-  `sicli` char(1) DEFAULT NULL,
-  `sicli25` char(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `IDX_ORPHEAN_EXTERNAL_CLIENT_CODE` (`external_client_code`)
-);";
-
-
-        $updater = new CompareTable;
-        $res     = $updater->getUpdates($struct3, $struct4);
-        print_r($res);
-    }
-
-    public function compareTableList($original, $compare, $table_type = 'BASE TABLE')
-    {
-        $dbs = [$this->db_origin, $this->db_target];
-        $req = ["select TABLE_NAME from information_schema.tables where TABLE_SCHEMA = '".$original."' AND TABLE_TYPE='".$table_type."' order by TABLE_NAME;",
-            "select TABLE_NAME from information_schema.tables where TABLE_SCHEMA = '".$compare."' AND TABLE_TYPE='".$table_type."' order by TABLE_NAME;"];
-        $res = $this->exectute($dbs, $req);
-
-        $i = 0;
-        foreach ($res as $query) {
-            foreach ($query as $elem) {
-                //debug($elem);
-                $this->data[$table_type][$elem['TABLE_NAME']][$i] = 1;
-            }
-            $i++;
-        }
-
-        ksort($this->data[$table_type]);
-        return $this->data[$table_type];
     }
 
     private function getDbLinkFromId($id_db)
@@ -364,40 +295,32 @@ class Compare extends Controller
         return $db_link;
     }
 
-    private function exectute(array $dbs, $query)
-    {
-        $i   = 0;
-        $ret = [];
-
-        foreach ($dbs as $db) {
-            if (is_array($query)) {
-                $req = $query[$i];
-            } else {
-                $req = $query;
-            }
-
-            $res = $db->sql_query($req);
-            while ($tab = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
-                $ret[$i][] = $tab;
-            }
-
-            $i++;
-        }
-        return $ret;
-    }
-
     public function execMulti($queries, $db_link)
     {
         if (IS_CLI) {
             $this->view = false;
         }
+
+
+        if (!is_array($queries)) {
+            throw new Exception("PMACTRL-652 : first parameter should be an array !");
+        }
+
         $query = implode(";", $queries);
         $ret   = [];
         $i     = 0;
+
         if ($db_link->sql_multi_query($query)) {
             foreach ($queries as $table => $elem) {
                 $result = $db_link->sql_store_result();
-                while ($row    = $db_link->sql_fetch_array($result, MYSQLI_ASSOC)) {
+
+                if (!$result) {
+                    printf("Error: %s\n", mysqli_error($db_link->link));
+                    debug($query);
+                    exit();
+                }
+
+                while ($row = $db_link->sql_fetch_array($result, MYSQLI_ASSOC)) {
                     $ret[$table][] = $row;
                 }
                 if ($db_link->sql_more_results()) {
@@ -408,96 +331,221 @@ class Compare extends Controller
         return $ret;
     }
 
-    public function compareView($original, $compare, $data)
-    {
-        $queries = array();
-
-        foreach ($data as $table => $elem) {
-            if (!empty($elem[1])) {
-                $queries[$table] = "SHOW CREATE VIEW `".$original."`.`".$table."`";
-            }
-        }
-        $resultat = $this->execMulti($queries, $this->db_origin);
-
-
-        $queries2 = array();
-        foreach ($data as $table => $elem) {
-            if (!empty($elem[0])) {
-                $queries2[$table] = "SHOW CREATE VIEW `".$compare."`.`".$table."`";
-            }
-        }
-        $resultat2 = $this->execMulti($queries2, $this->db_target);
-
-        // UPDATE `mysql`.`proc` p SET definer = 'root@localhost' WHERE definer='root@foobar' AND db='whateverdbyouwant';
-
-
-
-        foreach ($data as $table => $elem) {
-            if (!empty($elem[0])) {
-                $this->data['VIEW'][$table]['ori'] = $resultat2[$table][0]['Create View'];
-            } else {
-                $this->data['VIEW'][$table]['ori'] = "";
-            }
-
-            if (!empty($elem[1])) {
-                $this->data['VIEW'][$table]['cmp'] = $resultat2[$table][0]['Create View'];
-            } else {
-                $this->data['VIEW'][$table]['cmp'] = "";
-            }
-
-            /* fine optim else we compare every thing even when not required */
-            if ($this->data['VIEW'][$table]['cmp'] === $this->data['VIEW'][$table]['ori']) {
-                $this->data['VIEW'][$table]['script']  = array();
-                $this->data['VIEW'][$table]['script2'] = array();
-            } elseif (empty($this->data['VIEW'][$table]['cmp'])) {
-                $this->data['VIEW'][$table]['script2'][0] = $this->data['VIEW'][$table]['ori'];
-                $this->data['VIEW'][$table]['script'][0]  = "DROP VIEW `".$table."`";
-            } elseif (empty($this->data['VIEW'][$table]['ori'])) {
-                $this->data['VIEW'][$table]['script'][0]  = $this->data['VIEW'][$table]['cmp'];
-                $this->data['VIEW'][$table]['script2'][0] = "DROP VIEW `".$table."`";
-            } else {
-                $this->data['VIEW'][$table]['script'][0]  = $this->data['VIEW'][$table]['cmp'];
-                $this->data['VIEW'][$table]['script2'][0] = $this->data['VIEW'][$table]['ori'];
-            }
-        }
-    }
-
     function compareListObject($db1, $db2, $type_object)
     {
         $query['TRIGGER']['query']   = "select trigger_schema, trigger_name, action_statement from information_schema.triggers where trigger_schema ='{DB}'";
         $query['FUNCTION']['query']  = "show function status WHERE Db ='{DB}';";
         $query['PROCEDURE']['query'] = "show procedure status WHERE Db ='{DB}'";
+        $query['TABLE']['query']     = "select TABLE_NAME from information_schema.tables where TABLE_SCHEMA = '{DB}' AND TABLE_TYPE='BASE TABLE' order by TABLE_NAME;";
+        $query['VIEW']['query']      = "select TABLE_NAME from information_schema.tables where TABLE_SCHEMA = '{DB}' AND TABLE_TYPE='VIEW' order by TABLE_NAME;";
+        $query['EVENT']['query']     = "SHOW EVENTS FROM `{DB}`";
 
         $query['TRIGGER']['field']   = "trigger_name";
         $query['FUNCTION']['field']  = "Name";
         $query['PROCEDURE']['field'] = "Name";
         $query['TABLE']['field']     = "TABLE_NAME";
+        $query['VIEW']['field']      = "TABLE_NAME";
+        $query['EVENT']['field']     = "Name";
+
 
         if (!in_array($type_object, array_keys($query))) {
             throw new \Exception("PMACTRL-095 : this type of object is not supported : '".$type_object."'", 80);
         }
 
-        $dbs[$db1] = $this->db_origin;
-        $dbs[$db2] = $this->db_target;
+        // [] to prevent db with same name
+        $dbs[][$db1] = $this->db_origin;
+        $dbs[][$db2] = $this->db_target;
 
         $i = 0;
 
         //to prevent if a DB don't have a type of object
-        $this->data[$type_object] = array();
+        $data = array();
 
-        foreach($dbs as $db_name => $db_link)
-        {
-            $sql = str_replace('{DB}', $db_name, $query[$type_object]['query']);
-            $res = $db_link->sql_query($sql);
 
-            while ($row = $db_link->sql_fetch_array($res, MYSQLI_ASSOC))
-            {
-                $this->data[$type_object][$query[$type_object]['field']][$i] = 1;
+        foreach ($dbs as $db_unique) {
+            foreach ($db_unique as $db_name => $db_link) {
+                $sql = str_replace('{DB}', $db_name, $query[$type_object]['query']);
+                $res = $db_link->sql_query($sql);
+
+                while ($row = $db_link->sql_fetch_array($res, MYSQLI_ASSOC)) {
+                    $data[$row[$query[$type_object]['field']]][$i] = 1;
+                }
+                $i++;
             }
-            $i++;
+        }
+        ksort($data);
+        return $data;
+    }
+
+    public function menu($param)
+    {
+
+        $data['menu']['TABLE']['name']  = __("Tables");
+        $data['menu']['TABLE']['icone'] = '<i class="fa fa-table"></i>';
+        $data['menu']['VIEW']['name']   = __("Views");
+        $data['menu']['VIEW']['icone']  = '<i class="fa fa-eye"></i>';
+
+        $data['menu']['TRIGGER']['name']  = __("Triggers");
+        $data['menu']['TRIGGER']['icone'] = '<i class="fa fa-random"></i>';
+
+        $data['menu']['FUNCTION']['name']  = __("Functions");
+        $data['menu']['FUNCTION']['icone'] = '<i class="fa fa-cog"></i>';
+
+        $data['menu']['PROCEDURE']['name']  = __("Routines");
+        $data['menu']['PROCEDURE']['icone'] = '<i class="fa fa-cogs"></i>';
+
+        $data['menu']['EVENT']['name']  = __("Events");
+        $data['menu']['EVENT']['icone'] = '<i class="fa fa-calendar"></i>';
+
+        if (empty($_GET['menu'])) {
+            $_GET['menu'] = "TABLE";
         }
 
-        ksort($this->data[$type_object]);
-        return $this->data[$type_object];
+        //default choice if none selected
+        $tmp_data = $param[0];
+
+        // c'est laid !
+        $tmp = json_decode(json_encode($tmp_data), true);
+
+        foreach ($tmp['resultat'] as $key => $tab) {
+            $data['menu'][$key]['count'] = count($tab);
+            $data['menu'][$key]['url']   = LINK.'compare/index/'.$this->generateGet().'menu:'.$key;
+        }
+
+        $this->set('data', $data);
+        return $data;
+    }
+
+    public function generateGet()
+    {
+
+        $url = array();
+        foreach ($_GET['compare_main'] as $key => $val) {
+            $url[] = 'compare_main:'.$key.':'.$val;
+        }
+
+        return implode('/', $url)."/";
+    }
+
+    public function getObjectDiff($param)
+    {
+
+        $this->db_origin = $this->getDbLinkFromId($_GET['compare_main']['id_mysql_server__original']);
+        $this->db_target = $this->getDbLinkFromId($_GET['compare_main']['id_mysql_server__compare']);
+
+
+        $data = json_decode(json_encode($param[0]), true);
+
+        switch ($_GET['menu']) {
+            case 'TABLE':
+                $diff = $this->compareTable($_GET['compare_main']['database__original'], $_GET['compare_main']['database__compare'],
+                    $data['resultat'][$_GET['menu']]);
+
+                $data['resultat'][$_GET['menu']] = $diff;
+                break;
+
+            default:
+                $diff = $this->compareObject($_GET['compare_main']['database__original'], $_GET['compare_main']['database__compare'],
+                    $data['resultat'][$_GET['menu']]);
+
+                $data['resultat'][$_GET['menu']] = $diff;
+                break;
+        }
+
+        //$res = array_merge_recursive($diff, $data['resultat'][$_GET['menu']]);
+
+        $this->set('data', $data);
+        $this->set('menu', $param[1]);
+    }
+
+    public function compareObject($db1, $db2, $data)
+    {
+        $query['TRIGGER']['query']   = "SHOW CREATE TRIGGER `{DB}`.`{OBJECT}`";
+        $query['FUNCTION']['query']  = "SHOW CREATE FUNCTION `{DB}`.`{OBJECT}`";
+        $query['PROCEDURE']['query'] = "SHOW CREATE PROCEDURE `{DB}`.`{OBJECT}`";
+        $query['TABLE']['query']     = "SHOW CREATE TABLE `{DB}`.`{OBJECT}`";
+        $query['VIEW']['query']      = "SHOW CREATE VIEW `{DB}`.`{OBJECT}`";
+        $query['EVENT']['query']     = "SHOW CREATE EVENT `{DB}`.`{OBJECT}`";
+
+        $query['TRIGGER']['field']   = "SQL Original Statement";
+        $query['FUNCTION']['field']  = "Create Function";
+        $query['PROCEDURE']['field'] = "Create Procedure";
+        $query['TABLE']['field']     = "Create Table";
+        $query['VIEW']['field']      = "Create View";
+        $query['EVENT']['field']     = "Create Event";
+
+
+        $query['TRIGGER']['drop']   = "DROP TRIGGER `{OBJECT}`";
+        $query['FUNCTION']['drop']  = "DROP FUNCTION `{OBJECT}`";
+        $query['PROCEDURE']['drop'] = "DROP PROCEDURE `{OBJECT}`";
+        $query['TABLE']['drop']     = "DROP TABLE `{OBJECT}`";
+        $query['VIEW']['drop']      = "DROP VIEW `{OBJECT}`";
+        $query['EVENT']['drop']     = "DROP EVENT `{OBJECT}`";
+
+
+        //HACK
+        if (!empty($data['diagnostics']) && $_GET['menu'] === 'PROCEDURE')
+        {
+            unset($data['diagnostics']);
+        }
+
+
+        if (!in_array($_GET['menu'], array_keys($query))) {
+            throw new \Exception("PMACTRL-096 : this type of object is not supported : '".$_GET['menu']."'", 80);
+        }
+
+        $queries = array();
+        foreach ($data as $object => $elem) {
+            if (!empty($elem[0])) {
+                $tmp = str_replace(array('{DB}', '{OBJECT}'), array($db1, $object), $query[$_GET['menu']]['query']);
+                $queries[$object] = $tmp;
+            }
+        }
+
+        $resultat = $this->execMulti($queries, $this->db_origin);
+
+
+        $queries2 = array();
+        foreach ($data as $object => $elem) {
+            if (!empty($elem[1])) {
+                $queries2[$object] = str_replace(array('{DB}', '{OBJECT}'), array($db2, $object), $query[$_GET['menu']]['query']);
+            }
+        }
+        $resultat2 = $this->execMulti($queries2, $this->db_target);
+
+
+
+        // UPDATE `mysql`.`proc` p SET definer = 'root@localhost' WHERE definer='root@foobar' AND db='whateverdbyouwant';
+
+        foreach ($data as $object => $elem) {
+            if (!empty($elem[0])) {
+                $data[$object]['ori'] = $resultat[$object][0][$query[$_GET['menu']]['field']];
+            } else {
+                $data[$object]['ori'] = "";
+            }
+
+            if (!empty($elem[1])) {
+                $data[$object]['cmp'] = $resultat2[$object][0][$query[$_GET['menu']]['field']];
+            } else {
+                $data[$object]['cmp'] = "";
+            }
+
+            /* fine optim else we compare every thing even when not required */
+            if ($data[$object]['cmp'] === $data[$object]['ori']) {
+                $data[$object]['script']  = array();
+                $data[$object]['script2'] = array();
+            } elseif (empty($data[$object]['cmp'])) {
+                $data[$object]['script2'][0] = $data[$object]['ori'];
+                $data[$object]['script'][0]  = str_replace('{OBJECT}',$object, $query[$_GET['menu']]['drop'] );
+            } elseif (empty($data[$object]['ori'])) {
+                $data[$object]['script'][0]  = $data[$object]['cmp'];
+                $data[$object]['script2'][0] = str_replace('{OBJECT}',$object, $query[$_GET['menu']]['drop'] );
+            } else {
+                $data[$object]['script'][0]  = $data[$object]['cmp'];
+                $data[$object]['script2'][0] = $data[$object]['ori'];
+            }
+        }
+
+        return $data;
     }
 }

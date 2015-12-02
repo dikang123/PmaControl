@@ -65,6 +65,8 @@
                             $close_at[] = $item['bd'];
                             $i++;
                         } else {
+                                $item['url'] = str_replace('[IMG]', IMG, $item['url']);
+                                $item['icon'] = str_replace('[IMG]', IMG, $item['icon']);
                             echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . LINK . $item['url'] . '">' . $item['icon'] . ' ' . $item['title'] . '</a></li>';
                         }
                     }
