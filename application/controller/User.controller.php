@@ -27,8 +27,6 @@ class User extends Controller
 
     function index()
     {
-
-
         //$this->di['js']->addJavascript(array("jquery-latest.min.js"));
         $this->layout_name = 'pmacontrol';
         $this->title       = __("Members");
@@ -202,7 +200,7 @@ class User extends Controller
         //$this->di['js']->addJavascript(array("http://www.estrildidae.net/js/jquery.1.3.2.js", "jquery.autocomplete.min.js"));
         $this->di['js']->addJavascript(array("jquery.browser.min.js", "jquery.autocomplete.min.js"));
 
-        $this->di['js']->code_javascript('$("#user_main-id_geolocalisation_city-auto").autocomplete("'.LINK.'user/city/", {
+        $this->di['js']->code_javascript('$("#user_main-id_geolocalisation_city-auto").autocomplete("'.LINK.'user/city/none>none", {
 		extraParams: {
 			country: function() {return $("#user_main-id_geolocalisation_country").val();}
 		},
@@ -306,7 +304,7 @@ class User extends Controller
                 $subject = __("Confirm your registration on ").SITE_NAME;
 
                 $msg = __('Hello').' '.$data['user_main']['firstname'].' '.$data['user_main']['name'].' !<br />
-				'.__('Thank you for registering on ').'<a href="'.SITE_URL.'">'.SITE_NAME.'</a><br />
+				'.__('Thank you for registering on ').' <a href="'.SITE_URL.'">'.SITE_NAME.'</a><br />
 				<br />
 				'.__("To finalise your registration, please click on the confirmation link below. Once you've done this, your registration will be complete.").'<br />
 				'.__('Please').' <a href="'.'http://'.$_SERVER['SERVER_NAME'].LINK.'user/confirmation/'.$data['user_main']['email']."/".$data['user_main']['key_auth'].'"> '.__('click here').'</a> '.__('to confirm your registration
@@ -323,7 +321,7 @@ class User extends Controller
 
                 // En-tetes additionnels
                 $headers .= 'To: '.$data['user_main']['firstname'].' '.$data['user_main']['name'].' <'.$data['user_main']['email'].'>'."\r\n";
-                $headers .= 'From: Contact <noreply@pmacontrol.com>'."\r\n";
+                $headers .= 'From: '.SITE_NAME.' <noreply@pmacontrol.com>'."\r\n";
                 //$headers .= 'Cc: anniversaire_archive@example.com' . "\r\n";
                 //$headers .= 'Bcc: anniversaire_verif@example.com' . "\r\n";
 
@@ -345,7 +343,7 @@ class User extends Controller
 
                 $this->login($data['user_main']['login'], $password_non_hashed);
 
-                header("location: ".LINK."home/index/");
+                header("location: ".LINK.ROUTE_DEFAULT);
                 exit;
             }
         }
@@ -491,7 +489,7 @@ class User extends Controller
                     $msg   = I18n::getTranslation(__("Your password has been updated successfully"));
 
                     set_flash("success", $title, $msg);
-                    header("location: ".LINK."home/index");
+                    header("location: ".LINK.ROUTE_DEFAULT);
                     exit;
                 } else {
                     $error             = $db->sql_error();
@@ -594,7 +592,7 @@ class User extends Controller
         set_flash($type, $title, $msg);
 
 
-        header("location: ".LINK."home/");
+        header("location: ".LINK.ROUTE_DEFAULT);
         exit;
     }
 
@@ -700,7 +698,6 @@ GROUP BY d.id";
           [timestamp] => 1297207840432
           [lg] => en
           [url] => user/city/
-
          */
 
         $this->layout_name = false;
@@ -728,10 +725,7 @@ GROUP BY d.id";
             $this->data['item'] = '';
         }
 
-
-
         $this->layout_name = "admin";
-
 
         $sql = "SELECT * FROM user_main a
 			LEFT JOIN user_settings b ON a.id = b.id_user_main
@@ -746,9 +740,6 @@ GROUP BY d.id";
             .'<a href="'.LINK.'user/'.$user->id.'">'.$this->data['user']['firstname'].' '.$this->data['user']['name'].'</a>'
             .' > '
             .$this->title;
-
-
-
 
         switch ($this->data['request']) {
             case 'main':
@@ -817,7 +808,7 @@ GROUP BY d.id";
                 $msg   = I18n::getTranslation(__("Congratulations you have successfully loged in."));
 
                 set_flash("success", $title, $msg);
-                header("Location: ".LINK."home/index/");
+                header("Location: ".LINK.ROUTE_DEFAULT);
                 exit;
             } else {
 
@@ -916,7 +907,7 @@ GROUP BY d.id";
                     $title = I18n::getTranslation(__("Error"));
                     set_flash("error", $title, $msg);
 
-                    header('location: '.LINK.'user/index/');
+                    header('location: '.LINK."user/index");
                 }
             }
 
