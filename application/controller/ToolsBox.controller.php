@@ -50,6 +50,7 @@ class ToolsBox extends Controller
             order by `name`";
         $res50 = $default->sql_query($sql);
 
+        $data = [];
         while ($ob50 = $default->sql_fetch_object($res50)) {
 
             $db = $this->di['db']->sql($ob50->name);

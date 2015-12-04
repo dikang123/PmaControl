@@ -20,13 +20,13 @@ use Glial\Html\Form\Form;
                         <tbody>
                             <tr>
                                 <td style="text-align:right;"><?=__("Login")?> (Email)</td>
-                                <td><?=Form::input("user_main", "login", array("class"=>"form-control")) ?>
+                                <td><?=Form::input("user_main", "login", array("class"=>"form-control","autocomplete"=>"false", "autocomplete"=>"off")) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="text-align:right;"><?=__("Password")?>
                                 </td>
-                                <td><?=Form::input("user_main", "password", array("type"=>"password", "class"=>"form-control")) ?>
+                                <td><?=Form::input("user_main", "password", array("type"=>"password", "class"=>"form-control","autocomplete"=>"false", "autocomplete"=>"off", "autocomplete"=>"new-password")) ?>
                                 </td>
                             </tr>
                             <tr>
