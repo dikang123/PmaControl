@@ -17,7 +17,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> PmaControl <span class="badge badge-info" style="font-variant: small-caps; font-size: 15px; vertical-align: middle;" title="2015-11-25">v0.8 beta (2015-04-29)</span></a>
+                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> PmaControl <span class="badge badge-info" style="font-variant: small-caps; font-size: 14px; vertical-align: middle; background-color: #4384c7" title="2015-12-04">v0.8 beta (2015-12-04)</span></a>
                 </div>
                 <?php
             endif;
@@ -45,19 +45,15 @@
                                 echo '
                                 </ul>
                                 </li>' . "\n";
-
                                 unset($close_at[$key]);
                             }
                         }
-
-
-
 
                         if ($item['bd'] - $item['bg'] > 1) {
                             echo '
                                 <li class="dropdown">
                                 <a id="drop' . $i . '" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">
-                                ' . $item['icon'] . ' ' . $item['title'] . '
+                                ' . $item['icon'] . ' ' . __($item['title']) . '
                                 <span class="caret"></span>
                                 </a>
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop' . $i . '">';
@@ -67,7 +63,20 @@
                         } else {
                                 $item['url'] = str_replace('[IMG]', IMG, $item['url']);
                                 $item['icon'] = str_replace('[IMG]', IMG, $item['icon']);
-                            echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . LINK . $item['url'] . '">' . $item['icon'] . ' ' . $item['title'] . '</a></li>';
+
+                                
+                                $item['url'] = str_replace(array('{LINK}'), array(LINK), $item['url']);
+
+                                if (strstr($item['url'],'{PATH}'))
+                                {
+                                    $item['url'] = WWW_ROOT .str_replace('{PATH}', '', $item['url']).'/'.substr($_GET['glial_path'], 3);
+                                }
+
+
+                                $PATH = WWW_ROOT .substr($_GET['glial_path'], 3);
+
+
+                            echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="' . $item['url'] . '">' . $item['icon'] . ' ' . __($item['title']) . '</a></li>';
                         }
                     }
 

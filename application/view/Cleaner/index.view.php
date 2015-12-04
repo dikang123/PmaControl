@@ -1,4 +1,4 @@
-<table class="pmacontrol">
+<table class="table">
     <tr>
         <th><?= __('ID') ?> </th>
         <th><?= __('Name') ?> </th>

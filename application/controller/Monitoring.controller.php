@@ -67,7 +67,6 @@ class Monitoring extends Controller
 
         if (empty($param[0])) {
 
-            echo DB_DEFAULT;
             $default = $this->di['db']->sql(DB_DEFAULT);
             $sql     = "SELECT * FROM mysql_server limit 1";
             $res     = $default->sql_query($sql);
