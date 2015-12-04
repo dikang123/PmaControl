@@ -21,7 +21,10 @@ class ToolsBox extends Controller
 
 
         $default = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM mysql_server order by `name`";
+        $sql = "SELECT * FROM mysql_server a"
+            . "INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server "
+            . "WHERE is_available = 1 "
+            . "order by a.`name`";
         $res50 = $default->sql_query($sql);
 
         while ($ob50 = $default->sql_fetch_object($res50)) {
