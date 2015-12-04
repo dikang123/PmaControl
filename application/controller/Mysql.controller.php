@@ -896,8 +896,7 @@ class Mysql extends Controller
 
                 $columns = $db->sql_fetch_yield($sql);
                 foreach ($columns as $column) {
-                    fwrite($fp,
-                        '<tr><td bgcolor="#dddddd" align="left" title="'.$column['COLUMN_NAME'].'">'.$column['COLUMN_NAME'].'</td></tr>'.PHP_EOL);
+                    fwrite($fp, '<tr><td bgcolor="#dddddd" align="left" title="'.$column['COLUMN_NAME'].'">'.$column['COLUMN_NAME'].'</td></tr>'.PHP_EOL);
                 }
 
                 fwrite($fp, '</table>> ];'.PHP_EOL);
@@ -1353,5 +1352,15 @@ class Mysql extends Controller
 
             $db->sql_close();
         }
+    }
+
+        public function generate_config()
+    {
+
+        $this->layout_name = 'pmacontrol';
+        $db                = $this->di['db']->sql(DB_DEFAULT);
+        $this->db_default  = $db;
+        $this->title       = __("Configurator");
+        $this->ariane      = "> ".'<a href="'.LINK.'Plugins/index/">'.__('Tools box')."</a> > ".$this->title;
     }
 }

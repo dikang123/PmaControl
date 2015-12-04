@@ -15,7 +15,6 @@ function format($bytes, $decimals = 2)
 }
 
 
-echo '<div class="well">';
 
 
 
@@ -51,9 +50,8 @@ foreach ($data['status'] as $server => $variable) {
 
 
 
-    $percent = ($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd']) /
-            ($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd'] + $variable['Handler_read_first'] + $variable['Handler_read_next'] + $variable['Handler_read_key'] + $variable['Handler_read_prev'] );
-
+    $percent = 1-(($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd']) /
+            ($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd'] + $variable['Handler_read_first'] + $variable['Handler_read_next'] + $variable['Handler_read_key'] + $variable['Handler_read_prev'] ));
 
 
 
@@ -91,11 +89,12 @@ foreach ($data['status'] as $server => $variable) {
 echo '</table>';
 
 
+echo '<div class="well">';
 echo '<b>' . __('Usage of index is calculed as follow :') . '</b>';
 
 echo '<br /><br />';
-echo '(Handler_read_rnd_next + Handler_read_rnd)/<br />'
- . '(Handler_read_rnd_next + Handler_read_rnd + Handler_read_first + Handler_read_next + Handler_read_key + Handler_read_prev)<br />';
+echo '1-((Handler_read_rnd_next + Handler_read_rnd)/<br />'
+ . '(Handler_read_rnd_next + Handler_read_rnd + Handler_read_first + Handler_read_next + Handler_read_key + Handler_read_prev))<br />';
 
 
 echo '</div>';

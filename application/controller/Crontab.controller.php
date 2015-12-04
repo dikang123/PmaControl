@@ -24,7 +24,7 @@ class Crontab extends Controller
         $module['name'] = __("Crontab");
         $module['description'] = __("Manage all yours jobs");
 
-        if (from() !== "administration.controller.php") {
+        //if (from() !== "administration.controller.php") {
 
 
             $this->javascript = array("jquery.1.3.2.js");
@@ -67,14 +67,14 @@ class Crontab extends Controller
                 }
             }
 
-            $this->layout_name = "admin";
+            //$this->layout_name = "admin";
 
 
             $this->title = __("Crontab");
             $this->ariane = "> <a href=\"" . LINK . "administration/\">" . __("Administration") . "</a> > " . $this->title;
             $data = $this->view();
             $this->set("data", $data);
-        }
+        //}
 
         return $module;
     }

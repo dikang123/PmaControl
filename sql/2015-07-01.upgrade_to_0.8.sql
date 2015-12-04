@@ -5,24 +5,70 @@ ALTER TABLE `mysql_database` ADD `data_free` BIGINT NOT NULL AFTER `data_length`
 ALTER TABLE `mysql_database` ADD `index_length` BIGINT NOT NULL AFTER `data_free`;
 
 
-INSERT INTO  `pmacontrol`.`menu` (
-`id` ,
-`parent_id` ,
-`bg` ,
-`bd` ,
-`icon` ,
-`title` ,
-`url` ,
-`class` ,
-`position` ,
-`group_id`
-)
-VALUES (
-NULL ,  '0',  '37',  '38',  '<i class="glyphicon glyphicon-transfer" style="font-size:12px"></i>',  'Compare',  'Compare/index/',  '',  '0',  '1'
-);
+DROP TABLE `menu`;
 
-UPDATE  `pmacontrol`.`menu` SET  `bd` =  '39' WHERE  `menu`.`id` =50;
 
-DELETE FROM `menu`;
+CREATE TABLE `menu` (
+  `id` tinyint(3) UNSIGNED NOT NULL,
+  `parent_id` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
+  `bg` int(11) NOT NULL,
+  `bd` int(11) NOT NULL,
+  `active` int(11) NOT NULL,
+  `icon` text NOT NULL,
+  `title` varchar(255) NOT NULL DEFAULT '',
+  `url` varchar(255) NOT NULL DEFAULT '',
+  `class` varchar(255) NOT NULL DEFAULT '',
+  `position` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
+  `group_id` tinyint(3) UNSIGNED NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-INSERT INTO `menu` VALUES (1,0,0,1,'<span class=\"glyphicon glyphicon glyphicon-home\" style=\"font-size:12px\"></span>','Home','home/index/','',1,1),(2,0,2,3,'<span class=\"glyphicon glyphicon-th\" style=\"font-size:12px\"></span>','Dashboard','server/listing/','',2,1),(3,2,4,5,'<span class=\"glyphicon glyphicon glyphicon-th-list\" style=\"font-size:12px\"></span>','Master / Slave','replication/status/','',1,1),(7,11,10,21,'<span class=\"glyphicon glyphicon-floppy-disk\" style=\"font-size:12px\"></span>','Backups','backup/listing/','',5,1),(18,6,8,9,'<span class=\"glyphicon glyphicon-user\" style=\"font-size:12px\"></span>','Members','user/index/','',2,1),(19,5,6,7,'<span class=\"glyphicon glyphicon-list-alt\" style=\"font-size:12px\"></span>','Queries analyzer','monitoring/query/','',3,1),(29,25,11,12,'<span class=\"glyphicon glyphicon-th\" style=\"font-size:12px\" style=\"font-size:12px\"></span>','Backup\'s list','backup/listing/','',1,1),(30,25,13,14,'<span class=\"glyphicon glyphicon-th\" style=\"font-size:12px\"></span>','Backup\'s list (new)','backup/dump/','',2,1),(42,0,17,18,'<span class=\"glyphicon glyphicon-hdd\" style=\"font-size:12px\"></span>','Storage area','backup/storageArea/','',0,1),(43,0,19,20,'<span class=\"glyphicon glyphicon-cog\" style=\"font-size:12px\"></span>','Schedules','backup/settings','',0,1),(44,0,22,27,'<span class=\"glyphicon glyphicon-briefcase\" style=\"font-size:12px\"></span>','Tools box','','',0,1),(45,0,23,24,'<span class=\"glyphicon glyphicon-briefcase\" style=\"font-size:12px\"></span>','Memory','ToolsBox/memory','',0,1),(46,0,25,26,'<span class=\"glyphicon glyphicon-briefcase\" style=\"font-size:12px\"></span>','Index usage','ToolsBox/indexUsage','',0,1),(47,0,28,33,'<i class=\"fa fa-language\" style=\"font-size:14px\"></i>','Language','','',0,1),(48,0,29,30,'<img class=\"country\" src=\"[IMG]country/type1/fr.gif\" width=\"18\" height=\"12\">','French','Reporting/detail_order/','',0,1),(49,0,31,32,'<img class=\"country\" src=\"[IMG]country/type1/uk.gif\" width=\"18\" height=\"12\">','English','Reporting/getIdProdItem/','',0,1),(50,0,34,39,'<i style=\"font-size: 16px\" class=\"fa fa-puzzle-piece\"></i>','Plugins','','',0,1),(51,0,35,36,'<i class=\"glyphicon glyphicon-trash\" style=\"font-size:12px\"></i>','Cleaner','Cleaner/index/','',0,1),(60,0,1,2,'<span class=\"glyphicon glyphicon-off\"></span>','Login','user/connection/','',0,3),(61,0,3,4,'<span class=\"glyphicon glyphicon-user\"></span>','Register','user/register/','',0,3),(62,0,5,6,'<span class=\"glyphicon glyphicon-envelope\"></span>','Lost password','user/lost_password/','',0,3),(63,25,15,16,'<span class=\"glyphicon glyphicon-film\" style=\"font-size:12px\"></span>','Glove pattern','backup/gant/','',3,1),(64,0,37,38,'<i class=\"glyphicon glyphicon-transfer\" style=\"font-size:12px\"></i>','Compare','Compare/index/','',0,1),(65,0,40,41,'<span class=\"glyphicon glyphicon-off\"></span>','Logout','user/logout/','',0,1);
+--
+-- Contenu de la table `menu`
+--
+
+INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `url`, `class`, `position`, `group_id`) VALUES
+(1, 0, 0, 1, 1, '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span>', 'Dashboard', '{LINK}server/listing/', '', 1, 1),
+(2, 0, 2, 3, 0, '<span class="glyphicon glyphicon-th" style="font-size:12px"></span>', 'Alarms', '{LINK}server/listing/', '', 2, 1),
+(3, 2, 4, 5, 0, '<span class="glyphicon glyphicon glyphicon-th-list" style="font-size:12px"></span>', 'Architecture', '{LINK}replication/status/', '', 1, 1),
+(7, 11, 10, 19, 0, '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>', 'Backups', '{LINK}backup/listing/', '', 5, 1),
+(18, 6, 8, 9, 0, '<span class="glyphicon glyphicon-user" style="font-size:12px"></span>', 'Members', '{LINK}user/index/', '', 2, 1),
+(19, 5, 6, 7, 1, '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>', 'Queries analyzer', '{LINK}monitoring/query/', '', 3, 1),
+(30, 25, 11, 12, 0, '<span class="glyphicon glyphicon-th" style="font-size:12px"></span>', 'Backup''s list', '{LINK}backup/dump/', '', 2, 1),
+(42, 0, 15, 16, 0, '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>', 'Storage area', '{LINK}backup/storageArea/', '', 0, 1),
+(43, 0, 17, 18, 0, '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>', 'Schedules', '{LINK}backup/settings', '', 0, 1),
+(44, 0, 20, 25, 1, '<span class="glyphicon glyphicon-briefcase" style="font-size:12px"></span>', 'Tools box', '', '', 0, 1),
+(45, 0, 21, 22, 1, '<span class="glyphicon glyphicon-briefcase" style="font-size:12px"></span>', 'Memory', '{LINK}ToolsBox/memory', '', 0, 1),
+(46, 0, 23, 24, 1, '<span class="glyphicon glyphicon-briefcase" style="font-size:12px"></span>', 'Index usage', '{LINK}ToolsBox/indexUsage', '', 0, 1),
+(47, 0, 26, 33, 1, '<i class="fa fa-language" style="font-size:14px"></i>', 'Language', '', '', 0, 1),
+(48, 0, 27, 28, 1, '<img class="country" src="[IMG]country/type1/fr.gif" width="18" height="12">', 'French', 'fr{PATH}', '', 2, 1),
+(49, 0, 29, 30, 1, '<img class="country" src="[IMG]country/type1/uk.gif" width="18" height="12">', 'English', 'en{PATH}', '', 1, 1),
+(50, 0, 34, 39, 1, '<i style="font-size: 16px" class="fa fa-puzzle-piece"></i>', 'Plugins', '', '', 0, 1),
+(51, 0, 35, 36, 1, '<i class="glyphicon glyphicon-trash" style="font-size:12px"></i>', 'Cleaner', '{LINK}cleaner/index/', '', 0, 1),
+(60, 0, 1, 2, 1, '<span class="glyphicon glyphicon-off"></span>', 'Login', '{LINK}user/connection/', '', 0, 3),
+(61, 0, 3, 4, 1, '<span class="glyphicon glyphicon-user"></span>', 'Register', '{LINK}user/register/', '', 0, 3),
+(62, 0, 5, 6, 1, '<span class="glyphicon glyphicon-envelope"></span>', 'Lost password', '{LINK}user/lost_password/', '', 0, 3),
+(63, 25, 13, 14, 0, '<span class="glyphicon glyphicon-film" style="font-size:12px"></span>', 'Glove pattern', '{LINK}backup/gant/', '', 3, 1),
+(64, 0, 37, 38, 1, '<i class="glyphicon glyphicon-transfer" style="font-size:12px"></i>', 'Compare', '{LINK}compare/index/', '', 0, 1),
+(65, 0, 40, 41, 1, '<span class="glyphicon glyphicon-off"></span>', 'Logout', '{LINK}user/logout/', '', 0, 1),
+(66, 0, 31, 32, 1, '<img class="country" src="[IMG]country/type1/ru.gif" width="18" height="12">', 'Russian', 'ru{PATH}', '', 1, 1);
+
+--
+-- Index pour les tables exportées
+--
+
+--
+-- Index pour la table `menu`
+--
+ALTER TABLE `menu`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- AUTO_INCREMENT pour les tables exportées
+--
+
+--
+-- AUTO_INCREMENT pour la table `menu`
+--
+ALTER TABLE `menu`
+  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+

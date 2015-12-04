@@ -26,7 +26,6 @@ class Compare extends Controller
          *
          */
 
-
         $this->layout_name = 'pmacontrol';
         $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->db_default  = $db;

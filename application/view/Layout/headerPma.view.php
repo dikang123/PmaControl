@@ -15,8 +15,12 @@ echo "<meta name=\"generator\" content=\"GLIALE 1.1\" />\n";
 echo "<meta name=\"runtime\" content=\"[PAGE_GENERATION]\" />\n";
 echo "<link rel=\"shortcut icon\" href=\"favicon.ico\" />";
 echo "<title>" . $GLIALE_TITLE . " - PmaControl 0.8</title>\n";
+
+
 //echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"\" />\n";
 ?>
+<link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAABdFBMVEUAAABDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMdDhMeYweDeAAAAe3RSTlMAAQIDBAUGBwgJCgsNDg8QERITFxgaHB4gISIjJSYnKCksLS4vMTIzNTY3ODk7PD0+QEFCR0lMTVFSVFZZW11hYmNna2xtb3B0dXd4fIKDiYuOj5KVnZ6goqWoqq2wtbq+wMHDxcfI0dPV2drc3uTm6Ovt7/Hz9ff5+/0KBW49AAABeUlEQVQYGXXBC1sSURQF0H1nREEJAjPMNM0hNCWzBMwkzd4lVqb2kMpKBPMJoiXuP+8cBpEP5q4Fx5WpjwVeKmXnehUujefZ6uSVF46OTbo7HUfVd2oFIKg3DEE9C+KYWgMQs9TZNlA1eURXyx7UGPF1NttZCKAmCpvRM7Gw+nu7WCnv5rPvUoM+2LxXIfjzloIL/8tTC4JkeWk0ZKJB5425HEkLokTH4bcPi8/S86+XVvNndPRDJKmzpVAVO6CrjIkaFft8xiaFJ12oicOmuuPzK78KxUp5d2v9TbK/A7ZACIL7j4No1Rb9SguCttJKerTH5zEUoMz20FDybZ42C2KHWhGIyH9qvIfDm6nQxZ8h1JnRzF82OvmSCuLCjzCE0RUZuZ+YmX44NhhqgzDTtyHIbMyDFt0vjmlBUOQWEzf97aYCDI/v2tjTtX+0DUNsUCsM4d+jxiM4jPQRXayFUaf6nufYqPhpwosmynf9zr3ETOrB3YGgibpzl+IgDrtTZxkAAAAASUVORK5CYII=" rel="icon" type="image/x-icon">
+
 <!--
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>bootstrap.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>iprod.css" />

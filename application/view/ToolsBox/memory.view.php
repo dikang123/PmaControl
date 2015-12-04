@@ -22,7 +22,7 @@ function format($bytes, $decimals = 2)
     return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . " ".@$sz[$factor] . "o";
 }
 
-echo '<div class="well">';
+
 
 
 
@@ -93,7 +93,7 @@ foreach ($data['variables'] as $server => $variable) {
 
 echo '</table>';
 
-
+echo '<div class="well">';
 echo '<b>'.__('Memory is calculed as follow :').'</b>';
 
 echo '<br /><br />';

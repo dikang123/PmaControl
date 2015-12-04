@@ -15,12 +15,9 @@ $("#compare_main-id_mysql_server__compare").change(function () {
 });
 
 
-
 $( "#vers" ).click(function() {
   $( ".vers2" ).toggle();
   $( ".vers1" ).toggle();
-  
-
 });
 
 

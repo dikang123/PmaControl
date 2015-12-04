@@ -11,40 +11,6 @@ use \Glial\I18n\I18n;
 use \Glial\Cli\Color;
 
 
-/*
-  declare(ticks = 1);
-  pcntl_signal(SIGTERM, "sig_handler");
-  pcntl_signal(SIGHUP, "sig_handler");
-  pcntl_signal(SIGUSR1, "sig_handler");
-
-
-
-  // signal handler function
-  function sig_handler($signo)
-  {
-
-  switch ($signo) {
-  case SIGTERM:
-  echo "handle shutdown tasks \n";
-  // handle shutdown tasks
-  exit;
-  break;
-  case SIGHUP:
-  // handle restart tasks
-  echo "handle shutdown tasks \n";
-  break;
-  case SIGUSR1:
-  echo "Caught SIGUSR1...\n";
-  break;
-  case SIGINT:
-  printf("Warning: interrupt received, killing server…%s", PHP_EOL);
-
-  break;
-  default:
-  echo "all other signals\n";
-  // handle all other signals
-  }
-  } */
 
 class Cleaner extends Controller
 {
@@ -1025,13 +991,12 @@ class Cleaner extends Controller
 
         $ob = $db->sql_fetch_object($res);
 
-        $data['log'] = shell_exec("tail -n200 " . $ob->log_file);
+        $data['log'] = shell_exec("tail -n2000 " . $ob->log_file);
         $data['log_file'] = $ob->log_file;
 
 
         $this->di['js']->code_javascript("var objDiv = document.getElementById('data_log');
 objDiv.scrollTop = objDiv.scrollHeight;
-
 ");
 
 

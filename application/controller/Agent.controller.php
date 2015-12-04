@@ -9,14 +9,103 @@ class Agent extends Controller
 {
     var $debug = false;
 
-    public function start()
+    var $url = "server/listing/";
+
+    function start($param)
     {
-        
+
+        $id_daemon        = $param[0];
+        $db                = $this->di['db']->sql(DB_DEFAULT);
+        $this->view        = false;
+        $this->layout_name = false;
+
+
+        $sql = "SELECT * FROM daemon where id ='".$id_daemon."'";
+        $res = $db->sql_query($sql);
+
+
+        if ($db->sql_num_rows($res) !== 1) {
+            $msg   = I18n::getTranslation(__("Impossible to find the daemon with the id : ")."'".$id_daemon."'");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+            header("location: ".LINK.$this->url);
+            exit;
+        }
+
+        $ob = $db->sql_fetch_object($res);
+
+        if ($ob->pid === "0") {
+
+            $php = explode(" ", shell_exec("whereis php"))[1];
+
+            //todo add error flux in the log
+
+            $log_file = TMP."log/daemon_".$ob->id.".log";
+
+            $cmd = $php." ".GLIAL_INDEX." Agent launch ".$id_daemon." >> ".$log_file." & echo $!";
+            $pid = shell_exec($cmd);
+
+
+            $sql = "UPDATE daemon SET pid ='".$pid."',log_file='".$log_file."' WHERE id = '".$id_daemon."'";
+            $db->sql_query($sql);
+
+            $msg   = I18n::getTranslation(__("The cleaner id (".$id_daemon.") successfully started with")." pid : ".$pid);
+            $title = I18n::getTranslation(__("Success"));
+            set_flash("success", $title, $msg);
+            header("location: ".LINK.$this->url);
+        } else {
+
+            $msg   = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ")."'".$id_daemon."'"." (".__("Already running !").")");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("caution", $title, $msg);
+            header("location: ".LINK.$this->url);
+        }
     }
 
-    public function stop()
+    function stop($param)
     {
-        
+        $id_daemon        = $param[0];
+        $db                = $this->di['db']->sql(DB_DEFAULT);
+        $this->view        = false;
+        $this->layout_name = false;
+
+        $sql = "SELECT * FROM daemon where id ='".$id_daemon."'";
+        $res = $db->sql_query($sql);
+
+        if ($db->sql_num_rows($res) !== 1) {
+            $msg   = I18n::getTranslation(__("Impossible to find the cleaner with the id : ")."'".$id_daemon."'");
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+            header("location: ".LINK.$this->url);
+            exit;
+        }
+
+        $ob = $db->sql_fetch_object($res);
+
+        if ($this->isRunning($ob->pid)) {
+            $msg   = I18n::getTranslation(__("The cleaner with pid : '".$ob->pid."' successfully stopped "));
+            $title = I18n::getTranslation(__("Success"));
+            set_flash("success", $title, $msg);
+
+            $cmd = "kill ".$ob->pid;
+            shell_exec($cmd);
+            shell_exec("echo '[".date("Y-m-d H:i:s")."] CLEANER STOPED !' >> ".$ob->log_file);
+        } else {
+            $msg   = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ")."'".$ob->pid."'");
+            $title = I18n::getTranslation(__("Cleaner was already stopped or in error"));
+            set_flash("caution", $title, $msg);
+        }
+
+        sleep(1);
+
+        if (!$this->isRunning($ob->pid)) {
+            $sql = "UPDATE daemon SET pid ='0' WHERE id = '".$id_daemon."'";
+            $db->sql_query($sql);
+        } else {
+            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "'.$ob->pid.'"');
+        }
+
+        header("location: ".LINK.$this->url);
     }
 
     public function launch($id)
@@ -121,8 +210,7 @@ class Agent extends Controller
         $this->view = false;
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
-        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection",
-                array($server['name'], $server['id']), 3);
+        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), 3);
 
 
         ($this->debug) ? print_r($ret) : '';
@@ -219,20 +307,17 @@ GROUP BY table_schema ; ';
             $table['mysql_replication_stats']['date']           = $date_time->date_time;
             $table['mysql_replication_stats']['is_master']      = ($master) ? 1 : 0;
             $table['mysql_replication_stats']['is_slave']       = ($slave) ? 1 : 0;
-            $table['mysql_replication_stats']['uptime']         = ($mysql_tested->getStatus('Uptime'))
-                    ? $mysql_tested->getStatus('Uptime') : '-1';
-            $table['mysql_replication_stats']['time_zone']      = ($mysql_tested->getVariables('system_time_zone'))
-                    ? $mysql_tested->getVariables('system_time_zone') : '-1';
+            $table['mysql_replication_stats']['uptime']         = ($mysql_tested->getStatus('Uptime')) ? $mysql_tested->getStatus('Uptime') : '-1';
+            $table['mysql_replication_stats']['time_zone']      = ($mysql_tested->getVariables('system_time_zone')) ? $mysql_tested->getVariables('system_time_zone')
+                    : '-1';
             $table['mysql_replication_stats']['ping']           = 1;
             $table['mysql_replication_stats']['last_sql_error'] = '';
-            $table['mysql_replication_stats']['binlog_format']  = ($mysql_tested->getVariables('binlog_format'))
-                    ? $mysql_tested->getVariables('binlog_format') : 'N/A';
+            $table['mysql_replication_stats']['binlog_format']  = ($mysql_tested->getVariables('binlog_format')) ? $mysql_tested->getVariables('binlog_format') : 'N/A';
 
             $res = $db->sql_save($table);
 
             if (!$res) {
-                throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !',
-                60);
+                throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !', 60);
             }
 
             //get all id_mysql_database
@@ -280,8 +365,7 @@ GROUP BY table_schema ; ';
                 $res7 = $db->sql_save($mysql_database);
 
                 if (!$res7) {
-                    throw new \Exception('PMACTRL-060 : insert in mysql_database !',
-                    60);
+                    throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                 }
             }
 
@@ -299,38 +383,24 @@ GROUP BY table_schema ; ';
 
                     $mysql_replication_thread                                                           = array();
                     $mysql_replication_thread['mysql_replication_thread']['id']                         = $id;
-                    $mysql_replication_thread['mysql_replication_thread']['id_mysql_replication_stats']
-                        = $table['mysql_replication_stats']['id'];
-                    $mysql_replication_thread['mysql_replication_thread']['relay_master_log_file']
-                        = $thread_slave->relay_master_log_file;
-                    $mysql_replication_thread['mysql_replication_thread']['exec_master_log_pos']
-                        = $thread_slave->exec_master_log_pos;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_io']
-                        = $thread_slave->thread_io;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']
-                        = $thread_slave->thread_sql;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_name']
-                        = $thread_slave->thread_name;
-                    $mysql_replication_thread['mysql_replication_thread']['time_behind']
-                        = $thread_slave->time_behind;
-                    $mysql_replication_thread['mysql_replication_thread']['master_host']
-                        = $thread_slave->master_host;
-                    $mysql_replication_thread['mysql_replication_thread']['master_port']
-                        = $thread_slave->master_port;
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']
-                        = $thread_slave->last_io_error;
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']
-                        = $thread_slave->last_sql_error;
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']
-                        = $thread_slave->last_sql_errno;
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']
-                        = $thread_slave->last_io_errno;
+                    $mysql_replication_thread['mysql_replication_thread']['id_mysql_replication_stats'] = $table['mysql_replication_stats']['id'];
+                    $mysql_replication_thread['mysql_replication_thread']['relay_master_log_file']      = $thread_slave->relay_master_log_file;
+                    $mysql_replication_thread['mysql_replication_thread']['exec_master_log_pos']        = $thread_slave->exec_master_log_pos;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_io']                  = $thread_slave->thread_io;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']                 = $thread_slave->thread_sql;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_name']                = $thread_slave->thread_name;
+                    $mysql_replication_thread['mysql_replication_thread']['time_behind']                = $thread_slave->time_behind;
+                    $mysql_replication_thread['mysql_replication_thread']['master_host']                = $thread_slave->master_host;
+                    $mysql_replication_thread['mysql_replication_thread']['master_port']                = $thread_slave->master_port;
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']              = $thread_slave->last_io_error;
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']             = $thread_slave->last_sql_error;
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']             = $thread_slave->last_sql_errno;
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']              = $thread_slave->last_io_errno;
 
                     $res8 = $db->sql_save($mysql_replication_thread);
 
                     if (!$res8) {
-                        throw new \Exception('PMACTRL-060 : insert in mysql_database !',
-                        60);
+                        throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                     }
                 }
             }
@@ -350,8 +420,7 @@ GROUP BY table_schema ; ';
         $mysql_tested->sql_close();
 
         if (count($err = error_get_last()) != 0) {
-            throw new \Exception('PMACTRL-056 : '.$err['message'].' in '.$err['file'].' on line '.$err['line'],
-            80);
+            throw new \Exception('PMACTRL-056 : '.$err['message'].' in '.$err['file'].' on line '.$err['line'], 80);
         }
     }
 
@@ -386,8 +455,7 @@ GROUP BY table_schema ; ';
             $data['mysql_server']['ip']     = $info_server['hostname'];
             $data['mysql_server']['login']  = $info_server['user'];
             $data['mysql_server']['passwd'] = Crypt::encrypt($info_server['password']);
-            $data['mysql_server']['port']   = empty($info_server['port']) ? 3306
-                    : $info_server['port'];
+            $data['mysql_server']['port']   = empty($info_server['port']) ? 3306 : $info_server['port'];
 
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);
@@ -413,9 +481,42 @@ GROUP BY table_schema ; ';
         }
     }
 
-
-    private function addServerToConfig($name,$ip="")
+    private function addServerToConfig($name, $ip = "")
     {
         
+    }
+
+    public function index()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+
+        $sql = "SELECT * FROM `daemon` order by id";
+
+        $res = $db->sql_query($sql);
+
+        while ($ob = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
+
+
+            $data['daemon'][] = $ob;
+        }
+
+        $this->set('data',$data);
+    }
+
+    private function isRunning($pid)
+    {
+
+        if (empty($pid)) {
+            return false;
+        }
+
+        $cmd   = "ps -p ".$pid;
+        $alive = shell_exec($cmd);
+
+        if (strpos($alive, $pid) !== false) {
+            return true;
+        }
+        return false;
     }
 }
