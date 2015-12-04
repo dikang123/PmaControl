@@ -854,8 +854,8 @@ GROUP BY d.id";
         $roles = $this->di['acl']->getAlias();
         $db    = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "TRUNCATE TABLE `group`";
-        //$db->sql_query($sql);
+        $sql = "DELETE FROM `group`";
+        $db->sql_query($sql);
 
         foreach ($roles as $id => $role) {
             $sql = "INSERT INTO `group` (id, name) VALUES ('".$id."','".$db->sql_real_escape_string($role)."');";

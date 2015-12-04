@@ -496,8 +496,6 @@ GROUP BY table_schema ; ';
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
-
-
             $data['daemon'][] = $ob;
         }
 
