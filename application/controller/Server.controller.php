@@ -108,7 +108,7 @@ class Server extends Controller
         $this->title = __("Dashboard");
         $this->ariane = " > " .  $this->title;
 
-        $sql = "SELECT a.*, b.version FROM mysql_server a "
+        $sql = "SELECT a.*, b.version, b.is_available FROM mysql_server a "
                 . " LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server"
                 . " order by `name`;";
 
