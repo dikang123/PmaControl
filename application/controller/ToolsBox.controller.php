@@ -13,12 +13,9 @@ class ToolsBox extends Controller
 
     public function memory()
     {
-
         $this->layout_name = 'pmacontrol';
-
         $this->title = __("Memory");
         $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
-
 
         $default = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM mysql_server a
@@ -28,13 +25,9 @@ class ToolsBox extends Controller
         $res50 = $default->sql_query($sql);
 
         while ($ob50 = $default->sql_fetch_object($res50)) {
-
-
             $db = $this->di['db']->sql($ob50->name);
-
             $data['variables'][$ob50->name] = $db->getVariables();
         }
-
 
         $this->set('data', $data);
     }
