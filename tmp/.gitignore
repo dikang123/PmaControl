@@ -1,2 +1,4 @@
 *.svg
 *.dot
+*.ser
+*.ini
