@@ -9,8 +9,8 @@ and open the template in the editor.
 */
 
 .dropdown-menu>li>a:hover, .dropdown-menu>li>a:focus {
-background-color: #3071a9;
-color:#fff;
+    background-color: #3071a9;
+    color:#fff;
 }
 
 body { padding-bottom: 70px;padding-top: 70px; font-size:12px}
@@ -23,7 +23,7 @@ body { padding-bottom: 70px;padding-top: 70px; font-size:12px}
 .pmacontrol > tbody > tr.highlight_row {border: #666 1px solid ;}
 
 .pmacontrol > tbody > tr:nth-child(odd){
-  background-color:#eeeeee;
+    background-color:#eeeeee;
 }
 
 .highlight_row td{background-color: #ddd;}
@@ -32,13 +32,39 @@ body { padding-bottom: 70px;padding-top: 70px; font-size:12px}
     margin: 0;
     padding: 0;
     -webkit-transform-origin: 0 0;
-        -ms-transform-origin: 0 0;
-            transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    transform-origin: 0 0;
     -webkit-transform: rotate(90deg);
-        -ms-transform: rotate(90deg);
-            transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 
 
-//*[@id="page"]/div[2]/table/tbody/tr[3]/td[5]
+.opacity {
+    position: absolute;
+    top: 0;left:0;
+    width: 100%;height: 100%;
+    background:rgba(0,0,0,.5);
+    z-index:1;
+}
+
+.opacity { 
+    opacity : .9;
+    z-index: 999999;
+}
+
+#domMessage
+{
+    position: absolute;
+    width: 100%; 
+    height: 100%; 
+    top: 0px;
+    left:0;
+    border: none; 
+    backgroundColor: #000; 
+    -webkit-border-radius: 10px; 
+    -moz-border-radius: 10px; 
+    opacity: .6; 
+    color: #000 
+}

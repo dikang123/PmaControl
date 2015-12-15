@@ -11,11 +11,6 @@ use \Glial\Synapse\FactoryController;
 class Mysql extends Controller
 {
     const DEBUG = true;
-
-    private $_dba_user      = "dba";
-    private $_dba_passwd    = "N2O6V6E4M"; //PROD_COMMANDES
-    private $_ssh_user      = "mlemanissier";
-    private $_ssh_passwd    = "UV4Ziu6Y";
     private $table_to_purge = array();
 
     private function generate_passswd($length)
@@ -33,7 +28,6 @@ class Mysql extends Controller
     {
         $server = array();
         $handle = fopen(CONFIG."serveur.csv", "r");
-
 
         if ($handle) {
             while (($buffer = fgets($handle, 4096)) !== false) {
@@ -84,26 +78,7 @@ class Mysql extends Controller
         }
     }
 
-    private function create_grant_account_mysql($host, $user, $password, $server_authorized)
-    {
 
-        $db = new mysqli($host, $this->_dba_user, $this->_dba_passwd);
-
-        if ($db->connect_error) {
-//throw new \Exception('PTB-003 Erreur de connexion (' . $db->connect_errno . ') ' . $db->connect_error);
-        }
-
-
-        $db->close();
-    }
-
-    private function create_grant_account_mysql_with_ssh($host, $user, $password, $server_authorized)
-    {
-        $sql[] = "CREATE USER '".$user."'@'localhost' IDENTIFIED BY '".$password."';";
-        $sql[] = "GRANT ALL PRIVILEGES ON * . * TO 'newuser'@'localhost';";
-
-        return $sql;
-    }
 
     private function ssh($host, $port, $user, $passwd)
     {
@@ -855,8 +830,6 @@ class Mysql extends Controller
 
 
         $file_name = TMP.$param[0]."_".$param[1].".svg";
-
-
         $data['file'] = $file_name;
 
         $path_parts = pathinfo($file_name);
@@ -902,7 +875,6 @@ class Mysql extends Controller
                 fwrite($fp, '</table>> ];'.PHP_EOL);
             }
 
-
             $sql        = "SELECT * FROM information_schema.`REFERENTIAL_CONSTRAINTS`
                 WHERE CONSTRAINT_SCHEMA ='".$param[1]."' AND UNIQUE_CONSTRAINT_SCHEMA ='".$param[1]."'";
             $contraints = $db->sql_fetch_yield($sql);
@@ -921,8 +893,6 @@ class Mysql extends Controller
 
 
             fwrite($fp, '}');
-
-            //fwrite($fp, "}");
             fclose($fp);
             exec('dot -T'.$type.' '.$path.'/'.$file.'.dot -o '.$path.'/'.$file.'.'.$type.'');
         }
@@ -978,11 +948,6 @@ class Mysql extends Controller
             $data['pma_cli'] = false;
         }
 
-
-
-
-
-
         if ($data['pma_cli']) {
             $sql = "SELECT busy_pct,  one_min_avg,five_min_avg,fifteen_min_avg , tstamp
 		FROM pma_cli.slave_sql_load_average 
@@ -1018,10 +983,6 @@ class Mysql extends Controller
   
 });");
         }
-
-
-
-
 
         $MS = new MasterSlave();
 
@@ -1308,15 +1269,8 @@ class Mysql extends Controller
         echo \SqlFormatter::highlight($sql);
     }
 
-    private function displayBox($data)
-    {
-        
-    }
 
-    public function nagios()
-    {
-        
-    }
+
 
     public function after($param)
     {
@@ -1326,33 +1280,7 @@ class Mysql extends Controller
         }
     }
 
-    public function addFkUk()
-    {
 
-        $this->view = false;
-
-        $sqls = file('/data/backup/tmp/fk.sql');
-
-
-
-
-        foreach ($sqls as $sql) {
-
-            $db = $this->di['db']->sql('cougar_uk_bd01');
-            $db->sql_query("USE PRODUCTION;");
-            $db->sql_query("SET sql_log_bin = OFF;");
-
-            echo SqlFormatter::format($sql);
-
-
-            $db->sql_query($sql);
-            sleep(1);
-            echo str_repeat("-", 80)."\n";
-
-
-            $db->sql_close();
-        }
-    }
 
         public function generate_config()
     {
