@@ -10,17 +10,19 @@ use Glial\Cli\Table;
 
 class Scan extends Controller
 {
-    public $data = array();
-
-    var $port = array(22 => "SSH",3306 => "MySQL", 3307 => "MySQL load-balanced", 33306 => "MySQL load-balanced",
-        9600 => "HAproxy stats", 4006=>"Round robin listener",4008=> "R/W split listener", 4442=> "Debug information",
-        4567 => "Galera", 4444 => "SST Gaelera", 4568 => "IST Galera", 6033 => "MaxAdmin CLI");
-
-
+    public $data  = array();
+    var $port  = array(22 => "SSH", 3306 => "MySQL", 3307 => "MySQL load-balanced", 
+        33306 => "MySQL load-balanced (Master)",
+        33307 => "MySQL load-balanced (R/W Splitting)",
+        33308 => "MySQL load-balanced (Read only)",
+        33309 => "MySQL load-balanced (Round-Robin)",
+        33310 => "MySQL load-balanced (Sharding)",
+        9600 => "HAproxy stats", 4006 => "Round robin listener", 4008 => "R/W split listener", 4442 => "Debug information",
+        4567 => "Galera", 4444 => "SST Gaelera", 4568 => "IST Galera", 6603 => "MaxAdmin CLI", 6033 => "MaxAdmin CLI");
     var $other = array(21 => "ftp", 23 => "telnet", 25 => "smtp", 80 => "http", 389 => "ldap",
-        443 => "https", 445 => "microsfot-ds", 465=> "smtps", 2019 => "nfs");
+        443 => "https", 445 => "microsfot-ds", 465 => "smtps", 2019 => "nfs");
 
-
+    //deprecated
     public function parse($input)
     {
         //35 & 68
@@ -82,24 +84,24 @@ class Scan extends Controller
         return $data;
     }
 
-    public function autoDiscovering($param)
+    public function autoDiscovering()
     {
         // arp -a -n => fastest way
 
         $this->view = false;
+        $xml        = shell_exec($this->generateNmap());
 
-        $range = $param[0];
-        $port  = $param[1];
+        $arr = $this->xmlToArray($xml);
 
-        //$res = shell_exec("nmap ".$range);
-        $res = shell_exec("nmap -F 10.0.51.0/24");
+        //$data = $this->extract($res);
+        //$json = $this->parse($data);
 
-        $data = $this->extract($res);
-        $json = $this->parse($data);
+        $this->data = $arr;
 
-        $this->data = $json;
+        return $arr;
     }
 
+    //deprecated
     public function extract($data)
     {
         /*
@@ -123,71 +125,110 @@ class Scan extends Controller
         return $lines;
     }
 
-    public function test2()
+    public function xmlToArray($xml)
     {
-        $xml  = new SimpleXMLElement(file_get_contents("/data/www/pmacontrol/ff.xml"));
+        $xml  = new SimpleXMLElement($xml);
         $json = json_encode($xml);
         $data = json_decode($json, true);
-        debug($data);
+        return $data;
     }
 
     public function index()
     {
 
-        $this->title = '<span class="glyphicon glyphicon-search" aria-hidden="true"></span> '.__("Scan network");
+        $this->title  = '<span class="glyphicon glyphicon-search" aria-hidden="true"></span> '.__("Scan network");
         $this->ariane = '> <i style="font-size: 16px" class="fa fa-puzzle-piece"></i> Plugins > '.$this->title;
 
-        $db = $this->di['db']->sql(DB_DEFAULT);
-
         $this->di['js']->addJavascript(array("Scan/index.js"));
-
-        $sql ="SELECT `ip` from mysql_server";
-        $res = $db->sql_query($sql);
-
-        $data['ip'] = array();
-        while ($ob = $db->sql_fetch_object($res))
-        {
-            $data['ip'][] = $ob->ip;
-        }
-
-
+        $data['ip']   = $this->getIpMonitored();
         $data['scan'] = $this->getData();
 
-
-
+        $data['port'] = $this->other + $this->port;
+        ksort($data['port']);
         $this->set('data', $data);
     }
 
-    public function insert($data)
-    {
-        
-    }
-
+    //deprecated ?
     public function __sleep()
     {
         return array('data');
     }
 
-    public function getData()
+    public function getData($refresh = false)
     {
         $path_to_acl_tmp = TMP."data/scan.ser";
 
-        if (file_exists($path_to_acl_tmp)) {
-
-            //unlink($path_to_acl_tmp);
-
-            if (is_file($path_to_acl_tmp)) {
-                $s          = file_get_contents($path_to_acl_tmp);
-                $tmp        = unserialize($s);
-                $this->data = $tmp->data;
-                return $this->data;
+        if (!$refresh) {
+            if (file_exists($path_to_acl_tmp)) {
+                if (is_file($path_to_acl_tmp)) {
+                    $s          = file_get_contents($path_to_acl_tmp);
+                    $tmp        = unserialize($s);
+                    $this->data = $tmp->data;
+                    return $this->data;
+                }
             }
         }
 
-        $data = $this->autoDiscovering(array("10.0.51.*", "T:22,T:3306,T:4567"));
+        $data = $this->autoDiscovering();
 
         file_put_contents($path_to_acl_tmp, serialize($this));
 
         return $data;
+    }
+
+    public function generateNmap()
+    {
+        $this->view   = false;
+        $this->layout = false;
+
+        $port_to_scan = $this->port + $this->other;
+        $ports        = "";
+        foreach ($port_to_scan as $port => $service_name) {
+            $ports .= 'T:'.$port.',';
+        }
+        $ports = substr($ports, 0, -1);
+        $ips   = $this->getIpMonitored();
+        $range = [];
+        $uniq_ip = [];
+        foreach ($ips as $ip) {
+            if ($ip === "127.0.0.1" || $ip === "localhost") {
+                continue;
+            }
+
+            $tmp       = explode('.', $ip);
+            unset($tmp[3]);
+            $new_range = implode('.', $tmp);
+            if (!in_array($new_range, $range) && ($tmp[0] == "10" || $tmp[0] == "192" && $tmp[0] == "168")) {
+                $range[] = $new_range;
+            }
+
+            if ($tmp[0] != "10" && ($tmp[0] != "192" || $tmp[0] != "168"))
+            {
+                $uniq_ip[] = $ip;
+            }
+        }
+
+        $ext  = '.0/24';
+        $nmap = "nmap -p ".$ports." -oX - ".implode($ext.' ', $range).$ext. " ".implode(' ',$uniq_ip);
+        return trim($nmap);
+    }
+
+    public function getIpMonitored()
+    {
+        $db         = $this->di['db']->sql(DB_DEFAULT);
+        $sql        = "SELECT `ip` from `mysql_server`";
+        $res        = $db->sql_query($sql);
+        $data['ip'] = array();
+        while ($ob         = $db->sql_fetch_object($res)) {
+            $data['ip'][] = $ob->ip;
+        }
+        return $data['ip'];
+    }
+
+    public function refresh()
+    {
+        $this->getData(true);
+
+        header('location: '.LINK."scan/index");
     }
 }
