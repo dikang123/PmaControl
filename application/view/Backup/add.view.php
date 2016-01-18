@@ -21,6 +21,7 @@ echo "<td>".Form::input("backup_storage_area","ip", array("class" => "form-contr
 echo "</tr>";
 
 
+
 echo "<tr>";
 echo "<td class=\"first\">".__("Port")." :</td>";
 echo "<td>".Form::input("backup_storage_area","port", array("class" => "form-control"))."</td>";
@@ -38,6 +39,7 @@ echo "<tr>";
 echo "<td colspan=\"2\"><h3 class=\"item\">".__("Location")." :</h3></td>";
 echo "</tr>";
 
+
 echo "<tr>";
 echo "<td class=\"first\">".__("Country")." :</td>";
 echo "<td>".Form::select("backup_storage_area","id_geolocalisation_country",$data['geolocalisation_country'],"", array("class" => "form-control"))."</td>";
@@ -50,7 +52,7 @@ echo "</tr>";
 
 
 echo "<tr>";
-echo "<td colspan=\"2\"><h3 class=\"item\">".__("Account SSH", array("class" => "form-control"))." :</h3></td>";
+echo "<td colspan=\"2\"><h3 class=\"item\">".__("Account SSH")." :</h3></td>";
 echo "</tr>";
 
 /*
@@ -62,12 +64,12 @@ echo "</tr>";
 
 echo "<tr>";
 echo "<td class=\"first\">".__("Login")." :</td>";
-echo "<td>".Form::input("backup_storage_area","ssh_login", array("class" => "form-control"))."</td>";
+echo "<td>".Form::input("backup_storage_area","ssh_login", array("class" => "form-control","autocomplete"=>"false", "autocomplete"=>"off", "autocomplete"=>"new-password"))."</td>";
 echo "</tr>";
 
 echo "<tr>";
 echo "<td class=\"first\">".__("Password")." :</td>";
-echo "<td>".Form::input("backup_storage_area","ssh_password", array("class" => "form-control", "type" => "password"))."</td>";
+echo "<td>".Form::input("backup_storage_area","ssh_password", array("class" => "form-control", "type" => "password","autocomplete"=>"false", "autocomplete"=>"off", "autocomplete"=>"new-password"))."</td>";
 echo "</tr>";
 
 

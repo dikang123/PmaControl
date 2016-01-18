@@ -30,6 +30,8 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 * **graphviz** => make a graph about replication (include multi master and galera cluster)
 * **apache2** (with a2enmod php5 & **a2enmod rewrite**)
 * **postfix** to send mail
+* **curl** used for get translatation from google
+
 
 ###Install composer
 

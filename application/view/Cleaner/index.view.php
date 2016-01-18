@@ -110,22 +110,3 @@ if (!empty($data['id_cleaner'])) {
     </div>
 </div>
 
-
-<!--
-
-<div class="jumbotron">
-<h1>Hello, world!</h1>
-<p>This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
-<p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
-</div>
-
-<div class="bs-callout bs-callout-warning" id="callout-navbar-overflow">
-<h4 id="overflowing-content">Overflowing content<a class="anchorjs-link" href="#overflowing-content"><span class="anchorjs-icon"></span></a></h4>
-<p>Since Bootstrap doesn't know how much space the content in your navbar needs, you might run into issues with content wrapping into a second row. To resolve this, you can:</p>
-<ol type="a">
-  <li>Reduce the amount or width of navbar items.</li>
-  <li>Hide certain navbar items at certain screen sizes using <a href="../css/#responsive-utilities">responsive utility classes</a>.</li>
-  <li>Change the point at which your navbar switches between collapsed and horizontal mode. Customize the <code>@grid-float-breakpoint</code> variable or add your own media query.</li>
-</ol>
-
--->

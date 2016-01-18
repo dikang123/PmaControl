@@ -8,21 +8,17 @@ use \Glial\Security\Crypt\Crypt;
 class Agent extends Controller
 {
     var $debug = false;
-
-    var $url = "server/listing/";
+    var $url   = "server/listing/";
 
     function start($param)
     {
-
-        $id_daemon        = $param[0];
+        $id_daemon         = $param[0];
         $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->view        = false;
         $this->layout_name = false;
 
-
         $sql = "SELECT * FROM daemon where id ='".$id_daemon."'";
         $res = $db->sql_query($sql);
-
 
         if ($db->sql_num_rows($res) !== 1) {
             $msg   = I18n::getTranslation(__("Impossible to find the daemon with the id : ")."'".$id_daemon."'");
@@ -64,7 +60,7 @@ class Agent extends Controller
 
     function stop($param)
     {
-        $id_daemon        = $param[0];
+        $id_daemon         = $param[0];
         $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->view        = false;
         $this->layout_name = false;
@@ -142,7 +138,6 @@ class Agent extends Controller
         $db         = $this->di['db']->sql(DB_DEFAULT);
         $sql        = "select * from mysql_server";
         $res        = $db->sql_query($sql);
-
 
         $server_list = array();
         while ($ob          = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
@@ -258,6 +253,7 @@ class Agent extends Controller
 
 
         $variables = $mysql_tested->getVariables();
+        $status    = $mysql_tested->getStatus();
         $master    = $mysql_tested->isMaster();
         $slave     = $mysql_tested->isSlave();
 
@@ -273,7 +269,7 @@ DEFAULT_CHARACTER_SET_NAME,
 DEFAULT_COLLATION_NAME
 FROM information_schema.TABLES a
 INNER JOIN information_schema.SCHEMATA b ON a.table_schema = b.SCHEMA_NAME
-GROUP BY table_schema ; ';
+GROUP BY table_schema ;';
 
 
         $schema = [];
@@ -284,7 +280,6 @@ GROUP BY table_schema ; ';
 
 
         try {
-
             $sql  = "SELECT id FROM mysql_replication_stats where id_mysql_server = '".$id_server."'";
             $res3 = $db->sql_query($sql);
 
@@ -296,29 +291,29 @@ GROUP BY table_schema ; ';
             }
 
             $db->sql_query("START TRANSACTION;");
-
-
             $table['mysql_replication_stats']['id_mysql_server'] = $id_server;
             $table['mysql_replication_stats']['is_available']    = 1;
             $table['mysql_replication_stats']['date']            = date("Y-m-d H:i:s");
             $table['mysql_replication_stats']['ping']            = 1;
-
-            $table['mysql_replication_stats']['version']        = $mysql_tested->getServerType()." : ".$mysql_tested->getVersion();
-            $table['mysql_replication_stats']['date']           = $date_time->date_time;
-            $table['mysql_replication_stats']['is_master']      = ($master) ? 1 : 0;
-            $table['mysql_replication_stats']['is_slave']       = ($slave) ? 1 : 0;
-            $table['mysql_replication_stats']['uptime']         = ($mysql_tested->getStatus('Uptime')) ? $mysql_tested->getStatus('Uptime') : '-1';
-            $table['mysql_replication_stats']['time_zone']      = ($mysql_tested->getVariables('system_time_zone')) ? $mysql_tested->getVariables('system_time_zone')
+            $table['mysql_replication_stats']['version']         = $mysql_tested->getServerType()." : ".$mysql_tested->getVersion();
+            $table['mysql_replication_stats']['date']            = $date_time->date_time;
+            $table['mysql_replication_stats']['is_master']       = ($master) ? 1 : 0;
+            $table['mysql_replication_stats']['is_slave']        = ($slave) ? 1 : 0;
+            $table['mysql_replication_stats']['uptime']          = ($mysql_tested->getStatus('Uptime')) ? $mysql_tested->getStatus('Uptime') : '-1';
+            $table['mysql_replication_stats']['time_zone']       = ($mysql_tested->getVariables('system_time_zone')) ? $mysql_tested->getVariables('system_time_zone')
                     : '-1';
-            $table['mysql_replication_stats']['ping']           = 1;
-            $table['mysql_replication_stats']['last_sql_error'] = '';
-            $table['mysql_replication_stats']['binlog_format']  = ($mysql_tested->getVariables('binlog_format')) ? $mysql_tested->getVariables('binlog_format') : 'N/A';
+            $table['mysql_replication_stats']['ping']            = 1;
+            $table['mysql_replication_stats']['last_sql_error']  = '';
+            $table['mysql_replication_stats']['binlog_format']   = ($mysql_tested->getVariables('binlog_format')) ? $mysql_tested->getVariables('binlog_format')
+                    : 'N/A';
 
             $res = $db->sql_save($table);
 
             if (!$res) {
                 throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !', 60);
             }
+
+
 
             //get all id_mysql_database
             $id_mysql_server = [];
@@ -331,7 +326,6 @@ GROUP BY table_schema ; ';
 
             foreach ($schema as $database) {
                 $mysql_database = [];
-
 
                 if (!empty($id_mysql_server[$database['table_schema']])) {
 
@@ -349,13 +343,8 @@ GROUP BY table_schema ; ';
                 $mysql_database['mysql_database']['index_length']       = $database['index'];
                 $mysql_database['mysql_database']['character_set_name'] = $database['DEFAULT_CHARACTER_SET_NAME'];
                 $mysql_database['mysql_database']['collation_name']     = $database['DEFAULT_COLLATION_NAME'];
-
-
-
-                $mysql_database['mysql_database']['binlog_do_db']     = 0;
-                $mysql_database['mysql_database']['binlog_ignore_db'] = 0;
-
-
+                $mysql_database['mysql_database']['binlog_do_db']       = 0;
+                $mysql_database['mysql_database']['binlog_ignore_db']   = 0;
 
                 if ($master) {
                     $mysql_database['mysql_database']['binlog_do_db']     = 1;
@@ -368,7 +357,6 @@ GROUP BY table_schema ; ';
                     throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                 }
             }
-
 
             //delete DB deleted
             foreach ($id_mysql_server as $key => $tab) {
@@ -405,9 +393,6 @@ GROUP BY table_schema ; ';
                 }
             }
 
-
-
-
             $db->sql_query("COMMIT;");
         } catch (\Exception $ex) {
 
@@ -415,6 +400,9 @@ GROUP BY table_schema ; ';
 
             throw new \Exception('PMACTRL-058 : ROLLBACK made !', 60);
         }
+
+
+        $this->saveStatus($status, $id_server);
 
         $db->sql_close();
         $mysql_tested->sql_close();
@@ -499,16 +487,14 @@ GROUP BY table_schema ; ';
             $data['daemon'][] = $ob;
         }
 
-        $this->set('data',$data);
+        $this->set('data', $data);
     }
 
     private function isRunning($pid)
     {
-
         if (empty($pid)) {
             return false;
         }
-
         $cmd   = "ps -p ".$pid;
         $alive = shell_exec($cmd);
 
@@ -517,4 +503,191 @@ GROUP BY table_schema ; ';
         }
         return false;
     }
+    /*
+     * This method can provide duplicate KEY, if daemon is started for first time with more than 2 servers, next run all will be fine
+     *
+     *
+     * Type :
+     *  - 1 => int
+     *  - 2 => double
+     *  - 3 => text
+     */
+
+    public function saveStatus($all_status, $id_mysql_server)
+    {
+
+        $default  = $this->di['db']->sql(DB_DEFAULT);
+        $all_name = array_keys($all_status);
+
+        $sql = "SELECT * FROM mysql_status_name";
+
+        $index = [];
+
+        $res = $default->sql_query($sql);
+
+        while ($ob = $default->sql_fetch_object($res)) {
+            $index[] = $ob->name;
+        }
+
+        debug($index);
+
+        foreach ($all_status as $name => $status) {
+            if (!in_array($name, $index)) {
+                echo "add ".$name."\n";
+
+
+                $mysql_status_name['mysql_status_name']['name']  = $name;
+                $mysql_status_name['mysql_status_name']['type']  = self::getTypeOfData($status);
+                $mysql_status_name['mysql_status_name']['value'] = $status;
+
+
+                $id = $default->sql_save($mysql_status_name);
+                if (!$id) {
+                    debug($mysql_status_name);
+                    debug($default->sql_error());
+
+                    throw new Exception('PMACTRL : Impossible to save');
+                }
+            }
+        }
+    }
+
+    public function saveVariables()
+    {
+        
+    }
+
+    static private function isFloat($value)
+    {
+        // test before => must be numeric first
+        if (strstr($value, ".")) {
+            return true;
+        }
+        return ((int) $value != $value);
+    }
+    
+    /* Type :
+     *  - 1 => int
+     *  - 2 => double
+     *  - 3 => text
+     */
+
+    static private function getTypeOfData($value)
+    {
+        $val = 0;
+
+        $is_numeric = is_numeric($value);
+
+        if ($is_numeric === true) {
+            //debug($is_numeric);
+            $val = 1;
+
+            $is_float = self::isFloat($value);
+
+            if ($is_float) {
+                $val = 2;
+            }
+        }
+
+        return $val;
+    }
+    /*
+     *
+     * Move to test for PHPUnit
+     */
+
+    public function testData()
+    {
+
+
+        $nogood = 0;
+
+        $tests  = [1452, 0.125, 254.25, "0.0000", "0.254", "254.25", "15", "1e25", "ggg.ggg", "fghg"];
+        $result = [1, 2, 2, 2, 2, 2, 1, 2, 0, 0];
+
+        if (count($tests) !== count($result)) {
+            throw new \Exception("PMACTRL : array not the same size");
+        }
+
+        $i = 0;
+        foreach ($tests as $test) {
+
+
+            $val = self::getTypeOfData($test);
+
+
+
+            if ($val != $result[$i]) {
+                echo "#".$i." -- ".$test.":".$val.":".$result[$i]." no good \n";
+                $nogood++;
+            } else {
+                echo "#".$i." -- ".$test.":".$val.":".$result[$i]."GOOOOOOOOOOD \n";
+            }
+            $i++;
+        }
+
+        if (!empty($nogood)) {
+            echo "##################### NO GOOD ################";
+        }
+    }
+
+    /*
+     * CREATE TABLE `mysql_status_value` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_mysql_server` int(11) NOT NULL,
+  `id_mysql_status_name` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `value` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_mysql_status_name` (`id_mysql_status_name`),
+  KEY `id_mysql_server` (`id_mysql_server`),
+  CONSTRAINT `mysql_status_value_ibfk_1` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
+     *
+     *partition by range (timestamp) (
+partition pt1 values less than (1199142000000)
+comment 'host "127.0.0.1", port "16850"',
+partition pt2 values less than (1270072800000)
+comment 'host "127.0.0.1", port "16849"',
+partition pt3 values less than (MAXVALUE)
+comment 'host "127.0.0.1", port "16848"'
+     *
+     * CREATE TABLE `mysql_status_value_int` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_mysql_server` int(11) NOT NULL,
+  `id_mysql_status_name` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `value` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_mysql_status_name_4` (`id_mysql_status_name`),
+  KEY `id_mysql_server_4` (`id_mysql_server`),
+  CONSTRAINT `mysql_status_value_ibfk_4` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
+     *
+     * CREATE TABLE `mysql_status_value_text` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_mysql_server` int(11) NOT NULL,
+  `id_mysql_status_name` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `value` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_mysql_status_name_3` (`id_mysql_status_name`),
+  KEY `id_mysql_server_3` (`id_mysql_server`),
+  CONSTRAINT `mysql_status_value_ibfk_3` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
+     *
+     *
+     * CREATE TABLE `mysql_status_value_float` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_mysql_server` int(11) NOT NULL,
+  `id_mysql_status_name` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `value` double NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_mysql_status_name_2` (`id_mysql_status_name`),
+  KEY `id_mysql_server_2` (`id_mysql_server`),
+  CONSTRAINT `mysql_status_value_ibfk_2` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
+     *
+     */
 }

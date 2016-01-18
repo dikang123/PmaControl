@@ -5,8 +5,5 @@ $(document).ready(function () {
     
     $("#mask").click(function () {
         $("#loading").addClass("show");
-        $("body").addClass("opacity");
     });
 });
-
-

@@ -11,6 +11,7 @@ use \Glial\Synapse\FactoryController;
 class Mysql extends Controller
 {
     const DEBUG = true;
+
     private $table_to_purge = array();
 
     private function generate_passswd($length)
@@ -77,8 +78,6 @@ class Mysql extends Controller
             $i++;
         }
     }
-
-
 
     private function ssh($host, $port, $user, $passwd)
     {
@@ -829,7 +828,7 @@ class Mysql extends Controller
         }
 
 
-        $file_name = TMP.$param[0]."_".$param[1].".svg";
+        $file_name    = TMP.$param[0]."_".$param[1].".svg";
         $data['file'] = $file_name;
 
         $path_parts = pathinfo($file_name);
@@ -1269,9 +1268,6 @@ class Mysql extends Controller
         echo \SqlFormatter::highlight($sql);
     }
 
-
-
-
     public function after($param)
     {
         if (!IS_CLI) {
@@ -1280,9 +1276,7 @@ class Mysql extends Controller
         }
     }
 
-
-
-        public function generate_config()
+    public function generate_config()
     {
 
         $this->layout_name = 'pmacontrol';
@@ -1290,5 +1284,20 @@ class Mysql extends Controller
         $this->db_default  = $db;
         $this->title       = __("Configurator");
         $this->ariane      = "> ".'<a href="'.LINK.'Plugins/index/">'.__('Tools box')."</a> > ".$this->title;
+    }
+
+    public function add($param)
+    {
+
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+            $db = $this->di['db']->sql(DB_DEFAULT);
+        }
+
+        $data['ip']   = $param[0];
+        $data['port'] = $param[1];
+
+        $this->set('data', $data);
     }
 }

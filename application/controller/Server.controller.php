@@ -17,7 +17,7 @@ class Server extends Controller
     {
         $this->view = false;
 
-        $tab = new Table();
+        $tab = new Table(1);
 
         $tab->addHeader(array("Top", "Server", "IP", "Os", "CPU", "Frequency", "Memory"));
         $i = 1;
@@ -40,8 +40,12 @@ class Server extends Controller
             $list_server[] = $info_server['hostname'];
 
             $ssh = new Ssh($info_server['hostname'], 22, "pmacontrol", $password);
+            //$ssh = new Ssh($info_server['hostname'], 22, "root", '/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa');
 
             if (!$ssh) {
+
+
+                echo "Impossible to connect on ".$info_server['hostname']."\n";
                 continue;
             }
             $nb_cpu = $ssh->exec("cat /proc/cpuinfo | grep processor | wc -l");
@@ -59,7 +63,10 @@ class Server extends Controller
 
             $os = trim($ssh->exec("lsb_release -ds"));
 
-            
+            if (empty($os))
+            {
+                $os = trim($ssh->exec("cat /etc/centos-release"));
+            }
             
             $product_name = $ssh->exec("dmidecode -s system-product-name");
             $arch = $ssh->exec("uname -m");
@@ -114,8 +121,6 @@ class Server extends Controller
 
         $data['servers'] = $db->sql_fetch_yield($sql);
 
-
         $this->set('data', $data);
     }
-
 }
