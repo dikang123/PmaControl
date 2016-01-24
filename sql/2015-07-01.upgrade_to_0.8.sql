@@ -72,3 +72,52 @@ ALTER TABLE `menu`
 ALTER TABLE `menu`
   MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
+
+
+
+update `menu` set bg=bg+1, bd=bd+1 where `group_id` =1 and bd > 38;
+
+
+INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `url`, `class`, `position`, `group_id`) VALUES (NULL, '0', '39', '40', '1', '<i class="glyphicon glyphicon-transfer" style="font-size:12px"></i>', 'Scan network', '{LINK}scan/index/', '', '0', '1');
+
+UPDATE `menu` SET `icon` = '<span class="glyphicon glyphicon-search" aria-hidden="true"></span>' WHERE `menu`.`id` = 67;
+
+
+CREATE TABLE `mysql_status_name` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `name` varchar(64) NOT NULL,
+ `type` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+ALTER TABLE `mysql_server` ADD `error` TEXT NOT NULL AFTER `kernel`;
+
+
+CREATE TABLE `mysql_status_value_double` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE `mysql_status_value_int` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `mysql_status_value_text` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` double NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;

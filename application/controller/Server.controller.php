@@ -118,9 +118,31 @@ class Server extends Controller
         $sql = "SELECT a.*, b.version, b.is_available FROM mysql_server a "
                 . " LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server"
                 . " order by `name`;";
-
+	
         $data['servers'] = $db->sql_fetch_yield($sql);
+	
+	if (empty($_GET['menu']))
+	{
+		$_GET['menu'] = 'listing';
+	}
 
+	$data['menu'][0]['name'] = __('Servers');
+	$data['menu'][0]['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+	$data['menu'][0]['url'] = LINK.__CLASS__.'/'.__FUNCTION__.'/listing';
+
+
+	$data['menu'][1]['name'] = __('Databases');
+	$data['menu'][1]['icone'] = '<i class="fa fa-database fa-lg"></i>';
+	$data['menu'][1]['url'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/database';
+
+	$data['menu'][2]['name'] = __('Statistics');
+	$data['menu'][2]['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+	$data['menu'][2]['url'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/statitics';
+	
+	$data['menu'][3]['name'] = __('Hardware');
+	$data['menu'][3]['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+	$data['menu'][3]['url'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/hardware';
+	
         $this->set('data', $data);
     }
 }

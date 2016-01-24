@@ -148,7 +148,7 @@ class Agent extends Controller
         $db->sql_close();
 
         //$maxThreads = \Glial\System\Cpu::getCpuCores();
-        $maxThreads      = 50; // check MySQL server 50 by 50
+        $maxThreads      = 10; // check MySQL server 50 by 50
         $openThreads     = 0;
         $child_processes = array();
 
@@ -205,10 +205,7 @@ class Agent extends Controller
         $this->view = false;
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
-        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), 3);
-
-
-        ($this->debug) ? print_r($ret) : '';
+        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), 100);
 
         if (!SetTimeLimit::exitWithoutError($ret)) {
             /* in case of somthing wrong :
@@ -217,16 +214,21 @@ class Agent extends Controller
              * wrong credentials
              * error in PHP script
              */
-
             $db  = $this->di['db']->sql(DB_DEFAULT);
+            $sql = "UPDATE mysql_server SET `error`='".$db->sql_real_escape_string($ret['stdout'])."' where id = '".$server['id']."'";
+            $db->sql_query($sql);
+
+		echo $sql ."\n";
+
             $sql = "UPDATE mysql_replication_stats SET is_available = 0 where id_mysql_server = '".$server['id']."'";
             $db->sql_query($sql);
             $db->sql_close();
 
-            echo ($this->debug) ? $server['name']." KO \n" : "";
+            echo ($this->debug) ? $server['name']." KO :\n" : "";
+            ($this->debug) ? print_r($ret) : '';
             return false;
         } else {
-            echo ($this->debug) ? $server['name']." OK \n" : "";
+            //echo ($this->debug) ? $server['name']." OK \n" : "";
             return true;
         }
     }
@@ -247,7 +249,7 @@ class Agent extends Controller
         $name_server = $param[0];
         $id_server   = $param[1];
 
-        $mysql_tested = $this->di['db']->sql($name_server);
+        $mysql_tested = @$this->di['db']->sql($name_server);
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -261,6 +263,11 @@ class Agent extends Controller
         $res2      = $mysql_tested->sql_query($sql);
         $date_time = $mysql_tested->sql_fetch_object($res2);  //can be empty ???????????
 
+
+
+	$schema = array();
+	if (version_compare($mysql_tested->getVersion(), '5.0', '>='))
+	{
         $sql = 'SELECT table_schema,
 sum( data_length ) as "data",
 sum( index_length ) as "index",
@@ -277,11 +284,25 @@ GROUP BY table_schema ;';
         while ($ob     = $mysql_tested->sql_fetch_array($res5)) {
             $schema[$ob['table_schema']] = $ob;
         }
-
+}
 
         try {
-            $sql  = "SELECT id FROM mysql_replication_stats where id_mysql_server = '".$id_server."'";
+            
+            $db->sql_query("START TRANSACTION;");
+		$sql  = "SELECT id FROM mysql_replication_stats where id_mysql_server = '".$id_server."'";
             $res3 = $db->sql_query($sql);
+
+		$table = array();
+		$table['mysql_server']['id'] = $id_server;
+		$table['mysql_server']['error'] = '';
+
+
+		$res10 = $db->sql_save($table);	
+
+
+            if (!$res10) {
+                throw new \Exception('PMACTRL-159 : impossible to remove error !', 60);
+            }
 
             $table = array();
 
@@ -290,7 +311,6 @@ GROUP BY table_schema ;';
                 $table['mysql_replication_stats']['id'] = $ob->id;
             }
 
-            $db->sql_query("START TRANSACTION;");
             $table['mysql_replication_stats']['id_mysql_server'] = $id_server;
             $table['mysql_replication_stats']['is_available']    = 1;
             $table['mysql_replication_stats']['date']            = date("Y-m-d H:i:s");
@@ -307,9 +327,9 @@ GROUP BY table_schema ;';
             $table['mysql_replication_stats']['binlog_format']   = ($mysql_tested->getVariables('binlog_format')) ? $mysql_tested->getVariables('binlog_format')
                     : 'N/A';
 
-            $res = $db->sql_save($table);
+            $id_mysql_replication_stats = $db->sql_save($table);
 
-            if (!$res) {
+            if (!$id_mysql_replication_stats) {
                 throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !', 60);
             }
 
@@ -367,29 +387,47 @@ GROUP BY table_schema ;';
             }
 
             if ($slave) {
+
+
+	debug($slave);
                 foreach ($slave as $thread_slave) {
 
+
                     $mysql_replication_thread                                                           = array();
-                    $mysql_replication_thread['mysql_replication_thread']['id']                         = $id;
-                    $mysql_replication_thread['mysql_replication_thread']['id_mysql_replication_stats'] = $table['mysql_replication_stats']['id'];
-                    $mysql_replication_thread['mysql_replication_thread']['relay_master_log_file']      = $thread_slave->relay_master_log_file;
-                    $mysql_replication_thread['mysql_replication_thread']['exec_master_log_pos']        = $thread_slave->exec_master_log_pos;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_io']                  = $thread_slave->thread_io;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']                 = $thread_slave->thread_sql;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_name']                = $thread_slave->thread_name;
-                    $mysql_replication_thread['mysql_replication_thread']['time_behind']                = $thread_slave->time_behind;
-                    $mysql_replication_thread['mysql_replication_thread']['master_host']                = $thread_slave->master_host;
-                    $mysql_replication_thread['mysql_replication_thread']['master_port']                = $thread_slave->master_port;
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']              = $thread_slave->last_io_error;
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']             = $thread_slave->last_sql_error;
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']             = $thread_slave->last_sql_errno;
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']              = $thread_slave->last_io_errno;
+			if( empty($thread_slave['Thread_name']))
+			{
+				$thread_slave['Thread_name'] = '';
+			}
+			$sql = "SELECT id from mysql_replication_thread where id_mysql_replication_stats = '".$id_mysql_replication_stats."' 
+			AND thread_name = '".$thread_slave['Thread_name']."'";
+
+			$res34 = $db->sql_query($sql);
+
+            		while ($ob = $db->sql_fetch_object($res34)) {
+                    		$mysql_replication_thread['mysql_replication_thread']['id']                         = $ob->id;
+            		}
+			
+                    $mysql_replication_thread['mysql_replication_thread']['id_mysql_replication_stats'] = $id_mysql_replication_stats;
+                    $mysql_replication_thread['mysql_replication_thread']['relay_master_log_file']      = $thread_slave['Relay_Master_Log_File'];
+                    $mysql_replication_thread['mysql_replication_thread']['exec_master_log_pos']        = $thread_slave['Exec_Master_Log_Pos'];
+                    $mysql_replication_thread['mysql_replication_thread']['thread_io']                  = ($thread_slave['Slave_IO_Running'] === 'Yes')? 1:0;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']                 = ($thread_slave['Slave_SQL_Running'] === 'Yes') ? 1:0;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_name']                = (empty($thread_slave['Thread_name']))? '' : $thread_slave['Thread_name'];
+                    $mysql_replication_thread['mysql_replication_thread']['time_behind']                = $thread_slave['Seconds_Behind_Master'];
+                    $mysql_replication_thread['mysql_replication_thread']['master_host']                = $thread_slave['Master_Host'];
+                    $mysql_replication_thread['mysql_replication_thread']['master_port']                = $thread_slave['Master_Port'];
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']             = (empty($thread_slave['Last_sql_Error']))? $thread_slave['Last_Error'] : $thread_slave['Last_sql_Error'] ;
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']             = (empty($thread_slave['Last_sql_Errno']))? $thread_slave['Last_Errno'] : $thread_slave['Last_sql_Errno'] ;
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']              = (empty($thread_slave['Last_Io_Error']))? $thread_slave['Last_Error'] : $thread_slave['Last_io_Error'] ;
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']              = (empty($thread_slave['Last_io_Errno']))? $thread_slave['Last_Errno'] : $thread_slave['Last_io_Errno'] ;
 
                     $res8 = $db->sql_save($mysql_replication_thread);
 
                     if (!$res8) {
+			debug($db->sql_error());
                         throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                     }
+
                 }
             }
 
@@ -402,8 +440,10 @@ GROUP BY table_schema ;';
         }
 
 
-        $this->saveStatus($status, $id_server);
-
+	if (version_compare($mysql_tested->getVersion(), '5.0', '>='))
+	{
+        	$this->saveStatus($status, $id_server);
+	}
         $db->sql_close();
         $mysql_tested->sql_close();
 
@@ -522,14 +562,16 @@ GROUP BY table_schema ;';
         $sql = "SELECT * FROM mysql_status_name";
 
         $index = [];
+	$data = [];
 
         $res = $default->sql_query($sql);
 
         while ($ob = $default->sql_fetch_object($res)) {
             $index[] = $ob->name;
+	    $data[$ob->name]['id'] = $ob->id;
+	    $data[$ob->name]['type'] = $ob->type;
         }
 
-        debug($index);
 
         foreach ($all_status as $name => $status) {
             if (!in_array($name, $index)) {
@@ -538,8 +580,7 @@ GROUP BY table_schema ;';
 
                 $mysql_status_name['mysql_status_name']['name']  = $name;
                 $mysql_status_name['mysql_status_name']['type']  = self::getTypeOfData($status);
-                $mysql_status_name['mysql_status_name']['value'] = $status;
-
+                //$mysql_status_name['mysql_status_name']['value'] = $status;
 
                 $id = $default->sql_save($mysql_status_name);
                 if (!$id) {
@@ -548,14 +589,46 @@ GROUP BY table_schema ;';
 
                     throw new Exception('PMACTRL : Impossible to save');
                 }
+		
             }
         }
+	$this->saveValue($data, $all_status, $id_mysql_server);
+	
     }
 
-    public function saveVariables()
+   public function saveValue($data,$all_status,$id_mysql_server)
     {
-        
+        $db  = $this->di['db']->sql(DB_DEFAULT);
+
+	$tables = array('mysql_status_value_int','mysql_status_value_double','mysql_status_value_text');
+
+        $i = 0;
+        foreach($tables as $table)
+        {
+                $sql[$i] = "INSERT INTO `".$table."` (`id_mysql_server`, `id_mysql_status_name`,`date`, `value`) VALUES ";
+                $i++;
+        }
+
+	$feed = array();
+	$date = date('Y-m-d H:i:s');
+
+        foreach ($all_status as $name => $status)
+        {
+		$feed[$data[$name]['type']][] = "(".$id_mysql_server.",".$data[$name]['id'].",'".$date."','".$status."')";
+        }
+
+	$i = 0;
+	foreach($feed as $tmp)
+	{
+		$req = $sql[$i].implode(',', $tmp). ";";
+		//echo $req."\n";
+		$db->sql_query($req);
+		$i++;
+	}
+
+
     }
+
 
     static private function isFloat($value)
     {
@@ -598,8 +671,6 @@ GROUP BY table_schema ;';
 
     public function testData()
     {
-
-
         $nogood = 0;
 
         $tests  = [1452, 0.125, 254.25, "0.0000", "0.254", "254.25", "15", "1e25", "ggg.ggg", "fghg"];
@@ -611,11 +682,7 @@ GROUP BY table_schema ;';
 
         $i = 0;
         foreach ($tests as $test) {
-
-
             $val = self::getTypeOfData($test);
-
-
 
             if ($val != $result[$i]) {
                 echo "#".$i." -- ".$test.":".$val.":".$result[$i]." no good \n";
@@ -630,64 +697,4 @@ GROUP BY table_schema ;';
             echo "##################### NO GOOD ################";
         }
     }
-
-    /*
-     * CREATE TABLE `mysql_status_value` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_mysql_server` int(11) NOT NULL,
-  `id_mysql_status_name` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `value` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_mysql_status_name` (`id_mysql_status_name`),
-  KEY `id_mysql_server` (`id_mysql_server`),
-  CONSTRAINT `mysql_status_value_ibfk_1` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
-     *
-     *partition by range (timestamp) (
-partition pt1 values less than (1199142000000)
-comment 'host "127.0.0.1", port "16850"',
-partition pt2 values less than (1270072800000)
-comment 'host "127.0.0.1", port "16849"',
-partition pt3 values less than (MAXVALUE)
-comment 'host "127.0.0.1", port "16848"'
-     *
-     * CREATE TABLE `mysql_status_value_int` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_mysql_server` int(11) NOT NULL,
-  `id_mysql_status_name` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `value` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_mysql_status_name_4` (`id_mysql_status_name`),
-  KEY `id_mysql_server_4` (`id_mysql_server`),
-  CONSTRAINT `mysql_status_value_ibfk_4` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
-     *
-     * CREATE TABLE `mysql_status_value_text` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_mysql_server` int(11) NOT NULL,
-  `id_mysql_status_name` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `value` text NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_mysql_status_name_3` (`id_mysql_status_name`),
-  KEY `id_mysql_server_3` (`id_mysql_server`),
-  CONSTRAINT `mysql_status_value_ibfk_3` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
-     *
-     *
-     * CREATE TABLE `mysql_status_value_float` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_mysql_server` int(11) NOT NULL,
-  `id_mysql_status_name` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `value` double NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_mysql_status_name_2` (`id_mysql_status_name`),
-  KEY `id_mysql_server_2` (`id_mysql_server`),
-  CONSTRAINT `mysql_status_value_ibfk_2` FOREIGN KEY (`id_mysql_server`) REFERENCES `mysql_server` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
-     *
-     */
 }
