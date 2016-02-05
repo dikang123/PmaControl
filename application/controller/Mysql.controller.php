@@ -874,6 +874,13 @@ class Mysql extends Controller
                 fwrite($fp, '</table>> ];'.PHP_EOL);
             }
 
+
+            $sql = "SELECT count(1) as cpt FROM information_schema.`tables` where table_name = 'REFERENTIAL_CONSTRAINTS' and table_schema = 'information_schema'";
+	    $res = $db->sql_query($sql);
+	    $ob = $db->sql_fetch_object($res);
+
+	    if ($ob->cpt === "1")
+	    {
             $sql        = "SELECT * FROM information_schema.`REFERENTIAL_CONSTRAINTS`
                 WHERE CONSTRAINT_SCHEMA ='".$param[1]."' AND UNIQUE_CONSTRAINT_SCHEMA ='".$param[1]."'";
             $contraints = $db->sql_fetch_yield($sql);
@@ -889,7 +896,11 @@ class Mysql extends Controller
                 fwrite($fp,
                     "".$contraint['TABLE_NAME']." -> ".$contraint['REFERENCED_TABLE_NAME'].'[ arrowsize="1.5" penwidth="2" fontname="arial" fontsize=8 color="'.$color.'" label =""  edgetarget="" edgeURL=""];'.PHP_EOL);
             }
-
+	    }
+            else
+	    {
+		$data['NO_FK'] = 1; 		
+	    }
 
             fwrite($fp, '}');
             fclose($fp);

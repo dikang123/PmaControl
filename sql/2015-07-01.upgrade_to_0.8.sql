@@ -121,3 +121,30 @@ CREATE TABLE `mysql_status_value_text` (
  `value` double NOT NULL,
  PRIMARY KEY (`id`)
 ) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+UPDATE `menu` SET `active` = '1' WHERE `menu`.`id` = 18;
+
+ALTER TABLE `mysql_database` ADD `tables` INT NOT NULL AFTER `name`;
+ALTER TABLE `mysql_database` ADD `rows` INT NOT NULL AFTER `tables`;
+
+
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`id_mysql_server`);
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`id_mysql_server`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`id_mysql_server`);
+
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`id_mysql_status_name`);
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`id_mysql_status_name`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`id_mysql_status_name`);
+
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`date`);
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`date`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`date`);
+
+
+UPDATE `menu` SET `bg` = '43' WHERE `menu`.`id` = 65;
+UPDATE `menu` SET `bd` = '44' WHERE `menu`.`id` = 65;
+INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `url`, `class`, `position`, `group_id`) VALUES (NULL, '0', '41', '42', '1', '<i class="fa fa-bug" style="font-size:14px"></i> ', 'report a bug', 'https://github.com/Glial/PmaControl/issues', '', '0', '1');
+
+
+ALTER IGNORE TABLE mysql_status_name ADD UNIQUE INDEX (`name`);

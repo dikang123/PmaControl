@@ -272,6 +272,8 @@ class Agent extends Controller
 sum( data_length ) as "data",
 sum( index_length ) as "index",
 sum( data_free ) as "data_free" ,
+count(1) as "tables",
+sum(TABLE_ROWS) as "rows",
 DEFAULT_CHARACTER_SET_NAME,
 DEFAULT_COLLATION_NAME
 FROM information_schema.TABLES a
@@ -285,6 +287,7 @@ GROUP BY table_schema ;';
             $schema[$ob['table_schema']] = $ob;
         }
 }
+
 
         try {
             
@@ -358,6 +361,8 @@ GROUP BY table_schema ;';
 
                 $mysql_database['mysql_database']['id_mysql_server']    = $id_server;
                 $mysql_database['mysql_database']['name']               = $database['table_schema'];
+                $mysql_database['mysql_database']['tables']             = $database['tables'];
+                $mysql_database['mysql_database']['rows']               = $database['rows'];
                 $mysql_database['mysql_database']['data_length']        = $database['data'];
                 $mysql_database['mysql_database']['data_free']          = $database['data_free'];
                 $mysql_database['mysql_database']['index_length']       = $database['index'];
@@ -389,7 +394,6 @@ GROUP BY table_schema ;';
             if ($slave) {
 
 
-	debug($slave);
                 foreach ($slave as $thread_slave) {
 
 

@@ -458,7 +458,7 @@ class Install extends Controller
 
 
             $rl       = new Hoa\Console\Readline\Readline ();
-            $database = $rl->readLine('User     [default : pmacontrol]    : ');
+            $database = $rl->readLine('Database     [default : pmacontrol]    : ');
 
             if (empty($database)) {
                 $database = "pmacontrol";

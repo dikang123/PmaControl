@@ -15,6 +15,8 @@
         "ext-gd" : "*",
         "ext-mcrypt" : "*",
         "ext-mysqlnd" : "*",
+        "ext-curl" : "*",
+        "ext-ssh2" : "*",
         "glial/glial": "4.1.*",
         "phpunit/phpunit": "3.7.*",
         "sensiolabs/ansi-to-html": "1.1.1",
