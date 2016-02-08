@@ -148,7 +148,7 @@ class Agent extends Controller
         $db->sql_close();
 
         //$maxThreads = \Glial\System\Cpu::getCpuCores();
-        $maxThreads      = 10; // check MySQL server 50 by 50
+        $maxThreads      = 3; // check MySQL server 50 by 50
         $openThreads     = 0;
         $child_processes = array();
 
