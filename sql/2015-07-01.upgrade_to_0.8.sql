@@ -148,3 +148,5 @@ INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `u
 
 
 ALTER IGNORE TABLE mysql_status_name ADD UNIQUE INDEX (`name`);
+
+ALTER TABLE `mysql_server` ADD `date_refresh` DATETIME NOT NULL AFTER `error`;

@@ -8,7 +8,7 @@ use \Glial\Net\Ssh;
 
 use \Glial\Security\Crypt\Crypt;
 
-class Server extends Controller
+class Spider extends Controller
 {
 
     //dba_source
