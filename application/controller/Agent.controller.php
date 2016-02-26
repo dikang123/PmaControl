@@ -4,6 +4,8 @@ use \Glial\Synapse\Controller;
 use \Glial\Cli\SetTimeLimit;
 use \Glial\Cli\Color;
 use \Glial\Security\Crypt\Crypt;
+use \Glial\I18n\I18n;
+
 
 class Agent extends Controller
 {
@@ -14,11 +16,13 @@ class Agent extends Controller
     function start($param)
     {
         $id_daemon = $param[0];
+	$id_daemon = 1;
+
         $db = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
         $this->layout_name = false;
 
-        $sql = "SELECT * FROM daemon where id ='" . $id_daemon . "'";
+        $sql = "SELECT * FROM daemon_main where id ='" . $id_daemon . "'";
         $res = $db->sql_query($sql);
 
         if ($db->sql_num_rows($res) !== 1) {
@@ -43,7 +47,7 @@ class Agent extends Controller
             $pid = shell_exec($cmd);
 
 
-            $sql = "UPDATE daemon SET pid ='" . $pid . "',log_file='" . $log_file . "' WHERE id = '" . $id_daemon . "'";
+            $sql = "UPDATE daemon_main SET pid ='" . $pid . "',log_file='" . $log_file . "' WHERE id = '" . $id_daemon . "'";
             $db->sql_query($sql);
 
             $msg = I18n::getTranslation(__("The cleaner id (" . $id_daemon . ") successfully started with") . " pid : " . $pid);
@@ -52,7 +56,7 @@ class Agent extends Controller
             header("location: " . LINK . $this->url);
         } else {
 
-            $msg = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ") . "'" . $id_daemon . "'" . " (" . __("Already running !") . ")");
+            $msg = I18n::getTranslation(__("Impossible to launch the daemon with the id : ") . "'" . $id_daemon . "'" . " (" . __("Already running !") . ")");
             $title = I18n::getTranslation(__("Error"));
             set_flash("caution", $title, $msg);
             header("location: " . LINK . $this->url);
@@ -62,15 +66,17 @@ class Agent extends Controller
     function stop($param)
     {
         $id_daemon = $param[0];
+	$id_daemon = 1;
+
         $db = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
         $this->layout_name = false;
 
-        $sql = "SELECT * FROM daemon where id ='" . $id_daemon . "'";
+        $sql = "SELECT * FROM daemon_main where id ='" . $id_daemon . "'";
         $res = $db->sql_query($sql);
 
         if ($db->sql_num_rows($res) !== 1) {
-            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the id : ") . "'" . $id_daemon . "'");
+            $msg = I18n::getTranslation(__("Impossible to find the daemon with the id : ") . "'" . $id_daemon . "'");
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
             header("location: " . LINK . $this->url);
@@ -80,26 +86,26 @@ class Agent extends Controller
         $ob = $db->sql_fetch_object($res);
 
         if ($this->isRunning($ob->pid)) {
-            $msg = I18n::getTranslation(__("The cleaner with pid : '" . $ob->pid . "' successfully stopped "));
+            $msg = I18n::getTranslation(__("The daemon with pid : '" . $ob->pid . "' successfully stopped "));
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
 
             $cmd = "kill " . $ob->pid;
             shell_exec($cmd);
-            shell_exec("echo '[" . date("Y-m-d H:i:s") . "] CLEANER STOPED !' >> " . $ob->log_file);
+            shell_exec("echo '[" . date("Y-m-d H:i:s") . "] DAEMON STOPED !' >> " . $ob->log_file);
         } else {
-            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ") . "'" . $ob->pid . "'");
-            $title = I18n::getTranslation(__("Cleaner was already stopped or in error"));
+            $msg = I18n::getTranslation(__("Impossible to find the daemon with the pid : ") . "'" . $ob->pid . "'");
+            $title = I18n::getTranslation(__("Daemon was already stopped or in error"));
             set_flash("caution", $title, $msg);
         }
 
         sleep(1);
 
         if (!$this->isRunning($ob->pid)) {
-            $sql = "UPDATE daemon SET pid ='0' WHERE id = '" . $id_daemon . "'";
+            $sql = "UPDATE daemon_main SET pid ='0' WHERE id = '" . $id_daemon . "'";
             $db->sql_query($sql);
         } else {
-            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "' . $ob->pid . '"');
+            throw new Exception('PMACTRL-876 : Impossible to stop daemon with pid : "' . $ob->pid . '"');
         }
 
         header("location: " . LINK . $this->url);
@@ -107,12 +113,17 @@ class Agent extends Controller
 
     public function launch($id)
     {
-        
+    	while (true)
+	{
+		$this->testAllMysql();
+		sleep(1);
+		
+	}    
     }
 
     public function getMysqlInfo()
     {
-        
+    	   
     }
 
     /**
@@ -149,7 +160,7 @@ class Agent extends Controller
         $db->sql_close();
 
         //$maxThreads = \Glial\System\Cpu::getCpuCores();
-        $maxThreads = 3; // check MySQL server 50 by 50
+        $maxThreads = 8; // check MySQL server 50 by 50
         $openThreads = 0;
         $child_processes = array();
 
@@ -277,7 +288,7 @@ DEFAULT_COLLATION_NAME
 FROM information_schema.TABLES a
 INNER JOIN information_schema.SCHEMATA b ON a.table_schema = b.SCHEMA_NAME
 GROUP BY table_schema ;';
-
+		//@bug : can crash MySQL have to see : https://mariadb.atlassian.net/browse/MDEV-9631
 
             $schema = [];
             $res5 = $mysql_tested->sql_query($sql);
@@ -514,7 +525,7 @@ GROUP BY table_schema ;';
         $db = $this->di['db']->sql(DB_DEFAULT);
 
 
-        $sql = "SELECT * FROM `daemon` order by id";
+        $sql = "SELECT * FROM `daemon_main` order by id";
 
         $res = $db->sql_query($sql);
 

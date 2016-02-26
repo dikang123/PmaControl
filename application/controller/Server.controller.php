@@ -170,7 +170,7 @@ class Server extends Controller
 		
 		$db = $this->di['db']->sql(DB_DEFAULT);
 		
-		$sql = "SELECT a.id,a.name,a.ip,a.port, 
+		$sql = "SELECT a.id,a.name,a.ip,a.port,a.error,
 			GROUP_CONCAT('',b.name) as dbs,
 			GROUP_CONCAT('',b.id) as id_db,
 			GROUP_CONCAT('',b.data_length) as data_length,

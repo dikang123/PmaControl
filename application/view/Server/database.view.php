@@ -109,7 +109,12 @@ foreach ($data['servers'] as $server) {
 		}
 		$j++;
 		echo '<td style="'.$style.'">'.$j.'</td>';
-		echo '<td style="'.$style.'"><a href="'.LINK.'Mysql/mpd/'.str_replace('_', '-', $server['name']).'/'.$databases[$k].'/"><img src="'.IMG.'main/dot.gif" title="Designer" alt="Designer" class="icon ic_b_relations"></a> ';
+		echo '<td style="'.$style.'">';
+
+		if (empty($server['error']))
+		{
+			echo '<a href="'.LINK.'Mysql/mpd/'.str_replace('_', '-', $server['name']).'/'.$databases[$k].'/"><img src="'.IMG.'main/dot.gif" title="Designer" alt="Designer" class="icon ic_b_relations"></a> ';
+		}
 		echo '<a href="'.LINK.'">'.$databases[$k].'</a></td>';
 		echo '<td style="'.$style.'">'.$tables[$k].'</td>';
 		echo '<td style="'.$style.'">'.number_format ( $rows[$k], 0 , "." , " " ).'</td>';
