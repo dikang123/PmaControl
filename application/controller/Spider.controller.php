@@ -15,7 +15,7 @@ class Spider extends Controller
 
 	public function index()
 	{
-		$this->title  = '<img src="/pmacontrol/image/main/spider.png" height="16" width="16px">'."Spider";
+		$this->title  = '<img src="/pmacontrol/image/main/spider-icon32.png" height="16" width="16px">'."Spider";
 		$this->ariane = '> <i style="font-size: 16px" class="fa fa-puzzle-piece"></i> Plugins > '.$this->title;
 
 

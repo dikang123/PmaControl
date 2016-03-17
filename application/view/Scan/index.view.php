@@ -35,6 +35,9 @@
             echo '</thead>';
             $i = 0;
 
+
+	if (!empty($data['scan']['host']))
+	{
             echo '<tbody>';
             foreach ($data['scan']['host'] as $line) {
                 $is_mysql = false;
@@ -108,6 +111,7 @@
                 echo '</tr>';
             }
             echo '</tbody>';
+	}
             ?>
         </table>
     </div>

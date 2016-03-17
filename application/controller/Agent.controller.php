@@ -5,15 +5,35 @@ use \Glial\Cli\SetTimeLimit;
 use \Glial\Cli\Color;
 use \Glial\Security\Crypt\Crypt;
 use \Glial\I18n\I18n;
+use \Glial\Synapse\Basic;
 
+use \Monolog\Logger;
+use \Monolog\Formatter\LineFormatter;
+use \Monolog\Handler\StreamHandler;
 
 class Agent extends Controller
 {
 
     var $debug = false;
     var $url = "server/listing/";
+    var $log_file = TMP . "log/daemon.log";
+    var $logger;
 
-    function start($param)
+	public function before($param)
+	{
+		$logger = new Logger('Daemon');
+
+		$file_log = $this->log_file;
+
+		$handler = new StreamHandler($file_log, Logger::INFO);
+		$handler->setFormatter(new LineFormatter(null, null, false, true));
+		$logger->pushHandler($handler);
+		$this->logger = $logger;	
+	}
+
+
+
+    public function start($param)
     {
         $id_daemon = $param[0];
 	$id_daemon = 1;
@@ -41,22 +61,23 @@ class Agent extends Controller
 
             //todo add error flux in the log
 
-            $log_file = TMP . "log/daemon_" . $ob->id . ".log";
-
-            $cmd = $php . " " . GLIAL_INDEX . " Agent launch " . $id_daemon . " >> " . $log_file . " & echo $!";
+            $cmd = $php . " " . GLIAL_INDEX . " Agent launch " . $id_daemon . " >> " . $this->log_file . " & echo $!";
             $pid = shell_exec($cmd);
+	
+	    $this->logger->info(Color::getColoredString('Started daemon with pid : '.$pid,"white","green"));
 
-
-            $sql = "UPDATE daemon_main SET pid ='" . $pid . "',log_file='" . $log_file . "' WHERE id = '" . $id_daemon . "'";
+            $sql = "UPDATE daemon_main SET pid ='" . $pid . "',log_file='" . $this->log_file . "' WHERE id = '" . $id_daemon . "'";
             $db->sql_query($sql);
 
-            $msg = I18n::getTranslation(__("The cleaner id (" . $id_daemon . ") successfully started with") . " pid : " . $pid);
+            $msg = I18n::getTranslation(__("The daemon successfully started with") . " pid : " . $pid);
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
             header("location: " . LINK . $this->url);
         } else {
+	    
+	    $this->logger->info(Color::getColoredString('Impossible to start daemon (Already running)',"yellow"));
 
-            $msg = I18n::getTranslation(__("Impossible to launch the daemon with the id : ") . "'" . $id_daemon . "'" . " (" . __("Already running !") . ")");
+            $msg = I18n::getTranslation(__("Impossible to launch the daemon ")."(" . __("Already running !") . ")");
             $title = I18n::getTranslation(__("Error"));
             set_flash("caution", $title, $msg);
             header("location: " . LINK . $this->url);
@@ -92,8 +113,12 @@ class Agent extends Controller
 
             $cmd = "kill " . $ob->pid;
             shell_exec($cmd);
-            shell_exec("echo '[" . date("Y-m-d H:i:s") . "] DAEMON STOPED !' >> " . $ob->log_file);
+            //shell_exec("echo '[" . date("Y-m-d H:i:s") . "] DAEMON STOPPED !' >> " . $ob->log_file);
+
+	    $this->logger->info(Color::getColoredString('Stopped daemon with the pid : '.$ob->pid,"white","red"));
         } else {
+     
+	    $this->logger->info(Color::getColoredString('Impossible to find the daemon with the pid : '.$pid,"yellow"));
             $msg = I18n::getTranslation(__("Impossible to find the daemon with the pid : ") . "'" . $ob->pid . "'");
             $title = I18n::getTranslation(__("Daemon was already stopped or in error"));
             set_flash("caution", $title, $msg);
@@ -105,6 +130,7 @@ class Agent extends Controller
             $sql = "UPDATE daemon_main SET pid ='0' WHERE id = '" . $id_daemon . "'";
             $db->sql_query($sql);
         } else {
+	    $this->logger->info(Color::getColoredString('Impossible to stop daemon with pid : '.$pid,"white","red"));
             throw new Exception('PMACTRL-876 : Impossible to stop daemon with pid : "' . $ob->pid . '"');
         }
 
@@ -113,12 +139,11 @@ class Agent extends Controller
 
     public function launch($id)
     {
-    	while (true)
-	{
+	while(1)
+	{	
 		$this->testAllMysql();
-		sleep(1);
-		
-	}    
+		sleep(4);
+	}
     }
 
     public function getMysqlInfo()
@@ -137,7 +162,11 @@ class Agent extends Controller
      */
     public function testAllMysql($param)
     {
-        if (!empty($param)) {
+
+
+
+
+	if (!empty($param)) {
             foreach ($param as $elem) {
                 if ($elem == "--debug") {
                     $this->debug = true;
@@ -145,6 +174,11 @@ class Agent extends Controller
                 }
             }
         }
+	
+	if ($this->debug)
+	{
+		echo "[".date('Y-m-d H:i:s')."]"." Start all tests\n";
+	}
 
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -160,7 +194,7 @@ class Agent extends Controller
         $db->sql_close();
 
         //$maxThreads = \Glial\System\Cpu::getCpuCores();
-        $maxThreads = 8; // check MySQL server 50 by 50
+        $maxThreads = 50; // check MySQL server 50 by 50
         $openThreads = 0;
         $child_processes = array();
 
@@ -191,6 +225,7 @@ class Agent extends Controller
                 //we want that child exit the foreach
                 break;
             }
+	    usleep(100);
         }
 
         if ($father) {
@@ -199,8 +234,16 @@ class Agent extends Controller
                 $childPid = pcntl_wait($status);
                 unset($child_processes[$childPid]);
             }
-            echo "All child termined !\n";
+		
+		if ($this->debug)
+        	{
+			echo "[".date('Y-m-d H:i:s')."]"." All tests termined\n";
+		}
         }
+	else
+	{
+		exit;
+	}
     }
 
     /**
@@ -217,7 +260,9 @@ class Agent extends Controller
         $this->view = false;
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
-        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), 100);
+
+	$max_execution_time = 3; // in seonceds
+        $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), $max_execution_time);
 
         if (!SetTimeLimit::exitWithoutError($ret)) {
             /* in case of somthing wrong :
@@ -227,7 +272,14 @@ class Agent extends Controller
              * error in PHP script
              */
             $db = $this->di['db']->sql(DB_DEFAULT);
-            $sql = "UPDATE mysql_server SET `error`='" . $db->sql_real_escape_string($ret['stdout']) . "', `date_refresh`='".date("Y-m-d H:i:s")."' where id = '" . $server['id'] . "'";
+            	
+		//in case of no answer provided we create a msg of error
+		if (empty($ret['stdout']))
+		{
+			$ret['stdout'] = "[".date("Y-m-d H:i:s")."]"." Server MySQL didn't answered in time (delay max : ".$max_execution_time." seconds)";
+		}
+
+	    $sql = "UPDATE mysql_server SET `error`='" . $db->sql_real_escape_string($ret['stdout']) . "', `date_refresh`='".date("Y-m-d H:i:s")."' where id = '" . $server['id'] . "'";
             $db->sql_query($sql);
 
             //echo $sql . "\n";
@@ -536,9 +588,18 @@ GROUP BY table_schema ;';
         $this->set('data', $data);
     }
 
-    private function isRunning($pid)
+    private function isRunning($param)
     {
-        if (empty($pid)) {
+       	if (is_array($param)) 
+	{
+		$pid = $param[0];
+	}
+	else
+	{
+		$pid = $param;
+	}
+
+	if (empty($pid)) {
             return false;
         }
         $cmd = "ps -p " . $pid;
@@ -697,5 +758,20 @@ GROUP BY table_schema ;';
             echo "##################### NO GOOD ################";
         }
     }
+	
+	public function logs()
+	{
+	$this->di['js']->code_javascript("var objDiv = document.getElementById('data_log'); objDiv.scrollTop = objDiv.scrollHeight;");
 
+		$db = $this->di['db']->sql(DB_DEFAULT);	
+		$sql = "SELECT * FROM `daemon_main` WHERE id =1";
+		$res = $db->sql_query($sql);
+		$ob  = $db->sql_fetch_object($res);
+		
+
+		$data['log_file'] = $ob->log_file;
+		$data['log'] = file_get_contents($ob->log_file);
+		
+		$this->set('data',$data);
+	}
 }

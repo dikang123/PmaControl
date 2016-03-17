@@ -67,7 +67,7 @@ class Compare extends Controller
         $this->di['js']->addJavascript(array("jquery-latest.min.js", "jquery.browser.min.js",
             "jquery.autocomplete.min.js", "compare/index.js"));
 
-        $sql     = "SELECT * FROM mysql_server order by `name`";
+        $sql     = "SELECT * FROM mysql_server WHERE `error` = '' order by `name`";
         $servers = $db->sql_fetch_yield($sql);
 
         $data['server'] = [];

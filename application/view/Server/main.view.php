@@ -8,7 +8,7 @@ $converter = new AnsiToHtmlConverter();
 
 
 
-echo '<table class="table table-bordered table-striped" id="table">';
+echo '<table class="table table-condensed table-bordered table-striped" id="table">';
 
 
 echo '<tr>';

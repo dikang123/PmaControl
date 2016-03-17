@@ -110,25 +110,51 @@ class Server extends Controller
 
     public function listing($param)
     {
-	$data['menu'][0]['name'] = __('Servers');
-	$data['menu'][0]['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-	$data['menu'][0]['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
 
-	$data['menu'][1]['name'] = __('Databases');
-	$data['menu'][1]['icone'] = '<i class="fa fa-database fa-lg"></i>';
-	$data['menu'][1]['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/database';
 
-	$data['menu'][2]['name'] = __('Statistics');
-	$data['menu'][2]['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
-	$data['menu'][2]['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/statistics';
 
-//	$data['menu'][3]['name'] = __('Hardware');
-//	$data['menu'][3]['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-//	$data['menu'][3]['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/hardware';
+	
+	$db = $this->di['db']->sql(DB_DEFAULT);
+
+	$sql = "SELECT * FROM daemon_main WHERE id=1";
+	$res = $db->sql_query($sql);
+
+	$ob = $db->sql_fetch_object($res);
+
+	$data['pid'] = $ob->pid;
+	$data['date'] = $ob->date;
+	$data['log_file'] = $ob->log_file;
+
+
+
+	$data['menu']['main']['name'] = __('Servers');
+	$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+	$data['menu']['main']['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
+
+	$data['menu']['database']['name'] = __('Databases');
+	$data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
+	$data['menu']['database']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/database';
+
+	$data['menu']['statistics']['name'] = __('Statistics');
+	$data['menu']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
+	$data['menu']['statistics']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/statistics';
+
+	$data['menu']['memory']['name'] = __('Memory');
+	$data['menu']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
+	$data['menu']['memory']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/memory';
+
+	$data['menu']['index']['name'] = __('Index');
+	$data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
+	$data['menu']['index']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
+	
+	$data['menu']['logs']['name'] = __('Logs');
+	$data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+	$data['menu']['logs']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
+
 
 	if (!empty($param[0]))
 	{
-		if (in_array($param[0], array("main","database","statistics")))
+		if (in_array($param[0], array("main","database","statistics","logs","memory","index")))
 		{
 			$_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
 		}
@@ -136,13 +162,19 @@ class Server extends Controller
 
 	if (empty($_GET['path']) && empty($param[0]))
 	{
-		$_GET['path'] = $data['menu'][0]['path'];
+		$_GET['path'] = $data['menu']['main']['path'];
+		$param[0] = 'main';
 	}
 
 	if (empty($_GET['path']))
 	{
 		$_GET['path'] = 'main';
 	}
+
+
+	$this->title = __("Dashboard");
+	$this->ariane = ' > <a href⁼"">'.$this->title.'</a> > '.$data['menu'][$param[0]]['icone'].' '.$data['menu'][$param[0]]['name'];
+
 
         $this->set('data', $data);
     }
@@ -239,4 +271,59 @@ and l.name = "Threads_connected"
 		$this->set('data',$data);
 	}
 
+
+
+	public function logs()
+	{
+		//used with recursive
+	}
+
+
+	public function memory()
+	{
+	$this->layout_name = 'pmacontrol';
+        $this->title = __("Memory");
+        $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
+
+        $default = $this->di['db']->sql(DB_DEFAULT);
+        $sql = "SELECT * FROM mysql_server a
+            INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server 
+            WHERE is_available = 1 
+            order by a.`name`";
+        $res50 = $default->sql_query($sql);
+
+        while ($ob50 = $default->sql_fetch_object($res50)) {
+            $db = $this->di['db']->sql($ob50->name);
+            $data['variables'][$ob50->name] = $db->getVariables();
+        }
+        $this->set('data', $data);
+
+	}
+
+	
+	public function index()
+	{
+	$this->layout_name = 'pmacontrol';
+
+        $this->title = __("Index usage");
+        $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
+
+        $default = $this->di['db']->sql(DB_DEFAULT);
+        $sql = "SELECT * FROM mysql_server a
+            INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server
+            WHERE is_available = 1
+            order by `name`";
+        $res50 = $default->sql_query($sql);
+
+        $data = [];
+        while ($ob50 = $default->sql_fetch_object($res50)) {
+
+            $db = $this->di['db']->sql($ob50->name);
+            $data['status'][$ob50->name] = $db->getStatus();
+
+        }
+
+
+        $this->set('data', $data);
+	}
 }
