@@ -8,7 +8,7 @@
  */
 
 if (!defined('AUTH_SESSION_TIME')) {
-    define("AUTH_SESSION_TIME",86400);
+    define("AUTH_SESSION_TIME",31536000);
 }
 
 

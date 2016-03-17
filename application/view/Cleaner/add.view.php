@@ -15,7 +15,8 @@ use Glial\Html\Form\Form;
 
         <div class="row">
             <div class="col-md-4"><?= __("Cleaner's name") ?></div>
-            <div class="col-md-4"><?= Form::input("cleaner_main", "libelle", array("class" => "form-control", "placeholder" => "Name of the cleaner you want to add")) ?></div>
+            <div class="col-md-4"><?= Form::input("cleaner_main", "libelle",
+    array("class" => "form-control", "placeholder" => "Name of the cleaner you want to add")) ?></div>
             <div class="col-md-4"></div>
         </div>
 
@@ -46,7 +47,8 @@ use Glial\Html\Form\Form;
 
         <div class="row">
             <div class="col-md-4"><?= __("Query") ?></div>
-            <div class="col-md-7"><?= Form::input("cleaner_main", "query", array("class" => "form-control", "placeholder" => "(ETAT = 'PO' OR ETAT = 'QO') and DATE_PASSAGE <= DATE_ADD(now(), INTERVAL - 14 DAY) LIMIT 100")) ?></div>
+            <div class="col-md-7"><?= Form::input("cleaner_main", "query",
+            array("class" => "form-control", "placeholder" => "(ETAT = 'PO' OR ETAT = 'QO') and DATE_PASSAGE <= DATE_ADD(now(), INTERVAL - 14 DAY) LIMIT 100")) ?></div>
             <div class="col-md-1"></div>
         </div>
         <div class="row">
@@ -57,12 +59,14 @@ use Glial\Html\Form\Form;
 
         <div class="row">
             <div class="col-md-4"><?= __("Database use for cleaning") ?></div>
-            <div class="col-md-4"><?= Form::input("cleaner_main", "cleaner_db", array("class" => "form-control", "placeholder" => "This database will store tmp tables used for cleaning, take care with replication.")) ?></div>
+            <div class="col-md-4"><?= Form::input("cleaner_main", "cleaner_db",
+            array("class" => "form-control", "placeholder" => "This database will store tmp tables used for cleaning, take care with replication.")) ?></div>
             <div class="col-md-4"></div>
         </div>
         <div class="row">
             <div class="col-md-4"><?= __("Prefix for tables used for clean") ?></div>
-            <div class="col-md-4"><?= Form::input("cleaner_main", "prefix", array("class" => "form-control", "placeholder" => "The prefix is the solution if you want store tmp table in same database.")) ?></div>
+            <div class="col-md-4"><?= Form::input("cleaner_main", "prefix",
+            array("class" => "form-control", "placeholder" => "The prefix is the solution if you want store tmp table in same database.")) ?></div>
             <div class="col-md-4"></div>
         </div>
 
@@ -100,7 +104,7 @@ use Glial\Html\Form\Form;
 
             </div>   
             <div class="col-md-1">
-                <?= __('Tools'); ?>
+<?= __('Tools'); ?>
             </div>
 
         </div>  
@@ -120,12 +124,18 @@ use Glial\Html\Form\Form;
                         <div class="row">
 
 
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_schema", $data, "", array("class" => "form-control schema constraint"), 1) ?></div>
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_table", $data, "", array("class" => "form-control tables constraint"), 1) ?></div>
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_column", $data, "", array("class" => "form-control column constraint"), 1) ?></div>
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_schema", $data, "", array("class" => "form-control schema referenced"), 1) ?></div>
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_table", $data, "", array("class" => "form-control tables referenced"), 1) ?></div>
-                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_column", $data, "", array("class" => "form-control column referenced"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_schema", $data, "",
+                        array("class" => "form-control schema constraint"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_table", $data, "",
+                        array("class" => "form-control tables constraint"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "constraint_column", $data, "",
+                        array("class" => "form-control column constraint"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_schema", $data, "",
+                        array("class" => "form-control schema referenced"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_table", $data, "",
+                        array("class" => "form-control tables referenced"), 1) ?></div>
+                            <div class="col-md-2"><?= Form::select("cleaner_foreign_key", "referenced_column", $data, "",
+                        array("class" => "form-control column referenced"), 1) ?></div>
 
                         </div>
                     </div>

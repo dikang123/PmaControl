@@ -72,3 +72,81 @@ ALTER TABLE `menu`
 ALTER TABLE `menu`
   MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
+
+
+
+update `menu` set bg=bg+1, bd=bd+1 where `group_id` =1 and bd > 38;
+
+
+INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `url`, `class`, `position`, `group_id`) VALUES (NULL, '0', '39', '40', '1', '<i class="glyphicon glyphicon-transfer" style="font-size:12px"></i>', 'Scan network', '{LINK}scan/index/', '', '0', '1');
+
+UPDATE `menu` SET `icon` = '<span class="glyphicon glyphicon-search" aria-hidden="true"></span>' WHERE `menu`.`id` = 67;
+
+
+CREATE TABLE `mysql_status_name` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `name` varchar(64) NOT NULL,
+ `type` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+ALTER TABLE `mysql_server` ADD `error` TEXT NOT NULL AFTER `kernel`;
+
+
+CREATE TABLE `mysql_status_value_double` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE `mysql_status_value_int` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `mysql_status_value_text` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `id_mysql_server` int(11) NOT NULL,
+ `id_mysql_status_name` int(11) NOT NULL,
+ `date` datetime NOT NULL,
+ `value` double NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=TokuDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+UPDATE `menu` SET `active` = '1' WHERE `menu`.`id` = 18;
+
+ALTER TABLE `mysql_database` ADD `tables` INT NOT NULL AFTER `name`;
+ALTER TABLE `mysql_database` ADD `rows` INT NOT NULL AFTER `tables`;
+
+
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`id_mysql_server`);
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`id_mysql_server`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`id_mysql_server`);
+
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`id_mysql_status_name`);
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`id_mysql_status_name`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`id_mysql_status_name`);
+
+ALTER TABLE `mysql_status_value_int` ADD INDEX(`date`);
+ALTER TABLE `mysql_status_value_double` ADD INDEX(`date`);
+ALTER TABLE `mysql_status_value_text` ADD INDEX(`date`);
+
+
+UPDATE `menu` SET `bg` = '43' WHERE `menu`.`id` = 65;
+UPDATE `menu` SET `bd` = '44' WHERE `menu`.`id` = 65;
+INSERT INTO `menu` (`id`, `parent_id`, `bg`, `bd`, `active`, `icon`, `title`, `url`, `class`, `position`, `group_id`) VALUES (NULL, '0', '41', '42', '1', '<i class="fa fa-bug" style="font-size:14px"></i> ', 'report a bug', 'https://github.com/Glial/PmaControl/issues', '', '0', '1');
+
+
+ALTER IGNORE TABLE mysql_status_name ADD UNIQUE INDEX (`name`);
+
+ALTER TABLE `mysql_server` ADD `date_refresh` DATETIME NOT NULL AFTER `error`;

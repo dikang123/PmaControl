@@ -1,21 +1,22 @@
 <?php
 
 
+if (!empty($data['NO_FK']))
+{
+	?>
+	<div class="well" style="border-left-color: #d9534f;   border-left-width: 5px;">
+	<p><b>IMPORTANT !!!</b></p>
+	Your server doesn't support the foreign keys, you need to upgrade to MySQL 5.1 to get it.
+	</div>	
+	<?php
+}
 
 
-$svg = 'tmp/replication.svg';
-//echo '<div style="background: url('.IMG.$svg.')"></div>';
-	
-
-//echo '<embed src="'.IMG.$svg.'" type="image/svg+xml" />';
 
 $filename = $data['file'];
-
-
 echo '<div id="svg">';
 
 $handle = fopen($filename, "r");
-
 $remove = true;
 
 if ($handle) {
@@ -34,6 +35,5 @@ if ($handle) {
     }
     fclose($handle);
 }
-
 
 echo '</div>';

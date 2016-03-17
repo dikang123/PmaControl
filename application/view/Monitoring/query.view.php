@@ -12,13 +12,16 @@ echo '<div class="well">';
 echo '<form action="" method="post" class="form-inline">';
 echo '<div class="form-group">';
 
-echo Form::select('mysql_server', 'id', $data['server_mysql'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
+\Glial\Synapse\FactoryController::addNode("Common", "getSelectServerAvailable", array());
+//echo Form::select('mysql_server', 'id', $data['server_mysql'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
 
 //class="form-control"
 
 
 if ($data['performance_schema']) {
     echo ' ';
+
+
     echo Form::select('database', 'id', $data['databases'], "", array('style' => 'margin-bottom:0px', 'class' => 'form-control'));
     echo ' ';
     echo Form::input('database', 'filter', array('style' => 'margin-bottom:0px', 'placeholder' => __("Filter"), 'class' => 'form-control'));
@@ -54,7 +57,7 @@ if ($data['performance_schema']) {
     echo '</div>';
 
 
-    echo '<table class="table table-condensed">';
+    echo '<table class="table table-condensed table-bordered table-striped">';
 
 
     echo '<tr>';

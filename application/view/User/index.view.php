@@ -5,7 +5,7 @@ use \Glial\Html\Form\Form;
 //http://www.estrildidae.net/fr/user/confirmation/claude.festor@free.fr/498c2742abf4e0f396188cdfe779ca91b4531782
 
 echo '<form action="'.LINK.'user/update_idgroup" method="post">';
-echo "<table class=\"table\" width=\"100%\">";
+echo "<table class=\"table table-bordered table-striped\" width=\"100%\">";
     echo "<tr>";
     echo "<th>".__("Top")."</th>";
     echo "<th>".__("Location")."</th>";

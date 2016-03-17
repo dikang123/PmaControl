@@ -56,6 +56,21 @@ cp -a config_sample/translation.config.php configuration/translation.config.php
 
 chmod 777 -R tmp/
 
+## disable support for transparent hugepages in Linux for TokuDB
+#redhat
+if test -f /sys/kernel/mm/redhat_transparent_hugepage/enabled; then
+	echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled
+fi
+
+#centos & debian
+if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
+   echo never > /sys/kernel/mm/transparent_hugepage/enabled
+fi
+if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
+   echo never > /sys/kernel/mm/transparent_hugepage/defrag
+fi
+
+
 php application/webroot/index.php install index
 php application/webroot/index.php install createAdmin
 

@@ -359,6 +359,7 @@ class Install extends Controller
         $this->cadre("Select MySQL server for PmaControl");
         $server = $this->testMysqlServer();
 
+	sleep(1);
         $this->importData($server);
         $this->updateConfig($server);
         $this->updateCache();
@@ -434,7 +435,7 @@ class Install extends Controller
                 $user = "root";
             }
 
-            $link = @mysqli_connect($hostname.":".$port, $user, trim($password));
+            $link = mysqli_connect($hostname.":".$port, $user, trim($password));
 
             if ($link) {
                 $good = true;
@@ -445,6 +446,8 @@ class Install extends Controller
                 //echo "credential (".$user." // ".$password.")\n";
                 echo str_repeat("-", 80)."\n";
             }
+
+	    sleep(1);
         } while ($good === false);
 
         // check database
@@ -455,7 +458,7 @@ class Install extends Controller
 
 
             $rl       = new Hoa\Console\Readline\Readline ();
-            $database = $rl->readLine('User     [default : pmacontrol]    : ');
+            $database = $rl->readLine('Database     [default : pmacontrol]    : ');
 
             if (empty($database)) {
                 $database = "pmacontrol";
@@ -499,7 +502,6 @@ class Install extends Controller
         $mysql['user']     = $user;
         $mysql['password'] = $password;
         $mysql['database'] = $database;
-
         return $mysql;
     }
 

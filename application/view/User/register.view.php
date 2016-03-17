@@ -84,4 +84,3 @@ echo "<div class=\"form-actions\" style=\"margin:0\"><input class=\"btn btn-prim
 echo "</div>";
 
 echo "</form>";
-

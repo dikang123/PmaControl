@@ -1,81 +1,68 @@
 <?php
-
 use \Glial\Synapse\FactoryController;
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-echo '<table class="table table-bordered table-striped" id="table">';
+?>
+<div class="well">
+    <?php
+    echo ' <div class="btn-group" role="group" aria-label="Default button group">';
 
 
-echo '<tr>';
+	unset($data['menu']['logs']);
 
-echo '<th>'.__("Top").'</th>';
-echo '<th>'.__("ID").'</th>';
-echo '<th>'.__("Available").'</th>';
-echo '<th>'.__("Name").'</th>';
-echo '<th>'.__("IP").'</th>';
-echo '<th>'.__("Hostname").'</th>';
-echo '<th>'.__("Version").'</th>';
+    foreach ($data['menu'] as $key => $elem) {
+        if ($_GET['path'] == $elem['path']) {
+            $color = "btn-primary";
+        } else {
+            $color = "btn-default";
+        }
 
-echo '<th>'.__("Operations system").'</th>';
-echo '<th>'.__("Product name").'</th>';
-echo '<th>'.__("Arch").'</th>';
-echo '<th>'.__("Kernel").'</th>';
-echo '<th>'.__("Processor").'</th>';
-echo '<th>'."Mhz".'</th>';
-
-echo '<th>'.__("Memory").'</th>';
-echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">'.__("Indice").'</th>';
-echo '</tr>';
-
-
-$i = 0;
-foreach ($data['servers'] as $server) {
-    $i++;
-
-    $style = "";
-    if(! empty($server['version']) && empty($server['is_available']))
-    {
-        $style = 'background-color:#d9534f';
+        echo '<a href="'.$elem['path'].'" type="button" class="btn '.$color.'" style="font-size:12px">'
+        .' '.$elem['icone'].' '.__($elem['name']).'</a>';
     }
 
 
-    echo '<tr>';
-    echo '<td style="'.$style.'">'.$i.'</td>';
-    echo '<td style="'.$style.'">'.$server['id'].'</td>';
-    echo '<td style="'.$style.'">';
-    echo '<span class="glyphicon '.($server['is_available'] == 1 ? "glyphicon-ok" : "glyphicon-remove").'" aria-hidden="true"></span>';
-    echo '</td>';
-    echo '<td style="'.$style.'">'.str_replace('_', '-', $server['name']).'</td>';
-    echo '<td style="'.$style.'">'.$server['ip'].'</td>';
-    echo '<td style="'.$style.'">'.$server['hostname'].'</td>';
+
+    echo '</div>';
+    
 
 
 
-    echo '<td style="'.$style.'" class="">'.$server['version'].'</td>';
+echo ' <div class="btn-group" role="group" aria-label="Default button group">';
+echo '<a href="'.LINK.'Agent/stop/'.$data['pid'].'" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-stop" aria-hidden="true" style="font-size:12px"></span> Stop Daemon</a>';
+echo '<a href="'.LINK.'Agent/start" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-play" aria-hidden="true" style="font-size:12px"></span> Start Daemon</a>';
 
-    echo '<td style="'.$style.'">'.$server['operating_system'].'</td>';
-
-    echo '<td style="'.$style.'">'.$server['product_name'].'</td>';
-
-
-    $class = ("i686" == $server['arch']) ? "error" : "";
-    echo '<td style="'.$style.'" class="'.$class.'">'.$server['arch'].'</td>';
-    echo '<td style="'.$style.'">'.$server['kernel'].'</td>';
-
-    echo '<td style="'.$style.'">'.$server['processor'].'</td>';
-    echo '<td style="'.$style.'">'.$server['cpu_mhz'].'</td>';
-    echo '<td style="'.$style.'">'.round($server['memory_kb'] / 1024 / 1024, 2).' Go</td>';
-    echo '<td style="'.$style.'">'.round(0.75 * $server['processor'] * ($server['cpu_mhz'] / 1024) + 0.5 * ($server['memory_kb'] / 1024 / 1024), 2).'</td>';
-
-    echo '</tr>';
+if (empty($data['pid']))
+{
+	echo '<a href="'.LINK.'Server/listing/logs" type="button" class="btn btn-warning" style="font-size:12px"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true" style="font-size:13px"></span> Stopped</a>';
 }
+else
+{
+	$cmd = "ps -p " . $data['pid'];
+	$alive = shell_exec($cmd);
+	
+	if (strpos($alive, $data['pid']) !== false)	
+	{
+		echo '<a href="'.LINK.'Server/listing/logs" type="button" class="btn btn-success" style="font-size:12px"><span class="glyphicon glyphicon-ok" aria-hidden="true" style="font-size:12px"></span> Running (PID : '.$data['pid'].')</a>';
+	}
+	else
+	{
+		echo '<a href="'.LINK.'Server/listing/logs" type="button" class="btn btn-danger" style="font-size:12px"><span class="glyphicon glyphicon-remove" aria-hidden="true" style="font-size:12px"></span> Error</a>';
+	}
 
-echo '</table>';
+}
+echo '</div>';
+
+
+echo ' <div class="btn-group" role="group" aria-label="Default button group">';
+echo '<a href="/pmacontrol/en/Cleaner/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a>';
+echo '</div>';
+
+echo '</div>';
 
 
 
-//FactoryController::addNode("Agent", "index", array());
+$elems = explode('/',$_GET['path']);
+$method = end($elems);
+
+
+
+\Glial\Synapse\FactoryController::addNode("Server", $method, array());
