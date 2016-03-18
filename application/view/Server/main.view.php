@@ -37,7 +37,7 @@ echo '<th>' . __("Date refresh") . '</th>';
   echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">'.__("Indice").'</th>';
  */
 
-echo '<th>' . __("Error") . '</th>';
+echo '<th style="max-width:500px">' . __("Error") . '</th>';
 echo '</tr>';
 
 
@@ -73,7 +73,7 @@ foreach ($data['servers'] as $server) {
     echo '<td style="' . $style . '">' . $server['version'] . '</td>';
     echo '<td style="' . $style . '">' . $server['date_refresh'] . '</td>';
 
-    echo '<td style="' . $style . '" class="">';
+    echo '<td style="max-width:600px;' . $style . '" class="">';
 
     if (strstr($server['error'], '[0m') || strstr($server['error'], 'Call Stack:')) {
         $converter = new AnsiToHtmlConverter();
