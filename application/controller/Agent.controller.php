@@ -135,7 +135,7 @@ class Agent extends Controller
     public function launch($id)
     {
         while (1) {
-            $this->testAllMysql();
+            $this->testAllMysql(array());
             sleep(4);
         }
     }
@@ -156,10 +156,6 @@ class Agent extends Controller
      */
     public function testAllMysql($param)
     {
-
-
-
-
         if (!empty($param)) {
             foreach ($param as $elem) {
                 if ($elem == "--debug") {
@@ -251,7 +247,7 @@ class Agent extends Controller
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
 
-        $max_execution_time = 3; // in seonceds
+        $max_execution_time = 8; // in seonceds
         $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), $max_execution_time);
 
         if (!SetTimeLimit::exitWithoutError($ret)) {
@@ -674,6 +670,8 @@ GROUP BY table_schema ;';
             $db->sql_query($req);
             $i++;
         }
+        
+        $db->sql_query("REPLACE INTO mysql_status_max_date  (`id_mysql_server`,`date`) VALUES ('".$id_mysql_server."', '".$date."');");
     }
 
     static private function isFloat($value)

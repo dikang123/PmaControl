@@ -228,22 +228,18 @@ class Server extends Controller
 		$db = $this->di['db']->sql(DB_DEFAULT);
 
 
+                /*
 		$db->sql_query("DROP TABLE IF EXISTS `temp`");
-
-		
 		$sql ="	
 create table temp
 as select a.id_mysql_server as id_mysql_server,max(a.date) as date from mysql_status_value_int a where a.id_mysql_status_name = 259 group by a.id_mysql_server;";
-
 		$db->sql_query($sql);
-
-
-
 		sleep("1");
+                */
 
 		$sql ='
 select b.value as "select", c.value as "update", f.value as "insert", g.value as "delete", j.ip, j.port, j.id, j.name, k.value as "connected"
-FROM temp a
+FROM mysql_status_max_date a
 INNER JOIN mysql_status_value_int b ON b.id_mysql_server = a.id_mysql_server and a.date = b.date
 INNER JOIN mysql_status_value_int c ON c.id_mysql_server = a.id_mysql_server and a.date = c.date
 INNER JOIN mysql_status_name d ON d.id = b.id_mysql_status_name

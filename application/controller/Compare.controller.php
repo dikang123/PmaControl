@@ -261,11 +261,11 @@ class Compare extends Controller
                 $data[$table]['script'] = array();
                 $data[$table]['script2'] = array();
             } elseif (empty($data[$table]['cmp'])) {
-                $data[$table]['script2'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['ori']);
-                $data[$table]['script'][0] = "DROP TABLE IF EXISTS `" . $table . "`";
-            } elseif (empty($data[$table]['ori'])) {
-                $data[$table]['script'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['cmp']);
+                $data[$table]['script'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['ori']);
                 $data[$table]['script2'][0] = "DROP TABLE IF EXISTS `" . $table . "`";
+            } elseif (empty($data[$table]['ori'])) {
+                $data[$table]['script2'][0] = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $data[$table]['cmp']);
+                $data[$table]['script'][0] = "DROP TABLE IF EXISTS `" . $table . "`";
             } else {
                 $updater = new CompareTable;
                 $data[$table]['script'] = $updater->getUpdates($data[$table]['cmp'], $data[$table]['ori']);
