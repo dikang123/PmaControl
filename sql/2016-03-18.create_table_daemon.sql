@@ -40,7 +40,7 @@ CREATE TABLE `daemon_main` (
 --
 
 INSERT INTO `daemon_main` (`id`, `name`, `date`, `pid`, `id_user_main`, `log_file`) VALUES
-(1, 'main', '2016-02-24 00:00:00', 10792, 0, '/data/www/pmacontrol/tmp/log/daemon.log');
+(1, 'main', '2016-02-24 00:00:00', 0, 0, '');
 
 --
 -- Index pour les tables exportées
