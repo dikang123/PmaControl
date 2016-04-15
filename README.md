@@ -35,8 +35,14 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 
 * **TokuDB** 
 
+* Debian / Ubuntu
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+* RedHat 
+echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled
+echo never > /sys/kernel/mm/redhat_transparent_hugepage/defrag
+
 
 in [mysqld] section
 
