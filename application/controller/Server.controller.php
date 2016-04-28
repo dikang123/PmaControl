@@ -13,94 +13,25 @@ class Server extends Controller
 
     //dba_source
 
-    public function hardware2()
+    public function hardware()
     {
-        $this->view = false;
 
-        $tab = new Table(1);
+        $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $tab->addHeader(array("Top", "Server", "IP", "Os", "CPU", "Frequency", "Memory"));
-        $i = 1;
+        $this->title = __("Hardware");
+        $this->ariane = " > " .  $this->title;
 
+        $sql = "SELECT c.libelle as client,d.libelle as environment,a.*, b.version, b.is_available 
+            FROM mysql_server a 
+                 INNER JOIN client c on c.id = a.id_client 
+                 INNER JOIN environment d on d.id = a.id_client 
+         LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+         order by `name`;";
 
-        $list_server = array();
+        $data['servers'] = $db->sql_fetch_yield($sql);
 
-        
-        Crypt::$key = CRYPT_KEY;
-        
-        $password = Crypt::decrypt(PMACONTROL_PASSWD);
+        $this->set('data', $data);
 
-        foreach ($this->di['db']->getAll() as $server) {
-
-            $info_server = $this->di['db']->getParam($server);
-
-            if (in_array($info_server['hostname'], $list_server)) {
-                continue;
-            }
-            $list_server[] = $info_server['hostname'];
-
-            $ssh = new Ssh($info_server['hostname'], 22, "pmacontrol", $password);
-            //$ssh = new Ssh($info_server['hostname'], 22, "root", '/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa');
-
-            if (!$ssh) {
-
-
-                echo "Impossible to connect on ".$info_server['hostname']."\n";
-                continue;
-            }
-            $nb_cpu = $ssh->exec("cat /proc/cpuinfo | grep processor | wc -l");
-
-            $brut_memory = $ssh->exec("cat /proc/meminfo | grep MemTotal");
-            preg_match("/[0-9]+/", $brut_memory, $memory);
-
-            $mem = $memory[0];
-            $memory = sprintf('%.2f', $memory[0] / 1024 / 1024) . " Go";
-
-            $freq_brut = $ssh->exec("cat /proc/cpuinfo | grep 'cpu MHz'");
-            preg_match("/[0-9]+\.[0-9]+/", $freq_brut, $freq);
-            $frequency = sprintf('%.2f', ($freq[0] / 1000)) . " GHz";
-
-
-            $os = trim($ssh->exec("lsb_release -ds"));
-
-            if (empty($os))
-            {
-                $os = trim($ssh->exec("cat /etc/centos-release"));
-            }
-            
-            $product_name = $ssh->exec("dmidecode -s system-product-name");
-            $arch = $ssh->exec("uname -m");
-            $kernel = $ssh->exec("uname -r");
-            $hostname = $ssh->exec("hostname");
-            
-            
-            $tab->addLine(array($i, $server, $info_server['hostname'], $os, trim($nb_cpu), $frequency, $memory));
-
-            $db = $this->di['db']->sql(DB_DEFAULT);
-
-
-            if (!empty($os)) {
-                $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
-                   processor='" . trim($nb_cpu) . "',
-                   cpu_mhz='" . trim($freq[0]) . "',
-                   product_name='" . trim($product_name) . "',
-                   arch='" . trim($arch) . "',
-                   kernel='" . trim($kernel) . "',
-                   hostname='" . trim($hostname) . "',
-                   memory_kb='" . trim($mem) . "' WHERE `name` = '" . $db->sql_real_escape_string($server) . "'";
-
-                $db->sql_query($sql);
-            }
-
-            unset($ssh);
-
-            $i++;
-            //$ssh->disconnect();
-        }
-
-        echo $tab->display();
-
-        //debug($tab);
     }
 
     public function before($param)
@@ -110,9 +41,6 @@ class Server extends Controller
 
     public function listing($param)
     {
-
-
-
 	
 	$db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -124,13 +52,45 @@ class Server extends Controller
 	$data['pid'] = $ob->pid;
 	$data['date'] = $ob->date;
 	$data['log_file'] = $ob->log_file;
-
-
+        
+        $sql  = "SELECT * from client order by libelle";
+        $res = $db->sql_query($sql);
+        
+        
+        $data['client'] = array();
+        while ($ob = $db->sql_fetch_object($res))
+        {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
+            
+            $data['client'][] = $tmp;
+        }
+        
+        $sql  = "SELECT * from environment order by libelle";
+        $res = $db->sql_query($sql);
+        
+        
+        $data['environment'] = array();
+        while ($ob = $db->sql_fetch_object($res))
+        {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
+            
+            $data['environment'][] = $tmp;
+        }
+        
 
 	$data['menu']['main']['name'] = __('Servers');
-	$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+	$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
 	$data['menu']['main']['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
 
+        $data['menu']['hardware']['name'] = __('Hardware');
+	$data['menu']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
+	$data['menu']['hardware']['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/hardware';
+        
+        
 	$data['menu']['database']['name'] = __('Databases');
 	$data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
 	$data['menu']['database']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/database';
@@ -154,7 +114,7 @@ class Server extends Controller
 
 	if (!empty($param[0]))
 	{
-		if (in_array($param[0], array("main","database","statistics","logs","memory","index")))
+		if (in_array($param[0], array("main","database","statistics","logs","memory","index", "hardware")))
 		{
 			$_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
 		}
@@ -187,9 +147,11 @@ class Server extends Controller
         	$this->title = __("Dashboard");
 	        $this->ariane = " > " .  $this->title;
 
-        	$sql = "SELECT a.*, b.version, b.is_available FROM mysql_server a "
-                . " LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server"
-                . " order by `name`;";
+        	$sql = "SELECT a.*, b.version, b.is_available,c.libelle as client,d.libelle as environment FROM mysql_server a 
+                     INNER JOIN client c on c.id = a.id_client 
+                 INNER JOIN environment d on d.id = a.id_environment
+                 LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+                 order by `name`;";
 
 	        $data['servers'] = $db->sql_fetch_yield($sql);
 
@@ -291,6 +253,8 @@ and l.name = "Threads_connected"
         while ($ob50 = $default->sql_fetch_object($res50)) {
             $db = $this->di['db']->sql($ob50->name);
             $data['variables'][$ob50->name] = $db->getVariables();
+            $data['status'][$ob50->name] = $db->getStatus();
+            $data['memory'][$ob50->name] = $ob50->memory_kb;
         }
         $this->set('data', $data);
 

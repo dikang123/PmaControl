@@ -1,6 +1,7 @@
 <?php
 
 use \Glial\Synapse\FactoryController;
+use Glial\Html\Form\Form;
 ?>
 <div class="well">
     <?php
@@ -19,13 +20,26 @@ use \Glial\Synapse\FactoryController;
         echo '<a href="' . $elem['path'] . '" type="button" class="btn ' . $color . '" style="font-size:12px">'
         . ' ' . $elem['icone'] . ' ' . __($elem['name']) . '</a>';
     }
+       echo '</div>';
+       
+       
+        echo '<form style="display:inline" action="" method="post">';
+       
+        echo " - ".__("Client")." : ";
+        echo ' <div class="btn-group" role="group" aria-label="Default button group">';
+        echo Form::select("client", "libelle", $data['client'], "", array("class" => "form-control"));
+        echo '</div>';
 
+        echo " - ".__("Environment")." : ";
+        echo ' <div class="btn-group" role="group" aria-label="Default button group">';
+        echo Form::select("client", "libelle", $data['environment'], "", array("class" => "form-control"));
+        
+        
+        echo '</div>';
 
-
-    echo '</div>';
-
-
-
+        
+        echo '<button type="submit" class="btn btn-primary">'.__("Filter").'</button>';
+        echo '</form>';
     echo '<div style="float:right" class="btn-group" role="group" aria-label="Default button group">';
     echo ' <a href="/pmacontrol/en/Cleaner/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a> ';
     echo '</div>';

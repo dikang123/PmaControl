@@ -6,11 +6,14 @@
  */
 
 use \Glial\Synapse\Controller;
+use \Glial\Form\Upload;
+use \Glial\Date\Date;
+
 
 class Dot extends Controller
 {
 
-    function index()
+    public function index()
     {
         $this->layout_name = 'default';
 
@@ -19,4 +22,30 @@ class Dot extends Controller
 
         //$this->javascript = array("");
     }
+    
+    
+    public function run()
+    {
+        $this->view = false;
+        $graph = new Alom\Graphviz\Digraph('G');
+    }
+    
+    
+    /*
+     * The goal is this function is to split the graph isloated to produce different dot
+     * like that we can provide a better display to dend user and hide the part that they don't need
+     * 
+     */
+    public function splitGraph()
+    {
+        
+        
+    }
+    
+    public function checkMasterSlave()
+    {
+        
+    }
+    
+    
 }

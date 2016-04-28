@@ -10,6 +10,11 @@ use \Monolog\Logger;
 use \Monolog\Formatter\LineFormatter;
 use \Monolog\Handler\StreamHandler;
 
+//use phpseclib\Crypt;
+use phpseclib\Crypt\RSA;
+use phpseclib\Net\SSH2;
+
+
 class Agent extends Controller
 {
 
@@ -284,6 +289,7 @@ class Agent extends Controller
 
     /**
      * (PmaControl 0.8)<br/>
+     * @example ./glial agent tryMysqlConnection name id_mysql_server
      * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
      * @return boolean Success
      * @package Controller
@@ -374,6 +380,9 @@ GROUP BY table_schema ;';
             $id_mysql_replication_stats = $db->sql_save($table);
 
             if (!$id_mysql_replication_stats) {
+                
+                debug($table);
+                debug($db->sql_error());
                 throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !', 60);
             }
 
@@ -399,6 +408,12 @@ GROUP BY table_schema ;';
                 } else {
                     // push event new DB add
                 }
+                
+                
+                if (empty($database['data'])) $database['data'] = 0;
+                if (empty($database['data_free'])) $database['data_free'] = 0;
+                if (empty($database['index'])) $database['index'] = 0;
+
 
                 $mysql_database['mysql_database']['id_mysql_server'] = $id_server;
                 $mysql_database['mysql_database']['name'] = $database['table_schema'];
@@ -417,9 +432,13 @@ GROUP BY table_schema ;';
                     $mysql_database['mysql_database']['binlog_ignore_db'] = 1;
                 }
 
+                
+                
                 $res7 = $db->sql_save($mysql_database);
 
                 if (!$res7) {
+                    print_r($mysql_database);
+                    print_r($db->sql_error());
                     throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                 }
             }
@@ -428,16 +447,11 @@ GROUP BY table_schema ;';
             foreach ($id_mysql_server as $key => $tab) {
                 $sql = "DELETE FROM mysql_database WHERE id = '" . $tab['id'] . "'";
                 $db->sql_query($sql);
-
                 // push event DB deleted
             }
 
             if ($slave) {
-
-
                 foreach ($slave as $thread_slave) {
-
-
                     $mysql_replication_thread = array();
                     if (empty($thread_slave['Thread_name'])) {
                         $thread_slave['Thread_name'] = '';
@@ -475,11 +489,12 @@ GROUP BY table_schema ;';
             }
 
             $db->sql_query("COMMIT;");
-        } catch (\Exception $ex) {
-
+        } catch (\Exception $ex) {            
             $db->sql_query("ROLLBACK");
 
-            throw new \Exception('PMACTRL-058 : ROLLBACK made !', 60);
+            $msg = $ex->getMessage();
+            
+            throw new \Exception("PMACTRL-058 : ROLLBACK made ! (".$msg.")" , 60);
         }
 
 
@@ -619,11 +634,14 @@ GROUP BY table_schema ;';
         while ($ob = $default->sql_fetch_object($res)) {
             $index[] = $ob->name;
             $data[$ob->name]['id'] = $ob->id;
-            $data[$ob->name]['type'] = $ob->type;
+            $data[$ob->name]['type'] = strtolower($ob->type);
         }
 
 
         foreach ($all_status as $name => $status) {
+            
+            $name = strtolower($name);
+            
             if (!in_array($name, $index)) {
                 echo "add " . $name . "\n";
 
@@ -660,6 +678,8 @@ GROUP BY table_schema ;';
         $date = date('Y-m-d H:i:s');
 
         foreach ($all_status as $name => $status) {
+            
+            $name = strtolower($name);
             $feed[$data[$name]['type']][] = "(" . $id_mysql_server . "," . $data[$name]['id'] . ",'" . $date . "','" . $status . "')";
         }
 
@@ -757,6 +777,72 @@ GROUP BY table_schema ;';
         $data['log'] = file_get_contents($ob->log_file);
 
         $this->set('data', $data);
+    }
+    
+    public function refreshHardware()
+    {
+        
+        $this->view = false;
+        
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+        $sql = "SELECT * FROM `mysql_server` WHERE `key_public_path` != '' and `key_public_user` != ''";
+        
+        $res = $db->sql_query($sql);
+        
+        while ($ob = $db->sql_fetch_object($res))
+        {
+            
+            echo $ob->ip."\n";
+            
+            $ssh = new SSH2($ob->ip);
+            $key = new RSA();
+            $key->loadKey(file_get_contents($ob->key_public_path));
+            if (!$ssh->login($ob->key_public_user, $key)) {
+                echo "Login Failed";
+                continue;
+            }
+
+            $memory = $ssh->exec("grep MemTotal /proc/meminfo | awk '{print $2}'");
+            $nb_cpu = $ssh->exec("cat /proc/cpuinfo | grep processor | wc -l");
+            $brut_memory = $ssh->exec("cat /proc/meminfo | grep MemTotal");
+            preg_match("/[0-9]+/", $brut_memory, $memory);
+
+            $mem = $memory[0];
+            $memory = sprintf('%.2f', $memory[0] / 1024 / 1024) . " Go";
+
+            $freq_brut = $ssh->exec("cat /proc/cpuinfo | grep 'cpu MHz'");
+            preg_match("/[0-9]+\.[0-9]+/", $freq_brut, $freq);
+            $frequency = sprintf('%.2f', ($freq[0] / 1000)) . " GHz";
+
+
+            $os = trim($ssh->exec("lsb_release -ds"));
+                        if (empty($os))
+            {
+                $os = trim($ssh->exec("cat /etc/centos-release"));
+            }
+            
+            $product_name = $ssh->exec("dmidecode -s system-product-name");
+            $arch = $ssh->exec("uname -m");
+            $kernel = $ssh->exec("uname -r");
+            $hostname = $ssh->exec("hostname");
+         
+            
+
+                $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
+                   processor='" . trim($nb_cpu) . "',
+                   cpu_mhz='" . trim($freq[0]) . "',
+                   product_name='" . trim($product_name) . "',
+                   arch='" . trim($arch) . "',
+                   kernel='" . trim($kernel) . "',
+                   hostname='" . trim($hostname) . "',
+                   memory_kb='" . trim($mem) . "' WHERE id='".$ob->id."'";
+
+                $db->sql_query($sql);
+            
+        }
+        
+        
     }
 
 }

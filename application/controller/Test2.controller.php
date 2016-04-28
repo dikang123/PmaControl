@@ -146,8 +146,6 @@ class Test2 extends Controller
 
         $ret = \Glial\Cli\SetTimeLimit::run("Test2", "hello", array("fgchfdg", "dfgdfg"), 2);
 
-
-        
         if (empty($ret)) {
             echo "script under timeout and successful\n";
         } elseif (is_int($ret)) {
@@ -159,12 +157,10 @@ class Test2 extends Controller
         {
             $this->di['log']->emergency("PMA-CTRL ANORMAL CASE !",$ret);
         }
-
     }
 
     function hello($param)
     {
-
 
         $this->view = false;
 

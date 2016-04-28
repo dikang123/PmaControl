@@ -2,8 +2,10 @@
 
 _UI & CLI Tools for DBA (monitoring / backup / install / cleaner ...)_
 
-**Distribution based on Linux. (don't work with windows!)**
+This software is distribued under Free Software Lisense : GNU / GPL v3 (http://www.gnu.org/licenses/gpl-3.0.en.html)
 
+
+**Distribution based on Linux. (don't work with windows!)**
 
 * Monitoring : Master/Slave, Galera Cluster, Graph
 * Query analyzer
@@ -54,7 +56,6 @@ plugin-load=ha_tokudb
 * `$ mv composer.phar /usr/local/bin/composer`
 
 
-
 ### Deploy this project
 * `git clone git@github.com:Glial/PmaControl.git pmacontrol`
 
@@ -86,4 +87,3 @@ plugin-load=ha_tokudb
 ![Alt text](/documentation/images/storage area.png?raw=true "Replication tree")
 
 ![Alt text](/documentation/images/backup.png?raw=true "Replication tree")
-

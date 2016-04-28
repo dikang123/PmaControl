@@ -117,7 +117,7 @@ foreach ($data['servers'] as $server) {
 		}
 		echo '<a href="'.LINK.'">'.$databases[$k].'</a></td>';
 		echo '<td style="'.$style.'">'.$tables[$k].'</td>';
-		echo '<td style="'.$style.'">'.number_format ( $rows[$k], 0 , "." , " " ).'</td>';
+		echo '<td style="text-align: right; '.$style.'">'.number_format ( $rows[$k], 0 , "." , " " ).'</td>';
 		echo '<td style="'.$styleData.'">'.byte($data[$k]).'</td>';
 		echo '<td style="'.$styleIndex.'">'.byte($index[$k]).'</td>';
 		echo '<td style="'.$styleFree.'">'.byte($free[$k]).'</td>';
