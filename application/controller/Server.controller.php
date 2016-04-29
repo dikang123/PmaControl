@@ -42,6 +42,8 @@ class Server extends Controller
     public function listing($param)
     {
 	
+        $this->di['js']->addJavascript(array('http://select2.github.io/select2/select2-3.4.1/select2.js'));
+        
 	$db = $this->di['db']->sql(DB_DEFAULT);
 
 	$sql = "SELECT * FROM daemon_main WHERE id=1";
@@ -106,15 +108,25 @@ class Server extends Controller
 	$data['menu']['index']['name'] = __('Index');
 	$data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
 	$data['menu']['index']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
+        
+        
+        $data['menu']['system']['name'] = __('System');
+	$data['menu']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
+	$data['menu']['system']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/system';
 	
 	$data['menu']['logs']['name'] = __('Logs');
 	$data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
 	$data['menu']['logs']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
-
+	
+	$data['menu']['id']['name'] = __('Server');
+	$data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+	$data['menu']['id']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/id';
+        
+        
 	if (!empty($param[0]))
 	{
-		if (in_array($param[0], array("main","database","statistics","logs","memory","index", "hardware")))
+		if (in_array($param[0], array("main","database","statistics","logs","memory","index", "hardware","system", "id")))
 		{
 			$_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
 		}
@@ -186,40 +198,10 @@ class Server extends Controller
 
 	public function statistics()
 	{
-
 		$db = $this->di['db']->sql(DB_DEFAULT);
-
-
-                /*
-		$db->sql_query("DROP TABLE IF EXISTS `temp`");
-		$sql ="	
-create table temp
-as select a.id_mysql_server as id_mysql_server,max(a.date) as date from mysql_status_value_int a where a.id_mysql_status_name = 259 group by a.id_mysql_server;";
-		$db->sql_query($sql);
-		sleep("1");
-                */
-
-		$sql ='
-select b.value as "select", c.value as "update", f.value as "insert", g.value as "delete", j.ip, j.port, j.id, j.name, k.value as "connected"
-FROM mysql_status_max_date a
-INNER JOIN mysql_status_value_int b ON b.id_mysql_server = a.id_mysql_server and a.date = b.date
-INNER JOIN mysql_status_value_int c ON c.id_mysql_server = a.id_mysql_server and a.date = c.date
-INNER JOIN mysql_status_name d ON d.id = b.id_mysql_status_name
-INNER JOIN mysql_status_name e ON e.id = c.id_mysql_status_name
-INNER JOIN mysql_status_value_int f ON f.id_mysql_server = a.id_mysql_server and a.date = f.date
-INNER JOIN mysql_status_value_int g ON g.id_mysql_server = a.id_mysql_server and a.date = g.date
-INNER JOIN mysql_status_name h ON h.id = f.id_mysql_status_name
-INNER JOIN mysql_status_name i ON i.id = g.id_mysql_status_name
-INNER JOIN mysql_server j ON j.id = a.id_mysql_server
-INNER JOIN mysql_status_value_int k ON k.id_mysql_server = a.id_mysql_server and a.date = k.date
-INNER JOIN mysql_status_name l ON l.id = k.id_mysql_status_name
-
-WHERE d.name = "Com_select" and e.name = "Com_update" 
-and h.name = "Com_insert" 
-and i.name = "Com_delete"
-and l.name = "Threads_connected"
-;';
-
+                
+                $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime", "Com_commit","Com_rollback","Com_begin", "Com_replace");
+                $sql = $this->buildQuery($fields);
 		$res = $db->sql_query($sql);
 
 		$data['servers'] = $db->sql_fetch_yield($sql);
@@ -235,7 +217,57 @@ and l.name = "Threads_connected"
 	{
 		//used with recursive
 	}
+        
+        private function buildQuery($fields)
+        {
+            $sql ='select a.ip, a.port, a.id, a.name,';            
+            
+            $i=0;
+            $tmp = [];
+            foreach($fields as $field)
+            {
+                $tmp[] = " c$i.value as $field";
+                $i++;
+            }
+            
+            $sql .= implode(",", $tmp);
+            $sql .= " from mysql_server a ";
+            $sql .= " INNER JOIN mysql_status_max_date b ON a.id = b.id_mysql_server ";
+            
+            $tmp = [];
+            $i=0;
+            foreach($fields as $field)
+            {
+                $sql .= " INNER JOIN mysql_status_value_int c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
+                $sql .= " INNER JOIN mysql_status_name d$i ON d$i.id = c$i.id_mysql_status_name ";
+                $i++;
+            }
 
+            $sql .= " WHERE 1 ";
+            
+            $tmp = [];
+            $i = 0;
+            foreach($fields as $field)
+            {
+                $sql .= " AND d$i.name = '".$field."'  ";
+                $i++;
+            }
+            
+            $sql .=";";
+            
+            return $sql;
+            
+            
+        }
+
+        public function gg()
+        {
+            $this->view = false;
+            
+            $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime");
+            
+            echo \SqlFormatter::format($this->buildQuery($fields));
+        }
 
 	public function memory()
 	{
@@ -286,4 +318,16 @@ and l.name = "Threads_connected"
 
         $this->set('data', $data);
 	}
+        
+        
+        public function id($param)
+        {
+            
+            $default = $this->di['db']->sql(DB_DEFAULT);
+            
+            
+            
+            
+            
+        }
 }

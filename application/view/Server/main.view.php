@@ -50,7 +50,7 @@ foreach ($data['servers'] as $server) {
     echo '</td>';
     echo '<td style="' . $style . '">' . $server['client'] . '</td>';
     echo '<td style="' . $style . '">' . $server['environment'] . '</td>';
-    echo '<td style="' . $style . '">' . str_replace('_', '-', $server['name']) . '</td>';
+    echo '<td style="' . $style . '"><a href="'.LINK.'server/listing/id/'.$server['id'].'">' . str_replace('_', '-', $server['name']) . '</a></td>';
     echo '<td style="' . $style . '">' . $server['ip'] . '</td>';
     echo '<td style="' . $style . '">' . $server['port'] . '</td>';
     echo '<td style="' . $style . '">' . $server['login'] . '</td>';
@@ -58,7 +58,8 @@ foreach ($data['servers'] as $server) {
     Crypt::$key = CRYPT_KEY;
     $passwd = Crypt::decrypt($server['passwd']);
 
-    echo '<td style="' . $style . '">' . $passwd . '</td>';
+    //echo '<td style="' . $style . '">' . $passwd . '</td>';
+    echo '<td style="' . $style . '">' . '***' . '</td>';
     //echo '<td style="'.$style.'">'.$server['hostname'].'</td>';
 
 

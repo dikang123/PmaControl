@@ -827,6 +827,23 @@ GROUP BY table_schema ;';
             $kernel = $ssh->exec("uname -r");
             $hostname = $ssh->exec("hostname");
          
+            $swapiness = $ssh->exec("cat /proc/sys/vm/swappiness");
+             
+            /*
+            $system = $ssh->exec("uptime");// get the uptime stats
+            
+            $uptime = explode(" ", $system); // break up the stats into an array
+
+            $up_days = $uptime[4]; // grab the days from the array
+
+            $hours = explode(":", $uptime[7]); // split up the hour:min in the stats
+
+            $up_hours = $hours[0]; // grab the hours
+            $mins = $hours[1]; // get the mins
+            $up_mins = str_replace(",", "", $mins); // strip the comma from the mins
+
+            echo "The server has been up for " . $up_days . " days, " . $up_hours . " hours, and " . $up_mins . " minutes."; 
+            */
             
 
                 $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
@@ -836,7 +853,9 @@ GROUP BY table_schema ;';
                    arch='" . trim($arch) . "',
                    kernel='" . trim($kernel) . "',
                    hostname='" . trim($hostname) . "',
-                   memory_kb='" . trim($mem) . "' WHERE id='".$ob->id."'";
+                   memory_kb='" . trim($mem) . "', 
+                   swappiness='" . trim($swapiness) . "' 
+                   WHERE id='".$ob->id."'";
 
                 $db->sql_query($sql);
             

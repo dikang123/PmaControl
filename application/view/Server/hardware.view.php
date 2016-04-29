@@ -15,17 +15,16 @@ echo '<th>' . __("Port") . '</th>';
 
 
 
-  echo '<th>'.__("Operations system").'</th>';
-  echo '<th>'.__("Product name").'</th>';
-  echo '<th>'.__("Arch").'</th>';
-  echo '<th>'.__("Kernel").'</th>';
-  echo '<th>'.__("Processor").'</th>';
-  echo '<th>'."Mhz".'</th>';
+echo '<th>'.__("Operations system").'</th>';
+echo '<th>'.__("Product name").'</th>';
+echo '<th>'.__("Arch").'</th>';
+echo '<th>'.__("Kernel").'</th>';
+echo '<th>'.__("Processor").'</th>';
+echo '<th>'."Mhz".'</th>';
 
-  echo '<th>'.__("Memory").'</th>';
-  echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">'.__("Indice").'</th>';
- 
-
+echo '<th>'.__("Memory").'</th>';
+echo '<th>Swapiness</th>';
+echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">'.__("Indice").'</th>';
 echo '</tr>';
 
 
@@ -65,6 +64,7 @@ foreach ($data['servers'] as $server) {
       echo '<td style="'.$style.'">'.$server['processor'].'</td>';
       echo '<td style="'.$style.'">'.$server['cpu_mhz'].'</td>';
       echo '<td style="'.$style.'">'.round($server['memory_kb'] / 1024 / 1024, 2).' Go</td>';
+      echo '<td style="'.$style.'">'.$server['swappiness'].' </td>';
       echo '<td style="'.$style.'">'.round(0.75 * $server['processor'] * ($server['cpu_mhz'] / 1024) + 0.5 * ($server['memory_kb'] / 1024 / 1024), 2).'</td>';
      
 
