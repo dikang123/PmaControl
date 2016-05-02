@@ -9,22 +9,18 @@ use \Glial\Synapse\Basic;
 use \Monolog\Logger;
 use \Monolog\Formatter\LineFormatter;
 use \Monolog\Handler\StreamHandler;
-
 //use phpseclib\Crypt;
 use phpseclib\Crypt\RSA;
 use phpseclib\Net\SSH2;
 
-
-class Agent extends Controller
-{
+class Agent extends Controller {
 
     var $debug = false;
     var $url = "server/listing/";
     var $log_file = TMP . "log/daemon.log";
     var $logger;
 
-    public function before($param)
-    {
+    public function before($param) {
         $logger = new Logger('Daemon');
         $file_log = $this->log_file;
         $handler = new StreamHandler($file_log, Logger::INFO);
@@ -33,8 +29,7 @@ class Agent extends Controller
         $this->logger = $logger;
     }
 
-    public function start($param)
-    {
+    public function start($param) {
         $id_daemon = $param[0];
         $id_daemon = 1;
 
@@ -84,8 +79,7 @@ class Agent extends Controller
         }
     }
 
-    function stop($param)
-    {
+    function stop($param) {
         $id_daemon = $param[0];
         $id_daemon = 1;
 
@@ -137,16 +131,14 @@ class Agent extends Controller
         header("location: " . LINK . $this->url);
     }
 
-    public function launch($id)
-    {
+    public function launch($id) {
         while (1) {
             $this->testAllMysql(array());
             sleep(4);
         }
     }
 
-    public function getMysqlInfo()
-    {
+    public function getMysqlInfo() {
         
     }
 
@@ -159,8 +151,7 @@ class Agent extends Controller
      * @description get list of MySQL server and try to connect on each one
      * @access public
      */
-    public function testAllMysql($param)
-    {
+    public function testAllMysql($param) {
         if (!empty($param)) {
             foreach ($param as $elem) {
                 if ($elem == "--debug") {
@@ -246,8 +237,7 @@ class Agent extends Controller
      * @description launch a subprocess limited in time to try MySQL connection
      * @access public
      */
-    private function testMysqlServer($server)
-    {
+    private function testMysqlServer($server) {
         $this->view = false;
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
@@ -297,8 +287,7 @@ class Agent extends Controller
      * @description try to connect successfully on MySQL, if any one error in process even in PHP it throw a new Exception.
      * @access public
      */
-    public function tryMysqlConnection($param)
-    {
+    public function tryMysqlConnection($param) {
         $this->view = false;
 
         $name_server = $param[0];
@@ -380,7 +369,7 @@ GROUP BY table_schema ;';
             $id_mysql_replication_stats = $db->sql_save($table);
 
             if (!$id_mysql_replication_stats) {
-                
+
                 debug($table);
                 debug($db->sql_error());
                 throw new \Exception('PMACTRL-059 : insert in mysql_replication_stats !', 60);
@@ -408,11 +397,14 @@ GROUP BY table_schema ;';
                 } else {
                     // push event new DB add
                 }
-                
-                
-                if (empty($database['data'])) $database['data'] = 0;
-                if (empty($database['data_free'])) $database['data_free'] = 0;
-                if (empty($database['index'])) $database['index'] = 0;
+
+
+                if (empty($database['data']))
+                    $database['data'] = 0;
+                if (empty($database['data_free']))
+                    $database['data_free'] = 0;
+                if (empty($database['index']))
+                    $database['index'] = 0;
 
 
                 $mysql_database['mysql_database']['id_mysql_server'] = $id_server;
@@ -432,8 +424,8 @@ GROUP BY table_schema ;';
                     $mysql_database['mysql_database']['binlog_ignore_db'] = 1;
                 }
 
-                
-                
+
+
                 $res7 = $db->sql_save($mysql_database);
 
                 if (!$res7) {
@@ -489,12 +481,12 @@ GROUP BY table_schema ;';
             }
 
             $db->sql_query("COMMIT;");
-        } catch (\Exception $ex) {            
+        } catch (\Exception $ex) {
             $db->sql_query("ROLLBACK");
 
             $msg = $ex->getMessage();
-            
-            throw new \Exception("PMACTRL-058 : ROLLBACK made ! (".$msg.")" , 60);
+
+            throw new \Exception("PMACTRL-058 : ROLLBACK made ! (" . $msg . ")", 60);
         }
 
 
@@ -509,8 +501,7 @@ GROUP BY table_schema ;';
         }
     }
 
-    public function updateServerList()
-    {
+    public function updateServerList() {
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM `mysql_server`";
@@ -567,13 +558,11 @@ GROUP BY table_schema ;';
         }
     }
 
-    private function addServerToConfig($name, $ip = "")
-    {
+    private function addServerToConfig($name, $ip = "") {
         
     }
 
-    public function index()
-    {
+    public function index() {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
 
@@ -588,8 +577,7 @@ GROUP BY table_schema ;';
         $this->set('data', $data);
     }
 
-    private function isRunning($param)
-    {
+    private function isRunning($param) {
         if (is_array($param)) {
             $pid = $param[0];
         } else {
@@ -618,8 +606,7 @@ GROUP BY table_schema ;';
      *  - 3 => text
      */
 
-    public function saveStatus($all_status, $id_mysql_server)
-    {
+    public function saveStatus($all_status, $id_mysql_server) {
 
         $default = $this->di['db']->sql(DB_DEFAULT);
         $all_name = array_keys($all_status);
@@ -639,9 +626,9 @@ GROUP BY table_schema ;';
 
 
         foreach ($all_status as $name => $status) {
-            
+
             $name = strtolower($name);
-            
+
             if (!in_array($name, $index)) {
                 echo "add " . $name . "\n";
 
@@ -662,8 +649,7 @@ GROUP BY table_schema ;';
         $this->saveValue($data, $all_status, $id_mysql_server);
     }
 
-    public function saveValue($data, $all_status, $id_mysql_server)
-    {
+    public function saveValue($data, $all_status, $id_mysql_server) {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $tables = array('mysql_status_value_int', 'mysql_status_value_double', 'mysql_status_value_text');
@@ -678,7 +664,7 @@ GROUP BY table_schema ;';
         $date = date('Y-m-d H:i:s');
 
         foreach ($all_status as $name => $status) {
-            
+
             $name = strtolower($name);
             $feed[$data[$name]['type']][] = "(" . $id_mysql_server . "," . $data[$name]['id'] . ",'" . $date . "','" . $status . "')";
         }
@@ -690,12 +676,11 @@ GROUP BY table_schema ;';
             $db->sql_query($req);
             $i++;
         }
-        
-        $db->sql_query("REPLACE INTO mysql_status_max_date  (`id_mysql_server`,`date`) VALUES ('".$id_mysql_server."', '".$date."');");
+
+        $db->sql_query("REPLACE INTO mysql_status_max_date  (`id_mysql_server`,`date`) VALUES ('" . $id_mysql_server . "', '" . $date . "');");
     }
 
-    static private function isFloat($value)
-    {
+    static private function isFloat($value) {
         // test before => must be numeric first
         if (strstr($value, ".")) {
             return true;
@@ -709,8 +694,7 @@ GROUP BY table_schema ;';
      *  - 3 => text
      */
 
-    static private function getTypeOfData($value)
-    {
+    static private function getTypeOfData($value) {
         $val = 0;
 
         $is_numeric = is_numeric($value);
@@ -734,8 +718,7 @@ GROUP BY table_schema ;';
      * Move to test for PHPUnit
      */
 
-    public function testData()
-    {
+    public function testData() {
         $nogood = 0;
 
         $tests = [1452, 0.125, 254.25, "0.0000", "0.254", "254.25", "15", "1e25", "ggg.ggg", "fghg"];
@@ -763,8 +746,7 @@ GROUP BY table_schema ;';
         }
     }
 
-    public function logs()
-    {
+    public function logs() {
         $this->di['js']->code_javascript("var objDiv = document.getElementById('data_log'); objDiv.scrollTop = objDiv.scrollHeight;");
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -778,23 +760,21 @@ GROUP BY table_schema ;';
 
         $this->set('data', $data);
     }
-    
-    public function refreshHardware()
-    {
-        
+
+    public function refreshHardware() {
+
         $this->view = false;
-        
+
         $db = $this->di['db']->sql(DB_DEFAULT);
-        
+
         $sql = "SELECT * FROM `mysql_server` WHERE `key_public_path` != '' and `key_public_user` != ''";
-        
+
         $res = $db->sql_query($sql);
-        
-        while ($ob = $db->sql_fetch_object($res))
-        {
-            
-            echo $ob->ip."\n";
-            
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+            echo $ob->ip . "\n";
+
             $ssh = new SSH2($ob->ip);
             $key = new RSA();
             $key->loadKey(file_get_contents($ob->key_public_path));
@@ -817,36 +797,35 @@ GROUP BY table_schema ;';
 
 
             $os = trim($ssh->exec("lsb_release -ds"));
-                        if (empty($os))
-            {
+            if (empty($os)) {
                 $os = trim($ssh->exec("cat /etc/centos-release"));
             }
-            
+
             $product_name = $ssh->exec("dmidecode -s system-product-name");
             $arch = $ssh->exec("uname -m");
             $kernel = $ssh->exec("uname -r");
             $hostname = $ssh->exec("hostname");
-         
+
             $swapiness = $ssh->exec("cat /proc/sys/vm/swappiness");
-             
+
             /*
-            $system = $ssh->exec("uptime");// get the uptime stats
-            
-            $uptime = explode(" ", $system); // break up the stats into an array
+              $system = $ssh->exec("uptime");// get the uptime stats
 
-            $up_days = $uptime[4]; // grab the days from the array
+              $uptime = explode(" ", $system); // break up the stats into an array
 
-            $hours = explode(":", $uptime[7]); // split up the hour:min in the stats
+              $up_days = $uptime[4]; // grab the days from the array
 
-            $up_hours = $hours[0]; // grab the hours
-            $mins = $hours[1]; // get the mins
-            $up_mins = str_replace(",", "", $mins); // strip the comma from the mins
+              $hours = explode(":", $uptime[7]); // split up the hour:min in the stats
 
-            echo "The server has been up for " . $up_days . " days, " . $up_hours . " hours, and " . $up_mins . " minutes."; 
-            */
-            
+              $up_hours = $hours[0]; // grab the hours
+              $mins = $hours[1]; // get the mins
+              $up_mins = str_replace(",", "", $mins); // strip the comma from the mins
 
-                $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
+              echo "The server has been up for " . $up_days . " days, " . $up_hours . " hours, and " . $up_mins . " minutes.";
+             */
+
+
+            $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
                    processor='" . trim($nb_cpu) . "',
                    cpu_mhz='" . trim($freq[0]) . "',
                    product_name='" . trim($product_name) . "',
@@ -855,13 +834,10 @@ GROUP BY table_schema ;';
                    hostname='" . trim($hostname) . "',
                    memory_kb='" . trim($mem) . "', 
                    swappiness='" . trim($swapiness) . "' 
-                   WHERE id='".$ob->id."'";
+                   WHERE id='" . $ob->id . "'";
 
-                $db->sql_query($sql);
-            
+            $db->sql_query($sql);
         }
-        
-        
     }
 
 }
