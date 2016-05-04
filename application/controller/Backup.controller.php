@@ -356,7 +356,7 @@ class Backup extends Controller
 
         $res = $db->sql_query($sql);
 
-        while ($tab = $db->sql_fetch_array($res, MYSQL_ASSOC)) {
+        while ($tab = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
             $data['space'][$tab['id_backup_storage_area']] = $tab;
         }
 

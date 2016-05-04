@@ -1,9 +1,31 @@
 <?php
 
 use \Glial\Synapse\FactoryController;
+use Glial\Html\Form\Form;
 ?>
 <div class="well">
     <?php
+    
+        echo '<div>';
+        echo '<form style="display:inline" action="" method="post">';
+    echo  __("Client") . " : ";
+    
+    echo Form::select("client", "libelle", $data['client'], "", array("data-live-search" => "true", "class" => "selectpicker"));
+
+
+    echo " - " . __("Environment") . " : ";
+    
+    echo Form::select("client", "libelle", $data['environment'], "", array("data-live-search" => "true", "class" => "selectpicker"));
+    
+    echo ' <button type="submit" class="btn btn-primary">' . __("Filter") . '</button>';
+    echo '</form>';
+    echo '</div>';
+    echo '<br />';
+    
+    
+    
+    
+    echo '<div>';
     echo ' <div class="btn-group" role="group" aria-label="Default button group">';
 
 
@@ -19,12 +41,9 @@ use \Glial\Synapse\FactoryController;
         echo '<a href="' . $elem['path'] . '" type="button" class="btn ' . $color . '" style="font-size:12px">'
         . ' ' . $elem['icone'] . ' ' . __($elem['name']) . '</a>';
     }
-
-
-
     echo '</div>';
 
-
+    
 
     echo '<div style="float:right" class="btn-group" role="group" aria-label="Default button group">';
     echo ' <a href="/pmacontrol/en/Cleaner/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a> ';
@@ -33,6 +52,11 @@ use \Glial\Synapse\FactoryController;
 
 
     echo ' <div style="float:right" class="btn-group" role="group" aria-label="Default button group">';
+
+    
+    
+
+    
     echo '&nbsp;<a href="' . LINK . 'Agent/stop/' . $data['pid'] . '" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-stop" aria-hidden="true" style="font-size:12px"></span> Stop Daemon</a>';
     echo '<a href="' . LINK . 'Agent/start" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-play" aria-hidden="true" style="font-size:12px"></span> Start Daemon</a>';
 
@@ -50,10 +74,9 @@ use \Glial\Synapse\FactoryController;
     }
     echo '</div>';
 
-
-
-
     echo '</div>';
+    
+echo '</div>';
 
 
 

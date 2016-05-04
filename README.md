@@ -2,8 +2,10 @@
 
 _UI & CLI Tools for DBA (monitoring / backup / install / cleaner ...)_
 
-**Distribution based on Linux. (don't work with windows!)**
+This software is distribued under Free Software Lisense : GNU / GPL v3 (http://www.gnu.org/licenses/gpl-3.0.en.html)
 
+
+**Distribution based on Linux. (don't work with windows!)**
 
 * Monitoring : Master/Slave, Galera Cluster, Graph
 * Query analyzer
@@ -35,8 +37,14 @@ have a look on : https://github.com/Esysteme/Debian/blob/master/ubuntu_server.ba
 
 * **TokuDB** 
 
+* Debian / Ubuntu
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+* RedHat 
+echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled
+echo never > /sys/kernel/mm/redhat_transparent_hugepage/defrag
+
 
 in [mysqld] section
 
@@ -46,7 +54,6 @@ plugin-load=ha_tokudb
 
 * `$ curl -sS https://getcomposer.org/installer | php`
 * `$ mv composer.phar /usr/local/bin/composer`
-
 
 
 ### Deploy this project
@@ -80,4 +87,3 @@ plugin-load=ha_tokudb
 ![Alt text](/documentation/images/storage area.png?raw=true "Replication tree")
 
 ![Alt text](/documentation/images/backup.png?raw=true "Replication tree")
-

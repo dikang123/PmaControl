@@ -23,7 +23,7 @@ function format($bytes, $decimals = 2)
 }
 
 
-
+//debug($data['status']);
 
 
 echo '<table class="table table-condensed table-bordered table-striped">';
@@ -44,7 +44,13 @@ echo '<th>' . 'join_buffer' . '</th>';
 echo '<th rowspan="2">' . 'thread_stack' . '</th>';
 echo '<th>' . 'binlog_cache' . '</th>';
 echo '<th rowspan="2">' . __('Total') . '</th>';
+
+
+echo '<th rowspan="2">' . 'used memory' . '</th>';
+echo '<th rowspan="2">' . 'Max used connections' . '</th>';
 echo '<th rowspan="2">' . __('Physical memory') . '</th>';
+
+
 echo '</tr>';
 
 echo '<tr>';
@@ -52,27 +58,30 @@ echo '<th colspan="6" style="text-align:center">' . 'size' . '</th>';
 echo '<th colspan="4" style="text-align:center">' . 'size' . '</th>';
 echo '<th style="text-align:center">' . 'size' . '</th>';
 echo '</tr>';
-foreach ($data['variables'] as $server => $variable) {
 
-
-    echo '<tr>';
-
-    echo '<td>' . str_replace("_","-",$server) . '</td>';
-    echo '<td>' . format($variable['key_buffer_size'])  . '</td>';
-    echo '<td>' . format($variable['query_cache_size'])  . '</td>';
-    echo '<td>' . format($variable['tmp_table_size'])  . '</td>';
-    echo '<td>' . format($variable['innodb_buffer_pool_size'])  . '</td>';
-    echo '<td>' . format($variable['innodb_additional_mem_pool_size'])  . '</td>';
-    echo '<td>' . format($variable['innodb_log_buffer_size'])  . '</td>';
-    echo '<td>' . $variable['max_connections']  . '</td>';
-    echo '<td>' . format($variable['sort_buffer_size'])  . '</td>';
-    echo '<td>' . format($variable['read_buffer_size'])  . '</td>';
-    echo '<td>' . format($variable['read_rnd_buffer_size'])  . '</td>';
-    echo '<td>' . format($variable['join_buffer_size'])  . '</td>';
-    echo '<td>' . format($variable['thread_stack'])  . '</td>';
-    echo '<td>' . format($variable['binlog_cache_size'])  . '</td>';
+$i =0;
+foreach ($data['variables'] as $server => $variable)
+{
     
+    /*
+     * Si memoire utilisable par mysql > RAM => rouge
+     * Si memoire utilisé (avec max user) > RAM => Noir
+     */
     
+    if (empty($variable['innodb_buffer_pool_size'])) $variable['innodb_buffer_pool_size'] =0;
+    if (empty($variable['innodb_additional_mem_pool_size'])) $variable['innodb_additional_mem_pool_size'] =0;
+    if (empty($variable['innodb_log_buffer_size'])) $variable['innodb_log_buffer_size'] =0;
+ 
+      
+    $totalmemorytest = 
+            $variable['key_buffer_size']
+            + $variable['query_cache_size']
+            + $variable['tmp_table_size']
+            + $variable['innodb_buffer_pool_size']
+            + $variable['innodb_additional_mem_pool_size']
+            + $variable['innodb_log_buffer_size']
+            + $variable['max_connections'];
+       
     $totalmemory = 
             $variable['key_buffer_size']
             + $variable['query_cache_size']
@@ -89,12 +98,63 @@ foreach ($data['variables'] as $server => $variable) {
                 + $variable['binlog_cache_size']
             );
     
-    echo '<td>' . format($totalmemory)  . '</td>';
-    echo '<td>' . 'n/a'  . '</td>';
-
-
+    $totalmemoryused = 
+            $variable['key_buffer_size']
+            + $variable['query_cache_size']
+            + $variable['tmp_table_size']
+            + $variable['innodb_buffer_pool_size']
+            + $variable['innodb_additional_mem_pool_size']
+            + $variable['innodb_log_buffer_size']
+            + $data['status'][$server]['Max_used_connections']
+            * ( $variable['sort_buffer_size']
+                + $variable['read_buffer_size']
+                + $variable['read_rnd_buffer_size']
+                + $variable['join_buffer_size']
+                + $variable['thread_stack']
+                + $variable['binlog_cache_size']
+            );
+            
+    
+    if (empty($data['memory'][$server]))
+    {
+        $mem_kb = 'N/A';
+    }
+    else
+    {
+        $mem_kb = format($data['memory'][$server]*1024);
+    }    
+    
+    $style = ($totalmemory > $data['memory'][$server]*1024)? "background:#d9534f; color:#fff": "";
+    $style2 = ($totalmemoryused > $data['memory'][$server]*1024)? "background:#000000; color:#fff": "";
+    $style3 = ($totalmemorytest > $data['memory'][$server]*1024)? "background:#000000; color:#fff": "";
+    
+ 
+ 
+    
+    echo '<tr>';
+    echo '<td>' . str_replace("_","-",$server) . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['key_buffer_size'])  . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['query_cache_size'])  . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['tmp_table_size'])  . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['innodb_buffer_pool_size'])  . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['innodb_additional_mem_pool_size'])  . '</td>';
+    echo '<td style="'.$style3.'">' . format($variable['innodb_log_buffer_size'])  . '</td>';
+    echo '<td>' . $variable['max_connections']  . '</td>';
+    echo '<td>' . format($variable['sort_buffer_size'])  . '</td>';
+    echo '<td>' . format($variable['read_buffer_size'])  . '</td>';
+    echo '<td>' . format($variable['read_rnd_buffer_size'])  . '</td>';
+    echo '<td>' . format($variable['join_buffer_size'])  . '</td>';
+    echo '<td>' . format($variable['thread_stack'])  . '</td>';
+    echo '<td>' . format($variable['binlog_cache_size'])  . '</td>';
+         
+    echo '<td style="'.$style.'">' . format($totalmemory)  . '</td>';
+    
+    echo '<td style="'.$style2.'">' . format($totalmemoryused)   . '</td>';
+    echo '<td>' . $data['status'][$server]['Max_used_connections']  . '</td>';
+    echo '<td>' . $mem_kb  . '</td>';
 
     echo '</tr>';
+    $i++;
 }
 
 echo '</table>';

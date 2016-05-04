@@ -5,204 +5,205 @@ use \Glial\Synapse\Controller;
 use \Glial\Cli\Table;
 use \Glial\Sgbd\Sgbd;
 use \Glial\Net\Ssh;
-
 use \Glial\Security\Crypt\Crypt;
 
-class Server extends Controller
-{
+class Server extends Controller {
 
     //dba_source
 
-    public function hardware2()
-    {
-        $this->view = false;
+    public function hardware() {
 
-        $tab = new Table(1);
+        $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $tab->addHeader(array("Top", "Server", "IP", "Os", "CPU", "Frequency", "Memory"));
-        $i = 1;
+        $this->title = __("Hardware");
+        $this->ariane = " > " . $this->title;
 
+        $sql = "SELECT c.libelle as client,d.libelle as environment,a.*, b.version, b.is_available 
+            FROM mysql_server a 
+                 INNER JOIN client c on c.id = a.id_client 
+                 INNER JOIN environment d on d.id = a.id_client 
+         LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+         order by `name`;";
 
-        $list_server = array();
+        $data['servers'] = $db->sql_fetch_yield($sql);
 
-        
-        Crypt::$key = CRYPT_KEY;
-        
-        $password = Crypt::decrypt(PMACONTROL_PASSWD);
-
-        foreach ($this->di['db']->getAll() as $server) {
-
-            $info_server = $this->di['db']->getParam($server);
-
-            if (in_array($info_server['hostname'], $list_server)) {
-                continue;
-            }
-            $list_server[] = $info_server['hostname'];
-
-            $ssh = new Ssh($info_server['hostname'], 22, "pmacontrol", $password);
-            //$ssh = new Ssh($info_server['hostname'], 22, "root", '/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa');
-
-            if (!$ssh) {
-
-
-                echo "Impossible to connect on ".$info_server['hostname']."\n";
-                continue;
-            }
-            $nb_cpu = $ssh->exec("cat /proc/cpuinfo | grep processor | wc -l");
-
-            $brut_memory = $ssh->exec("cat /proc/meminfo | grep MemTotal");
-            preg_match("/[0-9]+/", $brut_memory, $memory);
-
-            $mem = $memory[0];
-            $memory = sprintf('%.2f', $memory[0] / 1024 / 1024) . " Go";
-
-            $freq_brut = $ssh->exec("cat /proc/cpuinfo | grep 'cpu MHz'");
-            preg_match("/[0-9]+\.[0-9]+/", $freq_brut, $freq);
-            $frequency = sprintf('%.2f', ($freq[0] / 1000)) . " GHz";
-
-
-            $os = trim($ssh->exec("lsb_release -ds"));
-
-            if (empty($os))
-            {
-                $os = trim($ssh->exec("cat /etc/centos-release"));
-            }
-            
-            $product_name = $ssh->exec("dmidecode -s system-product-name");
-            $arch = $ssh->exec("uname -m");
-            $kernel = $ssh->exec("uname -r");
-            $hostname = $ssh->exec("hostname");
-            
-            
-            $tab->addLine(array($i, $server, $info_server['hostname'], $os, trim($nb_cpu), $frequency, $memory));
-
-            $db = $this->di['db']->sql(DB_DEFAULT);
-
-
-            if (!empty($os)) {
-                $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
-                   processor='" . trim($nb_cpu) . "',
-                   cpu_mhz='" . trim($freq[0]) . "',
-                   product_name='" . trim($product_name) . "',
-                   arch='" . trim($arch) . "',
-                   kernel='" . trim($kernel) . "',
-                   hostname='" . trim($hostname) . "',
-                   memory_kb='" . trim($mem) . "' WHERE `name` = '" . $db->sql_real_escape_string($server) . "'";
-
-                $db->sql_query($sql);
-            }
-
-            unset($ssh);
-
-            $i++;
-            //$ssh->disconnect();
-        }
-
-        echo $tab->display();
-
-        //debug($tab);
+        $this->set('data', $data);
     }
 
-    public function before($param)
-    {
+    public function before($param) {
         $this->layout_name = 'pmacontrol';
     }
 
-    public function listing($param)
-    {
+    public function listing($param) {
+
+        $this->di['js']->addJavascript(array('bootstrap-select.min.js'));
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $sql = "SELECT * FROM daemon_main WHERE id=1";
+        $res = $db->sql_query($sql);
+
+        $ob = $db->sql_fetch_object($res);
+
+        $data['pid'] = $ob->pid;
+        $data['date'] = $ob->date;
+        $data['log_file'] = $ob->log_file;
+
+        $sql = "SELECT * from client order by libelle";
+        $res = $db->sql_query($sql);
 
 
+        $data['client'] = array();
+        while ($ob = $db->sql_fetch_object($res)) {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
 
-	
-	$db = $this->di['db']->sql(DB_DEFAULT);
+            $data['client'][] = $tmp;
+        }
 
-	$sql = "SELECT * FROM daemon_main WHERE id=1";
-	$res = $db->sql_query($sql);
-
-	$ob = $db->sql_fetch_object($res);
-
-	$data['pid'] = $ob->pid;
-	$data['date'] = $ob->date;
-	$data['log_file'] = $ob->log_file;
-
+        $sql = "SELECT * from environment order by libelle";
+        $res = $db->sql_query($sql);
 
 
-	$data['menu']['main']['name'] = __('Servers');
-	$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon glyphicon-th-large" style="font-size:12px"></span>';
-	$data['menu']['main']['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
+        $data['environment'] = array();
+        while ($ob = $db->sql_fetch_object($res)) {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
 
-	$data['menu']['database']['name'] = __('Databases');
-	$data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
-	$data['menu']['database']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/database';
-
-	$data['menu']['statistics']['name'] = __('Statistics');
-	$data['menu']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
-	$data['menu']['statistics']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/statistics';
-
-	$data['menu']['memory']['name'] = __('Memory');
-	$data['menu']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
-	$data['menu']['memory']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/memory';
-
-	$data['menu']['index']['name'] = __('Index');
-	$data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
-	$data['menu']['index']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
-	
-	$data['menu']['logs']['name'] = __('Logs');
-	$data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-	$data['menu']['logs']['path'] =  LINK.__CLASS__.'/'.__FUNCTION__.'/index';
+            $data['environment'][] = $tmp;
+        }
 
 
-	if (!empty($param[0]))
-	{
-		if (in_array($param[0], array("main","database","statistics","logs","memory","index")))
-		{
-			$_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
-		}
-	}	
+        $data['menu']['main']['name'] = __('Servers');
+        $data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+        $data['menu']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
 
-	if (empty($_GET['path']) && empty($param[0]))
-	{
-		$_GET['path'] = $data['menu']['main']['path'];
-		$param[0] = 'main';
-	}
-
-	if (empty($_GET['path']))
-	{
-		$_GET['path'] = 'main';
-	}
+        $data['menu']['hardware']['name'] = __('Hardware');
+        $data['menu']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
+        $data['menu']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
 
 
-	$this->title = __("Dashboard");
-	$this->ariane = ' > <a href⁼"">'.$this->title.'</a> > '.$data['menu'][$param[0]]['icone'].' '.$data['menu'][$param[0]]['name'];
+        $data['menu']['database']['name'] = __('Databases');
+        $data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
+        $data['menu']['database']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/database';
+
+        $data['menu']['statistics']['name'] = __('Statistics');
+        $data['menu']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
+        $data['menu']['statistics']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/statistics';
+
+        $data['menu']['memory']['name'] = __('Memory');
+        $data['menu']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
+        $data['menu']['memory']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/memory';
+
+        $data['menu']['index']['name'] = __('Index');
+        $data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
+        $data['menu']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu']['system']['name'] = __('System');
+        $data['menu']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
+        $data['menu']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
+
+        $data['menu']['logs']['name'] = __('Logs');
+        $data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu']['id']['name'] = __('Server');
+        $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
+
+
+        /********/
+        
+        $data['menu_select']['main']['name'] = __('Servers');
+        $data['menu_select']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+        $data['menu_select']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
+
+        $data['menu_select']['hardware']['name'] = __('Hardware');
+        $data['menu_select']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
+        $data['menu_select']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
+
+
+        $data['menu_select']['database']['name'] = __('Databases');
+        $data['menu_select']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
+        $data['menu_select']['database']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/database';
+
+        $data['menu_select']['statistics']['name'] = __('Statistics');
+        $data['menu_select']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
+        $data['menu_select']['statistics']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/statistics';
+
+        $data['menu_select']['memory']['name'] = __('Memory');
+        $data['menu_select']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
+        $data['menu_select']['memory']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/memory';
+
+        $data['menu_select']['index']['name'] = __('Index');
+        $data['menu_select']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
+        $data['menu_select']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu_select']['system']['name'] = __('System');
+        $data['menu_select']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
+        $data['menu_select']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
+
+        $data['menu_select']['logs']['name'] = __('Logs');
+        $data['menu_select']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu_select']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu_select']['id']['name'] = __('Server');
+        $data['menu_select']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu_select']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
+        
+        
+        
+        if (!empty($param[0])) {
+            if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id"))) {
+                $_GET['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/' . $param[0];
+            }
+        }
+
+        if (empty($_GET['path']) && empty($param[0])) {
+            $_GET['path'] = $data['menu']['main']['path'];
+            $param[0] = 'main';
+        }
+
+        if (empty($_GET['path'])) {
+            $_GET['path'] = 'main';
+        }
+
+
+        $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
+        $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
 
 
         $this->set('data', $data);
     }
 
+    public function main() {
+        $db = $this->di['db']->sql(DB_DEFAULT);
 
-	public function main()
-	{
-		$db = $this->di['db']->sql(DB_DEFAULT);
+        $this->title = __("Dashboard");
+        $this->ariane = " > " . $this->title;
 
-        	$this->title = __("Dashboard");
-	        $this->ariane = " > " .  $this->title;
+        $sql = "SELECT a.*, b.version, b.is_available,c.libelle as client,d.libelle as environment FROM mysql_server a 
+                     INNER JOIN client c on c.id = a.id_client 
+                 INNER JOIN environment d on d.id = a.id_environment
+                 LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+                 order by `name`;";
 
-        	$sql = "SELECT a.*, b.version, b.is_available FROM mysql_server a "
-                . " LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server"
-                . " order by `name`;";
+        $data['servers'] = $db->sql_fetch_yield($sql);
 
-	        $data['servers'] = $db->sql_fetch_yield($sql);
+        $this->set('data', $data);
+    }
 
-        	$this->set('data', $data);
-	}
+    public function database() {
 
+        $db = $this->di['db']->sql(DB_DEFAULT);
 
-	public function database()
-	{
-		
-		$db = $this->di['db']->sql(DB_DEFAULT);
-		
-		$sql = "SELECT a.id,a.name,a.ip,a.port,a.error,
+        $sql = "SELECT a.id,a.name,a.ip,a.port,a.error,
 			GROUP_CONCAT('',b.name) as dbs,
 			GROUP_CONCAT('',b.id) as id_db,
 			GROUP_CONCAT('',b.data_length) as data_length,
@@ -215,69 +216,70 @@ class Server extends Controller
 			GROUP_CONCAT('',b.rows) as rows
 			FROM mysql_server a
 			INNER JOIN mysql_database b ON b.id_mysql_server = a.id
-			GROUP BY a.id";	
+			GROUP BY a.id";
 
-		$data['servers'] = $db->sql_fetch_yield($sql);
-		$this->set('data',$data);
-	}
+        $data['servers'] = $db->sql_fetch_yield($sql);
+        $this->set('data', $data);
+    }
+
+    public function statistics() {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime", "Com_commit", "Com_rollback", "Com_begin", "Com_replace");
+        $sql = $this->buildQuery($fields);
+        $res = $db->sql_query($sql);
+
+        $data['servers'] = $db->sql_fetch_yield($sql);
+
+        //$db->sql_query("DROP TABLE IF EXISTS `temp`");
+
+        $this->set('data', $data);
+    }
+
+    public function logs() {
+        //used with recursive
+    }
+
+    private function buildQuery($fields) {
+        $sql = 'select a.ip, a.port, a.id, a.name,';
+
+        $i = 0;
+        $tmp = [];
+        foreach ($fields as $field) {
+            $tmp[] = " c$i.value as $field";
+            $i++;
+        }
+
+        $sql .= implode(",", $tmp);
+        $sql .= " from mysql_server a ";
+        $sql .= " INNER JOIN mysql_status_max_date b ON a.id = b.id_mysql_server ";
+
+        $tmp = [];
+        $i = 0;
+        foreach ($fields as $field) {
+            $sql .= " INNER JOIN mysql_status_value_int c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
+            $sql .= " INNER JOIN mysql_status_name d$i ON d$i.id = c$i.id_mysql_status_name ";
+            $i++;
+        }
+
+        $sql .= " WHERE 1 ";
+
+        $tmp = [];
+        $i = 0;
+        foreach ($fields as $field) {
+            $sql .= " AND d$i.name = '" . $field . "'  ";
+            $i++;
+        }
+
+        $sql .=";";
+
+        return $sql;
+    }
 
 
-	public function statistics()
-	{
 
-		$db = $this->di['db']->sql(DB_DEFAULT);
-
-
-                /*
-		$db->sql_query("DROP TABLE IF EXISTS `temp`");
-		$sql ="	
-create table temp
-as select a.id_mysql_server as id_mysql_server,max(a.date) as date from mysql_status_value_int a where a.id_mysql_status_name = 259 group by a.id_mysql_server;";
-		$db->sql_query($sql);
-		sleep("1");
-                */
-
-		$sql ='
-select b.value as "select", c.value as "update", f.value as "insert", g.value as "delete", j.ip, j.port, j.id, j.name, k.value as "connected"
-FROM mysql_status_max_date a
-INNER JOIN mysql_status_value_int b ON b.id_mysql_server = a.id_mysql_server and a.date = b.date
-INNER JOIN mysql_status_value_int c ON c.id_mysql_server = a.id_mysql_server and a.date = c.date
-INNER JOIN mysql_status_name d ON d.id = b.id_mysql_status_name
-INNER JOIN mysql_status_name e ON e.id = c.id_mysql_status_name
-INNER JOIN mysql_status_value_int f ON f.id_mysql_server = a.id_mysql_server and a.date = f.date
-INNER JOIN mysql_status_value_int g ON g.id_mysql_server = a.id_mysql_server and a.date = g.date
-INNER JOIN mysql_status_name h ON h.id = f.id_mysql_status_name
-INNER JOIN mysql_status_name i ON i.id = g.id_mysql_status_name
-INNER JOIN mysql_server j ON j.id = a.id_mysql_server
-INNER JOIN mysql_status_value_int k ON k.id_mysql_server = a.id_mysql_server and a.date = k.date
-INNER JOIN mysql_status_name l ON l.id = k.id_mysql_status_name
-
-WHERE d.name = "Com_select" and e.name = "Com_update" 
-and h.name = "Com_insert" 
-and i.name = "Com_delete"
-and l.name = "Threads_connected"
-;';
-
-		$res = $db->sql_query($sql);
-
-		$data['servers'] = $db->sql_fetch_yield($sql);
-
-		//$db->sql_query("DROP TABLE IF EXISTS `temp`");
-		
-		$this->set('data',$data);
-	}
-
-
-
-	public function logs()
-	{
-		//used with recursive
-	}
-
-
-	public function memory()
-	{
-	$this->layout_name = 'pmacontrol';
+    public function memory() {
+        $this->layout_name = 'pmacontrol';
         $this->title = __("Memory");
         $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
 
@@ -291,15 +293,14 @@ and l.name = "Threads_connected"
         while ($ob50 = $default->sql_fetch_object($res50)) {
             $db = $this->di['db']->sql($ob50->name);
             $data['variables'][$ob50->name] = $db->getVariables();
+            $data['status'][$ob50->name] = $db->getStatus();
+            $data['memory'][$ob50->name] = $ob50->memory_kb;
         }
         $this->set('data', $data);
+    }
 
-	}
-
-	
-	public function index()
-	{
-	$this->layout_name = 'pmacontrol';
+    public function index() {
+        $this->layout_name = 'pmacontrol';
 
         $this->title = __("Index usage");
         $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
@@ -316,10 +317,37 @@ and l.name = "Threads_connected"
 
             $db = $this->di['db']->sql($ob50->name);
             $data['status'][$ob50->name] = $db->getStatus();
-
         }
 
 
         $this->set('data', $data);
-	}
+    }
+
+    public function id($param) {
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+        
+        
+        // get server available
+        $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
+        $res = $db->sql_query($sql);
+        $data['servers'] = array();
+        while($ob = $db->sql_fetch_object($res))
+        {
+            $tmp = [];
+            
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->name." (".$ob->ip.")";
+            
+            $data['servers'][] = $tmp;
+        }
+        
+        
+        $this->set('data', $data);
+        
+        
+        
+    }
+
 }
