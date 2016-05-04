@@ -23,6 +23,7 @@ echo "<title>".$GLIALE_TITLE." - PmaControl 0.8</title>\n";
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>title.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>reporting.css" />
 <link rel="stylesheet" type="text/css" href="<?= CSS ?>pmacontrol.css" />
+<link rel="stylesheet" type="text/css" href="<?= CSS ?>bootstrap-select.min.css" />
 <link href="<?= CSS ?>font-awesome.min.css" rel="stylesheet">
 </head>
 <body>

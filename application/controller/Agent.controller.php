@@ -20,6 +20,17 @@ class Agent extends Controller {
     var $log_file = TMP . "log/daemon.log";
     var $logger;
 
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description log error & start / stop daemon
+     * @access public
+     * 
+     */
+
     public function before($param) {
         $logger = new Logger('Daemon');
         $file_log = $this->log_file;
@@ -28,6 +39,17 @@ class Agent extends Controller {
         $logger->pushHandler($handler);
         $this->logger = $logger;
     }
+
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description to start the daemon
+     * @access public
+     * 
+     */
 
     public function start($param) {
         $id_daemon = $param[0];
@@ -78,6 +100,17 @@ class Agent extends Controller {
             header("location: " . LINK . $this->url);
         }
     }
+
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description to stop the daemon
+     * @access public
+     * 
+     */
 
     function stop($param) {
         $id_daemon = $param[0];
@@ -131,15 +164,35 @@ class Agent extends Controller {
         header("location: " . LINK . $this->url);
     }
 
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description loop to execute check on each mysql server
+     * @access public
+     * 
+     */
+
     public function launch($id) {
         while (1) {
-            $this->testAllMysql(array());
-            sleep(4);
-        }
-    }
+            
+            $this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
 
-    public function getMysqlInfo() {
-        
+
+            $this->testAllMysql(array());
+
+            $db = $this->di['db']->sql(DB_DEFAULT);
+            $sql = "SELECT * FROM daemon_main where id=1";
+            $res = $db->sql_query($sql);
+
+            while ($ob = $db->sql_fetch_object($res)) {
+                $refresh_time = $ob->refresh_time;
+            }
+
+            sleep($refresh_time);
+        }
     }
 
     /**
@@ -175,11 +228,20 @@ class Agent extends Controller {
             $server_list[] = $ob;
         }
 
+
+        $sql = "SELECT * FROM daemon_main where id=1";
+        $res = $db->sql_query($sql);
+
+        while ($ob = $db->sql_fetch_object($res)) {
+            $maxThreads = $ob->thread_concurency; // check MySQL server x by x
+            $maxExecutionTime = $ob->max_delay;
+        }
+
         //to prevent any trouble with fork
         $db->sql_close();
 
         //$maxThreads = \Glial\System\Cpu::getCpuCores();
-        $maxThreads = 50; // check MySQL server 50 by 50
+
         $openThreads = 0;
         $child_processes = array();
 
@@ -205,7 +267,7 @@ class Agent extends Controller {
             } else {
 
                 // one thread to test each MySQL server
-                $this->testMysqlServer($server);
+                $this->testMysqlServer($server, $maxExecutionTime);
                 $father = false;
                 //we want that child exit the foreach
                 break;
@@ -234,15 +296,14 @@ class Agent extends Controller {
      * @return boolean Success
      * @package Controller
      * @since 0.8 First time this was introduced.
-     * @description launch a subprocess limited in time to try MySQL connection
+     * @description launch a subprocess limited in time to try MySQL connection, if ok get status and show master/slave status
      * @access public
      */
-    private function testMysqlServer($server) {
+    private function testMysqlServer($server, $max_execution_time = 10) {
         $this->view = false;
 
         //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
-
-        $max_execution_time = 8; // in seonceds
+        //$max_execution_time = 20; // in seconds
         $ret = SetTimeLimit::run("Agent", "tryMysqlConnection", array($server['name'], $server['id']), $max_execution_time);
 
         if (!SetTimeLimit::exitWithoutError($ret)) {
@@ -501,6 +562,17 @@ GROUP BY table_schema ;';
         }
     }
 
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description refresh list of MySQL according pmacontrol/configuration/db.config.ini.php
+     * @access public
+     * 
+     */
+
     public function updateServerList() {
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -558,10 +630,6 @@ GROUP BY table_schema ;';
         }
     }
 
-    private function addServerToConfig($name, $ip = "") {
-        
-    }
-
     public function index() {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -576,6 +644,17 @@ GROUP BY table_schema ;';
 
         $this->set('data', $data);
     }
+
+    /*
+     * (PmaControl 0.8)<br/>
+     * @author Aurélien LEQUOY, <aurelien.lequoy@esysteme.com>
+     * @return boolean Success
+     * @package Controller
+     * @since 0.8 First time this was introduced.
+     * @description test if daemon is launched or not according with pid saved in table daemon_main
+     * @access public
+     * 
+     */
 
     private function isRunning($param) {
         if (is_array($param)) {
@@ -747,9 +826,30 @@ GROUP BY table_schema ;';
     }
 
     public function logs() {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+
+        // update param for the daemon
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+            if (!empty($_POST['daemon_main']['refresh_time']) && !empty($_POST['daemon_main']['thread_concurency']) && !empty($_POST['daemon_main']['max_delay'])) {
+                $table = [];
+                $table['daemon_main'] = $_POST['daemon_main'];
+                $table['daemon_main']['id'] = 1;
+                $gg = $db->sql_save($table);
+
+                if (!$gg) {
+                    set_flash("error", "Error", "Impossible to update the params of Daemon");
+                } else {
+                    set_flash("success", "Success", "The params of Daemon has been updated");
+                }
+                header("location: " . LINK . "Server/listing/logs");
+            }
+        }
+
         $this->di['js']->code_javascript("var objDiv = document.getElementById('data_log'); objDiv.scrollTop = objDiv.scrollHeight;");
 
-        $db = $this->di['db']->sql(DB_DEFAULT);
+
         $sql = "SELECT * FROM `daemon_main` WHERE id =1";
         $res = $db->sql_query($sql);
         $ob = $db->sql_fetch_object($res);
@@ -757,6 +857,46 @@ GROUP BY table_schema ;';
 
         $data['log_file'] = $ob->log_file;
         $data['log'] = file_get_contents($ob->log_file);
+
+        $_GET['daemon_main']['thread_concurency'] = $ob->thread_concurency;
+
+        $data['thread'] = array();
+        for ($i = 1; $i <= 128; $i++) {
+            $tmp = [];
+
+            $tmp['id'] = $i;
+            $tmp['libelle'] = $i;
+
+            $data['thread_concurency'][] = $tmp;
+        }
+
+
+        $_GET['daemon_main']['refresh_time'] = $ob->refresh_time;
+
+        $data['thread'] = array();
+        for ($i = 1; $i <= 60; $i++) {
+            $tmp = [];
+
+            $tmp['id'] = $i;
+            $tmp['libelle'] = $i;
+
+            $data['refresh_time'][] = $tmp;
+        }
+
+        $_GET['daemon_main']['max_delay'] = $ob->max_delay;
+
+        $data['thread'] = array();
+        for ($i = 1; $i <= 60; $i++) {
+            $tmp = [];
+
+            $tmp['id'] = $i;
+            $tmp['libelle'] = $i;
+
+            $data['max_delay'][] = $tmp;
+        }
+        //$data[''] = ;
+
+
 
         $this->set('data', $data);
     }
@@ -797,8 +937,12 @@ GROUP BY table_schema ;';
 
 
             $os = trim($ssh->exec("lsb_release -ds"));
+            $distributor = trim($ssh->exec("lsb_release -si"));
+            
+            
             if (empty($os)) {
                 $os = trim($ssh->exec("cat /etc/centos-release"));
+                $distributor = trim("Centos");
             }
 
             $product_name = $ssh->exec("dmidecode -s system-product-name");
@@ -826,6 +970,7 @@ GROUP BY table_schema ;';
 
 
             $sql = "UPDATE mysql_server SET operating_system='" . $db->sql_real_escape_string($os) . "',
+                   distributor='" . trim($distributor) . "',
                    processor='" . trim($nb_cpu) . "',
                    cpu_mhz='" . trim($freq[0]) . "',
                    product_name='" . trim($product_name) . "',

@@ -10,11 +10,18 @@ use \Glial\Synapse\FactoryController;
 use Glial\Html\Form\Form;
 ?>
 <div class="well">
-    <?php
-    echo ' <div class="btn-group" role="group" aria-label="Default button group">';
     
+    <?php
+    
+    echo '<form class="form-inline" action="" method="post">';
+    echo ' <div class="form-group" role="group" aria-label="Default button group">';
+        
+    echo __("Server : ");
+    echo ' ';
+    echo Form::select("mysql-server","id",$data['servers'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width"=>"auto"));
+    echo ' <button type="submit" class="btn btn-primary">' . __("Filter") . '</button>';
     
     echo '</div>';
+    echo '</form>';
     ?>
-
 </div>

@@ -28,6 +28,9 @@ class Dot extends Controller
     {
         $this->view = false;
         $graph = new Alom\Graphviz\Digraph('G');
+        
+        
+        
     }
     
     

@@ -36,7 +36,7 @@ class Server extends Controller {
 
     public function listing($param) {
 
-        $this->di['js']->addJavascript(array('http://select2.github.io/select2/select2-3.4.1/select2.js'));
+        $this->di['js']->addJavascript(array('bootstrap-select.min.js'));
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -116,6 +116,49 @@ class Server extends Controller {
         $data['menu']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
 
 
+        /********/
+        
+        $data['menu_select']['main']['name'] = __('Servers');
+        $data['menu_select']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+        $data['menu_select']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
+
+        $data['menu_select']['hardware']['name'] = __('Hardware');
+        $data['menu_select']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
+        $data['menu_select']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
+
+
+        $data['menu_select']['database']['name'] = __('Databases');
+        $data['menu_select']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
+        $data['menu_select']['database']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/database';
+
+        $data['menu_select']['statistics']['name'] = __('Statistics');
+        $data['menu_select']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
+        $data['menu_select']['statistics']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/statistics';
+
+        $data['menu_select']['memory']['name'] = __('Memory');
+        $data['menu_select']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
+        $data['menu_select']['memory']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/memory';
+
+        $data['menu_select']['index']['name'] = __('Index');
+        $data['menu_select']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
+        $data['menu_select']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu_select']['system']['name'] = __('System');
+        $data['menu_select']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
+        $data['menu_select']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
+
+        $data['menu_select']['logs']['name'] = __('Logs');
+        $data['menu_select']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu_select']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+
+
+        $data['menu_select']['id']['name'] = __('Server');
+        $data['menu_select']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu_select']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
+        
+        
+        
         if (!empty($param[0])) {
             if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id"))) {
                 $_GET['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/' . $param[0];
@@ -132,8 +175,8 @@ class Server extends Controller {
         }
 
 
-        $this->title = __("Dashboard");
-        $this->ariane = ' > <a href⁼"">' . $this->title . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
+        $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
+        $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
 
 
         $this->set('data', $data);
@@ -233,13 +276,7 @@ class Server extends Controller {
         return $sql;
     }
 
-    public function gg() {
-        $this->view = false;
 
-        $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime");
-
-        echo \SqlFormatter::format($this->buildQuery($fields));
-    }
 
     public function memory() {
         $this->layout_name = 'pmacontrol';
@@ -288,7 +325,29 @@ class Server extends Controller {
 
     public function id($param) {
 
-        $default = $this->di['db']->sql(DB_DEFAULT);
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+        
+        
+        // get server available
+        $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
+        $res = $db->sql_query($sql);
+        $data['servers'] = array();
+        while($ob = $db->sql_fetch_object($res))
+        {
+            $tmp = [];
+            
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->name." (".$ob->ip.")";
+            
+            $data['servers'][] = $tmp;
+        }
+        
+        
+        $this->set('data', $data);
+        
+        
+        
     }
 
 }
