@@ -605,6 +605,10 @@ GROUP BY table_schema ;';
             $data['mysql_server']['passwd'] = Crypt::encrypt($info_server['password']);
             $data['mysql_server']['port'] = empty($info_server['port']) ? 3306 : $info_server['port'];
             $data['mysql_server']['date_refresh'] = date('Y-m-d H:i:s');
+            
+            //to update
+            $data['mysql_server']['id_client'] = 1;
+            $data['mysql_server']['id_environment'] = 1;
 
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);

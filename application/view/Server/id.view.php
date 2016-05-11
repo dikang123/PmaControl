@@ -18,10 +18,32 @@ use Glial\Html\Form\Form;
         
     echo __("Server : ");
     echo ' ';
-    echo Form::select("mysql-server","id",$data['servers'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width"=>"auto"));
+    echo Form::select("mysql_server","id",$data['servers'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width"=>"auto"));
+    echo ' ';
+    
+    echo Form::select("mysql_status_name","id",$data['status'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width"=>"auto"));
+    
+    
     echo ' <button type="submit" class="btn btn-primary">' . __("Filter") . '</button>';
     
     echo '</div>';
     echo '</form>';
     ?>
 </div>
+
+
+
+
+
+<canvas id="buyers" width="600" height="400"></canvas>
+
+<canvas id="rice" width="400" height="400"></canvas>
+
+<canvas id="canvas"></canvas>
+<canvas id="skills"></canvas>
+
+
+
+<?php
+
+

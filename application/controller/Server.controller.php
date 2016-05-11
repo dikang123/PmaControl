@@ -12,6 +12,7 @@ class Server extends Controller {
     //dba_source
 
     public function hardware() {
+        
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -75,7 +76,6 @@ class Server extends Controller {
             $data['environment'][] = $tmp;
         }
 
-
         $data['menu']['main']['name'] = __('Servers');
         $data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
         $data['menu']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
@@ -83,7 +83,6 @@ class Server extends Controller {
         $data['menu']['hardware']['name'] = __('Hardware');
         $data['menu']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
         $data['menu']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
-
 
         $data['menu']['database']['name'] = __('Databases');
         $data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
@@ -101,7 +100,6 @@ class Server extends Controller {
         $data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
         $data['menu']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
 
-
         $data['menu']['system']['name'] = __('System');
         $data['menu']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
         $data['menu']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
@@ -109,7 +107,6 @@ class Server extends Controller {
         $data['menu']['logs']['name'] = __('Logs');
         $data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
-
 
         $data['menu']['id']['name'] = __('Server');
         $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
@@ -177,7 +174,6 @@ class Server extends Controller {
 
         $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
         $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
-
 
         $this->set('data', $data);
     }
@@ -272,7 +268,6 @@ class Server extends Controller {
         }
 
         $sql .=";";
-
         return $sql;
     }
 
@@ -323,11 +318,34 @@ class Server extends Controller {
         $this->set('data', $data);
     }
 
+    
+    /*
+     * 
+     * graph with Chart.js
+     * 
+     */
     public function id($param) {
 
+        $this->di['js']->addJavascript(array("chart.js/src/chart.js"));
+        
         $db = $this->di['db']->sql(DB_DEFAULT);
         
         
+        if ($_SERVER['REQUEST_METHOD'] === "POST")
+        {
+            $sql = "SELECT * FROM mysql_server where id='".$_POST['mysql_server']['id']."'";
+            
+            $res = $db->sql_query($sql);
+            
+            
+            while ($ob = $db->sql_fetch_object($res))
+            {
+                $id_mysql_server = $ob->id;
+                
+                header('location: '.LINK.__CLASS__.'/listing/id/mysql_server:id:'.$id_mysql_server.'/mysql_status_name:id:'.$_POST['mysql_status_name']['id']);
+            }
+            
+        }
         
         // get server available
         $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
@@ -335,19 +353,72 @@ class Server extends Controller {
         $data['servers'] = array();
         while($ob = $db->sql_fetch_object($res))
         {
-            $tmp = [];
-            
+            $tmp = [];    
             $tmp['id'] = $ob->id;
             $tmp['libelle'] = $ob->name." (".$ob->ip.")";
-            
             $data['servers'][] = $tmp;
         }
         
         
+        // get server available
+        $sql = "SELECT * FROM mysql_status_name order by name ASC";
+        $res = $db->sql_query($sql);
+        $data['status'] = array();
+        while($ob = $db->sql_fetch_object($res))
+        {
+            $tmp = [];    
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->name;
+            $data['status'][] = $tmp;
+        }
+        
+        
+        
+        
+        
+        $elems = array(60*5, 60*15, 3600, 3600*2, 3600*6, 3600*12, 3600*24, 3600*48, 3600*24*7);
+        
+        if (!empty($_GET['mysql_server']['id']))
+        {
+            $sql ="SELECT * FROM mysql_status_value_int a
+                    
+                    WHERE a.id_mysql_server = ".$_GET['mysql_server']['id']." 
+                    AND a.id_mysql_status_name = '".$_GET['mysql_status_name']['id']."'
+                    and a.date > date_sub(now(), interval 60 minute) ORDER BY a.date ASC;";
+            
+            $data['sql'] = $sql;
+            
+            $data['graph'] = $db->sql_fetch_yield($sql);
+            
+            
+   
+            
+        }
+
+
+$this->di['js']->code_javascript('
+
+
+var riceData = {
+    labels : ["January","February","March","April","May","June"],
+    datasets : [
+        {
+            fillColor : "rgba(172,194,132,0.4)",
+            strokeColor : "#ACC26D",
+            pointColor : "#fff",
+            pointStrokeColor : "#9DB86D",
+            data : [203000,15600,99000,25100,30500,24700]
+        }
+    ]
+}
+
+var rice = document.getElementById("rice").getContext("2d");
+//new Chart(rice).Line(riceData);
+
+');
+        
+
         $this->set('data', $data);
-        
-        
-        
     }
 
 }
