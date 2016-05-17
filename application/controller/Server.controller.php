@@ -13,6 +13,7 @@ class Server extends Controller {
 
     public function hardware() {
 
+
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $this->title = __("Hardware");
@@ -75,7 +76,6 @@ class Server extends Controller {
             $data['environment'][] = $tmp;
         }
 
-
         $data['menu']['main']['name'] = __('Servers');
         $data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
         $data['menu']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
@@ -83,7 +83,6 @@ class Server extends Controller {
         $data['menu']['hardware']['name'] = __('Hardware');
         $data['menu']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
         $data['menu']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
-
 
         $data['menu']['database']['name'] = __('Databases');
         $data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
@@ -101,7 +100,6 @@ class Server extends Controller {
         $data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
         $data['menu']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
 
-
         $data['menu']['system']['name'] = __('System');
         $data['menu']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
         $data['menu']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
@@ -110,14 +108,13 @@ class Server extends Controller {
         $data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
 
-
         $data['menu']['id']['name'] = __('Server');
         $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
 
 
-        /********/
-        
+        /*         * ***** */
+
         $data['menu_select']['main']['name'] = __('Servers');
         $data['menu_select']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
         $data['menu_select']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
@@ -156,9 +153,9 @@ class Server extends Controller {
         $data['menu_select']['id']['name'] = __('Server');
         $data['menu_select']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu_select']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
-        
-        
-        
+
+
+
         if (!empty($param[0])) {
             if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id"))) {
                 $_GET['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/' . $param[0];
@@ -175,9 +172,8 @@ class Server extends Controller {
         }
 
 
-        $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
-        $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
-
+        $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> ' . __("Dashboard");
+        $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> ' . __("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
 
         $this->set('data', $data);
     }
@@ -272,11 +268,8 @@ class Server extends Controller {
         }
 
         $sql .=";";
-
         return $sql;
     }
-
-
 
     public function memory() {
         $this->layout_name = 'pmacontrol';
@@ -323,31 +316,173 @@ class Server extends Controller {
         $this->set('data', $data);
     }
 
+    /*
+     * 
+     * graph with Chart.js
+     * 
+     */
+
     public function id($param) {
 
+        $this->di['js']->addJavascript(array("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js")); //,
+
         $db = $this->di['db']->sql(DB_DEFAULT);
-        
-        
-        
-        // get server available
-        $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
-        $res = $db->sql_query($sql);
-        $data['servers'] = array();
-        while($ob = $db->sql_fetch_object($res))
-        {
-            $tmp = [];
-            
-            $tmp['id'] = $ob->id;
-            $tmp['libelle'] = $ob->name." (".$ob->ip.")";
-            
-            $data['servers'][] = $tmp;
+
+
+        if ($_SERVER['REQUEST_METHOD'] === "POST") {
+            $sql = "SELECT * FROM mysql_server where id='" . $_POST['mysql_server']['id'] . "'";
+
+            $res = $db->sql_query($sql);
+
+
+            while ($ob = $db->sql_fetch_object($res)) {
+                $id_mysql_server = $ob->id;
+
+                header('location: ' . LINK . __CLASS__
+                        . '/listing/id/mysql_server:id:' . $id_mysql_server
+                        . '/mysql_status_name:id:' . $_POST['mysql_status_name']['id']
+                        . '/mysql_status_value_int:date:' . $_POST['mysql_status_value_int']['date']
+                        . '/mysql_status_value_int:derivate:' . $_POST['mysql_status_value_int']['derivate']);
+            }
+        } else {
+
+            // get server available
+            $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
+            $res = $db->sql_query($sql);
+            $data['servers'] = array();
+            while ($ob = $db->sql_fetch_object($res)) {
+                $tmp = [];
+                $tmp['id'] = $ob->id;
+                $tmp['libelle'] = $ob->name . " (" . $ob->ip . ")";
+                $data['servers'][] = $tmp;
+            }
+
+
+            // get server available
+            $sql = "SELECT * FROM mysql_status_name order by name ASC";
+            $res = $db->sql_query($sql);
+            $data['status'] = array();
+            while ($ob = $db->sql_fetch_object($res)) {
+                $tmp = [];
+                $tmp['id'] = $ob->id;
+                $tmp['libelle'] = $ob->name;
+                $data['status'][] = $tmp;
+            }
+
+
+            $interval = array('5 minute', '15 minute', '1 hour', '2 hour', '6 hour', '12 hour', '1 day', '2 day', '1 week', '2 week', '1 month');
+            $libelles = array('5 minutes', '15 minutes', '1 hour', '2 hours', '6 hours', '12 hours', '1 day', '2 days', '1 week', '2 weeks', '1 month');
+            $elems = array(60 * 5, 60 * 15, 3600, 3600 * 2, 3600 * 6, 3600 * 12, 3600 * 24, 3600 * 48, 3600 * 24 * 7, 3600 * 24 * 14, 3600 * 24 * 30);
+
+            $data['interval'] = array();
+            $i = 0;
+            foreach ($libelles as $libelle) {
+                $tmp = [];
+                $tmp['id'] = $interval[$i];
+                $tmp['libelle'] = $libelle;
+                $data['interval'][] = $tmp;
+                $i++;
+            }
+
+            $data['derivate'][0]['id'] = 1;
+            $data['derivate'][0]['libelle'] = __("Yes");
+            $data['derivate'][1]['id'] = 2;
+            $data['derivate'][1]['libelle'] = __("No");
+
+
+
+
+            if (!empty($_GET['mysql_server']['id'])) {
+                $sql = "SELECT * FROM mysql_status_value_int a
+                    
+                    WHERE a.id_mysql_server = " . $_GET['mysql_server']['id'] . " 
+                    AND a.id_mysql_status_name = '" . $_GET['mysql_status_name']['id'] . "'
+                    and a.date > date_sub(now(), INTERVAL " . $_GET['mysql_status_value_int']['date'] . ") ORDER BY a.date ASC;";
+
+                $data['sql'] = $sql;
+                $data['graph'] = $db->sql_fetch_yield($sql);
+                $dates = [];
+                $val = [];
+
+                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '".$_GET['mysql_status_name']['id']."'";
+                $res2 = $db->sql_query($sql2);
+                
+                while ($ob2 = $db->sql_fetch_object($res2))
+                {
+                    $name = $ob2->name;
+                }
+                
+                
+                $i = 0;
+
+
+                $old_date = "";
+                foreach ($data['graph'] as $value) {
+
+                    if (empty($old_date) && $_GET['mysql_status_value_int']['derivate'] == "1") {
+
+                        $old_date = $value['date'];
+                        $old_value = $value['value'];
+                        continue;
+                    } elseif ($_GET['mysql_status_value_int']['derivate'] == "1") {
+
+                        $datetime1 = strtotime($old_date);
+                        $datetime2 = strtotime($value['date']);
+
+                        $secs = $datetime2 - $datetime1; // == <seconds between the two times>
+
+                        //echo $datetime1. ' '.$datetime2 . ' : '. $secs." ".$value['value'] ." - ". $old_value." => ".($value['value']- $old_value)/ $secs."<br>";
+
+
+                        $val[] = round(($value['value']- $old_value)/ $secs,2);
+                    } else {
+                        $val[] = $value['value'];
+                        
+                    }
+
+                    $dates[] = $value['date'];
+
+                    $old_date = $value['date'];
+                    $old_value = $value['value'];
+                    
+                }
+
+
+
+                $date = implode('","', $dates);
+                $vals = implode(',', $val);
+
+
+
+                $this->di['js']->code_javascript('
+var ctx = document.getElementById("myChart");
+
+var myChart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: ["' . $date . '"],
+        datasets: [{
+            label: "'.  ucwords($name).'",
+            data: [' . $vals . ']
+        }]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
         }
-        
-        
-        $this->set('data', $data);
-        
-        
-        
+    }
+});
+');
+            }
+
+
+
+            $this->set('data', $data);
+        }
     }
 
 }
