@@ -28,7 +28,6 @@ class Agent extends Controller {
      * @since 0.8 First time this was introduced.
      * @description log error & start / stop daemon
      * @access public
-     * 
      */
 
     public function before($param) {
@@ -48,7 +47,6 @@ class Agent extends Controller {
      * @since 0.8 First time this was introduced.
      * @description to start the daemon
      * @access public
-     * 
      */
 
     public function start($param) {
