@@ -24,6 +24,7 @@ class Server extends Controller {
                  INNER JOIN client c on c.id = a.id_client 
                  INNER JOIN environment d on d.id = a.id_client 
          LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+         WHERE 1 " . $this->getFilter() . "
          order by `name`;";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
@@ -77,7 +78,8 @@ class Server extends Controller {
         }
 
         $data['menu']['main']['name'] = __('Servers');
-        $data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
+        $data['menu']['main']['icone'] = '<i class="fa fa-server" aria-hidden="true" style="font-size:14px"></i>';
+        //$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
         $data['menu']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
 
         $data['menu']['hardware']['name'] = __('Hardware');
@@ -184,10 +186,39 @@ class Server extends Controller {
         $this->title = __("Dashboard");
         $this->ariane = " > " . $this->title;
 
+        $this->di['js']->code_javascript('
+        $("#checkAll").click(function(){
+    $("input:checkbox").not(this).prop("checked", this.checked);
+});
+
+');
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+
+            if (!empty($_POST['is_monitored'])) {
+
+                //start transaction !
+                $sql = "UPDATE mysql_server a SET is_monitored='0' WHERE 1 " . $this->getFilter();
+                $db->sql_query($sql);
+
+                foreach ($_POST['monitored'] as $key => $val) {
+                    //ugly to optimize but no time now
+                    if ($val == "on") {
+                        $sql = "UPDATE mysql_server a SET is_monitored='1' WHERE id='" . $key . "' " . $this->getFilter();
+                        $db->sql_query($sql);
+                    }
+                }
+            }
+
+            //header
+        }
+
+
         $sql = "SELECT a.*, b.version, b.is_available,c.libelle as client,d.libelle as environment FROM mysql_server a 
                      INNER JOIN client c on c.id = a.id_client 
                  INNER JOIN environment d on d.id = a.id_environment
                  LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
+                 WHERE 1 " . $this->getFilter() . "
                  order by `name`;";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
@@ -212,6 +243,7 @@ class Server extends Controller {
 			GROUP_CONCAT('',b.rows) as rows
 			FROM mysql_server a
 			INNER JOIN mysql_database b ON b.id_mysql_server = a.id
+                        " . $this->getFilter() . "
 			GROUP BY a.id";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
@@ -258,7 +290,7 @@ class Server extends Controller {
             $i++;
         }
 
-        $sql .= " WHERE 1 ";
+        $sql .= " WHERE 1 " . $this->getFilter() . "";
 
         $tmp = [];
         $i = 0;
@@ -279,10 +311,11 @@ class Server extends Controller {
         $default = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM mysql_server a
             INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server 
-            WHERE is_available = 1 
+            WHERE is_available = 1 " . $this->getFilter() . "
             order by a.`name`";
         $res50 = $default->sql_query($sql);
 
+        $data = [];
         while ($ob50 = $default->sql_fetch_object($res50)) {
             $db = $this->di['db']->sql($ob50->name);
             $data['variables'][$ob50->name] = $db->getVariables();
@@ -301,7 +334,7 @@ class Server extends Controller {
         $default = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM mysql_server a
             INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server
-            WHERE is_available = 1
+            WHERE is_available = 1 " . $this->getFilter() . "
             order by `name`";
         $res50 = $default->sql_query($sql);
 
@@ -347,7 +380,7 @@ class Server extends Controller {
         } else {
 
             // get server available
-            $sql = "SELECT * FROM mysql_server WHERE error = '' order by name ASC";
+            $sql = "SELECT * FROM mysql_server a WHERE error = '' " . $this->getFilter() . " order by a.name ASC";
             $res = $db->sql_query($sql);
             $data['servers'] = array();
             while ($ob = $db->sql_fetch_object($res)) {
@@ -389,6 +422,9 @@ class Server extends Controller {
             $data['derivate'][1]['id'] = 2;
             $data['derivate'][1]['libelle'] = __("No");
 
+            if (empty($_GET['mysql_status_value_int']['date'])) {
+                $_GET['mysql_status_value_int']['date'] = "6 hour";
+            }
 
 
 
@@ -397,26 +433,25 @@ class Server extends Controller {
                     
                     WHERE a.id_mysql_server = " . $_GET['mysql_server']['id'] . " 
                     AND a.id_mysql_status_name = '" . $_GET['mysql_status_name']['id'] . "'
-                    and a.date > date_sub(now(), INTERVAL " . $_GET['mysql_status_value_int']['date'] . ") ORDER BY a.date ASC;";
+                    and a.`date` > date_sub(now(), INTERVAL " . $_GET['mysql_status_value_int']['date'] . ") ORDER BY a.`date` ASC;";
 
                 $data['sql'] = $sql;
                 $data['graph'] = $db->sql_fetch_yield($sql);
                 $dates = [];
                 $val = [];
 
-                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '".$_GET['mysql_status_name']['id']."'";
+                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '" . $_GET['mysql_status_name']['id'] . "'";
                 $res2 = $db->sql_query($sql2);
-                
-                while ($ob2 = $db->sql_fetch_object($res2))
-                {
+
+                while ($ob2 = $db->sql_fetch_object($res2)) {
                     $name = $ob2->name;
                 }
-                
-                
+
                 $i = 0;
 
-
                 $old_date = "";
+                $points = [];
+
                 foreach ($data['graph'] as $value) {
 
                     if (empty($old_date) && $_GET['mysql_status_value_int']['derivate'] == "1") {
@@ -430,28 +465,36 @@ class Server extends Controller {
                         $datetime2 = strtotime($value['date']);
 
                         $secs = $datetime2 - $datetime1; // == <seconds between the two times>
-
                         //echo $datetime1. ' '.$datetime2 . ' : '. $secs." ".$value['value'] ." - ". $old_value." => ".($value['value']- $old_value)/ $secs."<br>";
 
+                        $derivate = round(($value['value'] - $old_value) / $secs, 2);
 
-                        $val[] = round(($value['value']- $old_value)/ $secs,2);
+                        if ($derivate < 0) {
+                            $derivate = 0;
+                        }
+
+                        $val[] = $derivate;
+
+                        //$points[] = "{ x: " . $datetime2 . ", y :" . $derivate . "}";
                     } else {
                         $val[] = $value['value'];
-                        
                     }
+
+
+
+                    //$points[] = "{ x: " . $datetime2 . "000, y :" . $derivate . "}";
 
                     $dates[] = $value['date'];
 
                     $old_date = $value['date'];
                     $old_value = $value['value'];
-                    
                 }
 
 
 
                 $date = implode('","', $dates);
                 $vals = implode(',', $val);
-
+                //$arr_points = implode(',', $points);
 
 
                 $this->di['js']->code_javascript('
@@ -461,8 +504,8 @@ var myChart = new Chart(ctx, {
     type: "line",
     data: {
         labels: ["' . $date . '"],
-        datasets: [{
-            label: "'.  ucwords($name).'",
+        datasets: [{    
+            label: "' . ucwords($name) . '",
             data: [' . $vals . ']
         }]
     },
@@ -483,6 +526,40 @@ var myChart = new Chart(ctx, {
 
             $this->set('data', $data);
         }
+    }
+
+    //to mutualize
+    private function getFilter() {
+
+        $where = "";
+
+
+        if (!empty($_GET['environment']['libelle'])) {
+            $environment = $_GET['environment']['libelle'];
+        }
+        if (!empty($_SESSION['environment']['libelle']) && empty($_GET['environment']['libelle'])) {
+            $environment = $_SESSION['environment']['libelle'];
+            $_GET['environment']['libelle'] = $environment;
+        }
+
+        if (!empty($_SESSION['client']['libelle'])) {
+            $client = $_SESSION['client']['libelle'];
+        }
+        if (!empty($_GET['client']['libelle']) && empty($_GET['client']['libelle'])) {
+            $client = $_GET['client']['libelle'];
+            $_GET['client']['libelle'] = $client;
+        }
+
+
+        if (!empty($environment)) {
+            $where .= " AND a.id_environment = '" . $environment . "'";
+        }
+
+        if (!empty($client)) {
+            $where .= " AND a.id_client = '" . $client . "'";
+        }
+
+        return $where;
     }
 
 }

@@ -24,9 +24,6 @@ echo '<th>'.__('Handler_read_key').'</th>';
 echo '<th>'.__('Handler_read_prev').'</th>';
 echo '<th>'.__('Usage').'</th>';
 echo '<th>'.__('Percent').'</th>';
-
-
-
 echo '</tr>';
 
 
@@ -41,16 +38,10 @@ if (!empty($data['status'])) {
         echo '<td>'.format($variable['Handler_read_next']).'</td>';
         echo '<td>'.format($variable['Handler_read_key']).'</td>';
         echo '<td>'.format($variable['Handler_read_prev']).'</td>';
-
-
-
-
+        
         $percent = 1 - (($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd']) /
             ($variable['Handler_read_rnd_next'] + $variable['Handler_read_rnd'] + $variable['Handler_read_first'] + $variable['Handler_read_next'] + $variable['Handler_read_key']
             + $variable['Handler_read_prev'] ));
-
-
-
 
         echo '<td>'.round($percent * 100, 2).'%</td>';
 
@@ -88,6 +79,5 @@ echo '<b>'.__('Usage of index is calculed as follow :').'</b>';
 echo '<br /><br />';
 echo '1-((Handler_read_rnd_next + Handler_read_rnd)/<br />'
 .'(Handler_read_rnd_next + Handler_read_rnd + Handler_read_first + Handler_read_next + Handler_read_key + Handler_read_prev))<br />';
-
 
 echo '</div>';

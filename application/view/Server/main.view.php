@@ -6,7 +6,7 @@ use \Glial\Security\Crypt\Crypt;
 
 $converter = new AnsiToHtmlConverter();
 
-
+echo '<form action="" method="POST">';
 
 echo '<table class="table table-condensed table-bordered table-striped" id="table">';
 echo '<tr>';
@@ -14,6 +14,7 @@ echo '<tr>';
 echo '<th>' . __("Top") . '</th>';
 echo '<th>' . __("ID") . '</th>';
 echo '<th>' . __("Available") . '</th>';
+echo '<th><input id="checkAll" type="checkbox" onClick="toggle(this)" /> ' . __("Monitored") . '</th>';
 echo '<th>' . __("Client") . '</th>';
 echo '<th>' . __("Environment") . '</th>';
 
@@ -48,6 +49,7 @@ foreach ($data['servers'] as $server) {
     echo '<td style="' . $style . '">';
     echo '<span class="glyphicon ' . ($server['is_available'] == 1 ? "glyphicon-ok" : "glyphicon-remove") . '" aria-hidden="true"></span>';
     echo '</td>';
+    echo '<td style="' . $style . '">' . '<input type="checkbox" name="monitored['.$server['id'].']" '.($server['is_monitored'] == 1 ? 'checked="checked"' : '').'" />' . '</td>';
     echo '<td style="' . $style . '">' . $server['client'] . '</td>';
     echo '<td style="' . $style . '">' . $server['environment'] . '</td>';
     echo '<td style="' . $style . '"><a href="'.LINK.'server/listing/id/'.$server['id'].'">' . str_replace('_', '-', $server['name']) . '</a></td>';
@@ -81,12 +83,13 @@ foreach ($data['servers'] as $server) {
         echo str_replace("\n", '<br>', trim($server['error']));
     }
     echo '</td>';
-
-
-
-
     echo '</tr>';
 }
 
 echo '</table>';
 
+
+echo '<input type="hidden" name="is_monitored" value="1" />';
+echo '<button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> Update</button>';
+
+echo '</form>';

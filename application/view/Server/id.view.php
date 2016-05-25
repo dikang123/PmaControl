@@ -42,7 +42,10 @@ use Glial\Html\Form\Form;
 </div>
 
 
-
+<!--
 <div style="height:600px; width:1600px">
 <canvas id="myChart" height="500" width="1600"></canvas>
 </div>
+-->
+
+<canvas style="width: 100%; height: 450px;" id="myChart" height="450" width="1600"></canvas>

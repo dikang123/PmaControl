@@ -175,8 +175,8 @@ class Agent extends Controller {
 
     public function launch($id) {
         while (1) {
-            
-            $this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
+
+            //$this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
 
 
             $this->testAllMysql(array());
@@ -218,7 +218,7 @@ class Agent extends Controller {
 
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "select * from mysql_server";
+        $sql = "select * from mysql_server WHERE is_monitored =1";
         $res = $db->sql_query($sql);
 
         $server_list = array();
@@ -499,6 +499,8 @@ GROUP BY table_schema ;';
                 $sql = "DELETE FROM mysql_database WHERE id = '" . $tab['id'] . "'";
                 $db->sql_query($sql);
                 // push event DB deleted
+
+                $this->logger->info(Color::getColoredString('Databases deleted', "yellow"));
             }
 
             if ($slave) {
@@ -536,6 +538,31 @@ GROUP BY table_schema ;';
                         debug($db->sql_error());
                         throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                     }
+
+
+                    // bug there in case of multi source replication and we remove one thread !
+                }
+            } else {
+
+
+                $sql = "SELECT id from mysql_replication_thread where id_mysql_replication_stats = '" . $id_mysql_replication_stats . "'";
+
+                $res34 = $db->sql_query($sql);
+
+                while ($ob = $db->sql_fetch_object($res34)) {
+                    //$mysql_replication_thread['mysql_replication_thread']['id'] = $ob->id;
+
+                    $sql = "DELETE FROM mysql_replication_thread WHERE id = " . $ob->id;
+                    $out = $db->sql_query($sql);
+
+                    if (!$out) {
+                        $this->logger->info(Color::getColoredString(print_r($db->sql_error()), "red"));
+                    }
+
+                    $this->logger->info(Color::getColoredString($sql, "red"));
+                    $this->logger->info(Color::getColoredString('Slave deleted', "yellow"));
+
+                    //log delete of a slave !
                 }
             }
 
@@ -595,6 +622,10 @@ GROUP BY table_schema ;';
                 unset($all_server[$server]);
             } else {
                 echo "Add : " . $server . " to monitoring\n";
+
+                //to update
+                $data['mysql_server']['id_client'] = 1;
+                $data['mysql_server']['id_environment'] = 1;
             }
 
             $data['mysql_server']['name'] = $server;
@@ -603,10 +634,9 @@ GROUP BY table_schema ;';
             $data['mysql_server']['passwd'] = Crypt::encrypt($info_server['password']);
             $data['mysql_server']['port'] = empty($info_server['port']) ? 3306 : $info_server['port'];
             $data['mysql_server']['date_refresh'] = date('Y-m-d H:i:s');
-            
-            //to update
-            $data['mysql_server']['id_client'] = 1;
-            $data['mysql_server']['id_environment'] = 1;
+
+
+
 
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);
@@ -754,7 +784,16 @@ GROUP BY table_schema ;';
         foreach ($feed as $tmp) {
             $req = $sql[$i] . implode(',', $tmp) . ";";
             //echo $req."\n";
-            $db->sql_query($req);
+
+            try {
+                $db->sql_query($req);
+            } catch (\Exception $ex) {
+                $db->sql_query("ROLLBACK");
+
+                $msg = $ex->getMessage();
+
+                throw new \Exception("PMACTRL-059 : (" . $msg . ")", 60);
+            }
             $i++;
         }
 
@@ -906,11 +945,8 @@ GROUP BY table_schema ;';
     public function refreshHardware() {
 
         $this->view = false;
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-
         $sql = "SELECT * FROM `mysql_server` WHERE `key_public_path` != '' and `key_public_user` != ''";
-
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
@@ -940,8 +976,8 @@ GROUP BY table_schema ;';
 
             $os = trim($ssh->exec("lsb_release -ds"));
             $distributor = trim($ssh->exec("lsb_release -si"));
-            
-            
+
+
             if (empty($os)) {
                 $os = trim($ssh->exec("cat /etc/centos-release"));
                 $distributor = trim("Centos");
