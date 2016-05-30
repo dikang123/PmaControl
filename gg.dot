@@ -1,0 +1,12 @@
+digraph Migration_MariaDB {
+label="Step 2";
+rankdir=LR;
+ graph [fontname = "helvetica"];
+ node [fontname = "helvetica"];
+ edge [fontname = "helvetica"];
+ node [color=green shape=rect style=filled fontsize=8 fontname="arial" ranksep=0 concentrate=true splines=true overlap=false];
+  370 [style="" penwidth="3" fontname="arial" label =<<table border="0" cellborder="0" cellspacing="0" cellpadding="2" bgcolor="white"><tr><td bgcolor="black" color="white" align="center"><font color="white">lap005901155_3306</font></td></tr><tr><td bgcolor="lightgrey" align="left">IP : 10.21.4.171</td></tr><tr><td bgcolor="lightgrey" align="left">MySQL : 5.0.77</td></tr><tr><td bgcolor="lightgrey" align="left">Time zone : CET</td></tr></table>> ];
+  371 [style="" penwidth="3" fontname="arial" label =<<table border="0" cellborder="0" cellspacing="0" cellpadding="2" bgcolor="white"><tr><td bgcolor="black" color="white" align="center"><font color="white">lap005901156_3306</font></td></tr><tr><td bgcolor="lightgrey" align="left">IP : 10.21.4.170</td></tr><tr><td bgcolor="lightgrey" align="left">MySQL : 5.0.77</td></tr><tr><td bgcolor="lightgrey" align="left">Time zone : CET</td></tr></table>> ];
+ 370 -> 371 [ arrowsize="1.5" penwidth="2" fontname="arial" fontsize=8 color ="#5cb85c" label =""  edgetarget="/pmacontrol/en/mysql/thread/lap005901156-3306/" edgeURL="/pmacontrol/en/mysql/thread/lap005901156-3306/"];
+ 371 -> 370 [ arrowsize="1.5" penwidth="2" fontname="arial" fontsize=8 color ="#5cb85c" label =""  edgetarget="/pmacontrol/en/mysql/thread/lap005901155-3306/" edgeURL="/pmacontrol/en/mysql/thread/lap005901155-3306/"];
+}

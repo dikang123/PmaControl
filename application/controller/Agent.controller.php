@@ -13,6 +13,10 @@ use \Monolog\Handler\StreamHandler;
 use phpseclib\Crypt\RSA;
 use phpseclib\Net\SSH2;
 
+
+use \Glial\Synapse\Config;
+
+
 class Agent extends Controller {
 
     var $debug = false;
@@ -1022,5 +1026,25 @@ GROUP BY table_schema ;';
             $db->sql_query($sql);
         }
     }
-
+    
+    public function updateHaProxy()
+    {
+        $this->view = false;
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+        $haproxys = $this->di['config']->get('haproxy');
+        
+        foreach ($haproxys as $name => $haproxy) {
+            
+            $table =[];
+            $talbe['haproxy_main']['hostname'] = $haproxy['hostname'];
+            $talbe['haproxy_main']['ip'] = $haproxy['hostname'];
+            $talbe['haproxy_main']['vip'] = $haproxy['vip'];
+            $talbe['haproxy_main']['csv'] = $haproxy['csv'];
+            $talbe['haproxy_main']['stats_login'] = $haproxy['csv'];
+            $talbe['haproxy_main']['stats_password'] = $haproxy['csv'];
+            
+            print_r($haproxy);
+        }
+    }
 }

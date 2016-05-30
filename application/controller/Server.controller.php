@@ -51,31 +51,11 @@ class Server extends Controller {
         $data['date'] = $ob->date;
         $data['log_file'] = $ob->log_file;
 
-        $sql = "SELECT * from client order by libelle";
-        $res = $db->sql_query($sql);
 
 
-        $data['client'] = array();
-        while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->id;
-            $tmp['libelle'] = $ob->libelle;
+        $data['client'] = $this->getClients();
+        $data['environment'] = $this->getEnvironments();
 
-            $data['client'][] = $tmp;
-        }
-
-        $sql = "SELECT * from environment order by libelle";
-        $res = $db->sql_query($sql);
-
-
-        $data['environment'] = array();
-        while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->id;
-            $tmp['libelle'] = $ob->libelle;
-
-            $data['environment'][] = $tmp;
-        }
 
         $data['menu']['main']['name'] = __('Servers');
         $data['menu']['main']['icone'] = '<i class="fa fa-server" aria-hidden="true" style="font-size:14px"></i>';
@@ -560,6 +540,74 @@ var myChart = new Chart(ctx, {
         }
 
         return $where;
+    }
+
+    public function settings() {
+
+        $this->title = '<i class="fa fa-server"></i> ' . __("Servers");
+        $this->ariane = ' > <a href⁼"">' . '<i class="fa fa-cog" style="font-size:14px"></i> '
+                . __("Settings") . '</a> > <i class="fa fa-server"  style="font-size:14px"></i> ' . __("Servers");
+
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+
+        if ($_SERVER['REQUEST_METHOD'] === "POST") {
+            
+        }
+
+        $sql = "SELECT * FROM mysql_server ORDER by name";
+        $data['servers'] = $db->sql_fetch_yield($sql);
+
+
+        $data['clients'] = $this->getClients();
+        $data['environments'] = $this->getEnvironments();
+
+
+
+        $this->set('data', $data);
+    }
+
+    public function getClients() {
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+
+        $sql = "SELECT * from client order by libelle";
+        $res = $db->sql_query($sql);
+
+        $data['client'] = array();
+
+        while ($ob = $db->sql_fetch_object($res)) {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
+
+            $data['client'][] = $tmp;
+        }
+
+        return $data['client'];
+    }
+
+    public function getEnvironments() {
+        
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+        $sql = "SELECT * from environment order by libelle";
+        $res = $db->sql_query($sql);
+
+
+        $data['environment'] = array();
+        while ($ob = $db->sql_fetch_object($res)) {
+            $tmp = [];
+            $tmp['id'] = $ob->id;
+            $tmp['libelle'] = $ob->libelle;
+
+            $data['environment'][] = $tmp;
+        }
+        
+        
+        return $data['environment'];
     }
 
 }
