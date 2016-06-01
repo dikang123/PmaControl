@@ -10,8 +10,8 @@ if (!defined('SITE_NAME')) {
 }
 
 
-if (!defined('LOGO')) {
-	define('LOGO',"  _____                  _____            _             _ 
+if (!defined('SITE_LOGO')) {
+	define('SITE_LOGO',"  _____                  _____            _             _
  |  __ \                / ____|          | |           | |
  | |__) | __ ___   __ _| |     ___  _ __ | |_ _ __ ___ | |
  |  ___/ '_ ` _ \ / _` | |    / _ \| '_ \| __| '__/ _ \| |
@@ -20,4 +20,13 @@ if (!defined('LOGO')) {
                                                           
                                                           
 ");
+}
+
+
+if (!defined('SITE_VERSION')) {
+    define("SITE_VERSION", "0-8 BETA");
+}
+
+if (!defined('SITE_LAST_UPDATE')) {
+    define("SITE_LAST_UPDATE", "2016-06-01");
 }

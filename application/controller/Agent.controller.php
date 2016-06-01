@@ -250,7 +250,10 @@ class Agent extends Controller {
         $child_processes = array();
 
         if (empty($server_list)) {
-            throw new Exception("List of server to test is empty", 20);
+            sleep(10);
+            $this->logger->info(Color::getColoredString('List of server to test is empty', "grey","red"));
+            //throw new Exception("List of server to test is empty", 20);
+
         }
 
 
@@ -384,6 +387,7 @@ DEFAULT_CHARACTER_SET_NAME,
 DEFAULT_COLLATION_NAME
 FROM information_schema.TABLES a
 INNER JOIN information_schema.SCHEMATA b ON a.table_schema = b.SCHEMA_NAME
+WHERE table_schema !="information_schema" AND table_schema !="performance_schema" AND table_schema !="mysql"
 GROUP BY table_schema ;';
             //@bug : can crash MySQL have to see : https://mariadb.atlassian.net/browse/MDEV-9631
 
@@ -506,7 +510,7 @@ GROUP BY table_schema ;';
                 $db->sql_query($sql);
                 // push event DB deleted
 
-                $this->logger->info(Color::getColoredString('Databases deleted', "yellow"));
+                $this->logger->info(Color::getColoredString('['.$name_server.'] Databases deleted', "yellow"));
             }
 
             if ($slave) {

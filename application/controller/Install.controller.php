@@ -349,17 +349,15 @@ class Install extends Controller
 
 
         echo "\n";
-        echo LOGO;
-        echo Color::getColoredString("PmaControl", "green")." version ".Color::getColoredString("0.8-beta",
-            "yellow")." 2015-10-28 15:01:06\n";
+        echo SITE_LOGO;
+        echo Color::getColoredString(SITE_NAME, "green")." version ".Color::getColoredString(SITE_VERSION,
+            "yellow")." (".SITE_LAST_UPDATE.")\n";
         echo "Powered by Glial (https://github.com/Esysteme/glial)\n";
-
-
 
         $this->cadre("Select MySQL server for PmaControl");
         $server = $this->testMysqlServer();
 
-	sleep(1);
+        sleep(1);
         $this->importData($server);
         $this->updateConfig($server);
         $this->updateCache();
@@ -447,7 +445,7 @@ class Install extends Controller
                 echo str_repeat("-", 80)."\n";
             }
 
-	    sleep(1);
+            sleep(1);
         } while ($good === false);
 
         // check database
@@ -708,6 +706,7 @@ database=".$server['database']."";
         $data['user_main']['id_group']                   = 4; // 4 = super admin
         $data['user_main']['id_geolocalisation_country'] = $id_country;
         $data['user_main']['id_geolocalisation_city']    = $id_city;
+        $data['user_main']['id_client']                  = 1;
 
         $id_user = $DB->sql_save($data);
 
@@ -739,5 +738,49 @@ database=".$server['database']."";
             echo "You can connect to the application on this url : ".Color::getColoredString("http://".$ip.WWW_ROOT,
                 "yellow")."\n";
         }
+    }
+
+    public function createOrganisation()
+    {
+        $this->view = false;
+        $DB  = $this->di['db']->sql(DB_DEFAULT);
+
+        createOragnisation:
+        $this->cadre("create oraganisation");
+
+        do {
+            $rl            = new Hoa\Console\Readline\Readline();
+            $oraganisation = $rl->readLine('Your Oraganisation : ');
+        } while (strlen($oraganisation) < 3);
+
+
+        $sql = "INSERT INTO client (`id`,`libelle`,`date`) VALUES (1,'".$oraganisation."', '".date('Y-m-d H:i:s')."')";
+        $DB->sql_query($sql);
+
+        /*
+        $data = [];
+        $data['client']['id']      = 1;
+        $data['client']['libelle'] = $oraganisation;
+        $data['client']['date'] = date('Y-m-d H:i:s');
+
+        $id_client = $DB->sql_save($data);
+
+
+        print_r($id_client);
+
+        if ($id_client) {
+            $this->displayResult("Oraganisation successfully created", "OK");
+        } else {
+
+            print_r($data);
+            $error = $DB->sql_error();
+            print_r($error);
+
+            $this->displayResult("Oraganisation successfully created", "KO");
+
+            goto createOragnisation;
+        }
+         
+         */
     }
 }
