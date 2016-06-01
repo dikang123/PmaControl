@@ -34,8 +34,6 @@ class Compare extends Controller
         $this->title = __("Compare");
         $this->ariane = "> " . '<a href="' . LINK . 'Plugins/index/">' . __('Plugins') . "</a> > " . $this->title;
 
-
-
         $redirect = false;
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
             $id_server1 = empty($_POST['compare_main']['id_mysql_server__original']) ? "" : $_POST['compare_main']['id_mysql_server__original'];

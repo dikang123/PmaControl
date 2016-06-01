@@ -12,6 +12,7 @@ use \Monolog\Handler\StreamHandler;
 //use phpseclib\Crypt;
 use phpseclib\Crypt\RSA;
 use phpseclib\Net\SSH2;
+use \Glial\Synapse\Config;
 
 class Agent extends Controller {
 
@@ -61,6 +62,8 @@ class Agent extends Controller {
         $res = $db->sql_query($sql);
 
         if ($db->sql_num_rows($res) !== 1) {
+
+
             $msg = I18n::getTranslation(__("Impossible to find the daemon with the id : ") . "'" . $id_daemon . "'");
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
@@ -143,7 +146,10 @@ class Agent extends Controller {
             $this->logger->info(Color::getColoredString('Stopped daemon with the pid : ' . $ob->pid, "white", "red"));
         } else {
 
-            $this->logger->info(Color::getColoredString('Impossible to find the daemon with the pid : ' . $pid, "yellow"));
+            if (!empty($pid)) {
+                $this->logger->info(Color::getColoredString('Impossible to find the daemon with the pid : ' . $pid, "yellow"));
+            }
+
             $msg = I18n::getTranslation(__("Impossible to find the daemon with the pid : ") . "'" . $ob->pid . "'");
             $title = I18n::getTranslation(__("Daemon was already stopped or in error"));
             set_flash("caution", $title, $msg);
@@ -175,8 +181,8 @@ class Agent extends Controller {
 
     public function launch($id) {
         while (1) {
-            
-            $this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
+
+            //$this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
 
 
             $this->testAllMysql(array());
@@ -218,7 +224,7 @@ class Agent extends Controller {
 
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "select * from mysql_server";
+        $sql = "select * from mysql_server WHERE is_monitored =1";
         $res = $db->sql_query($sql);
 
         $server_list = array();
@@ -315,7 +321,7 @@ class Agent extends Controller {
 
             //in case of no answer provided we create a msg of error
             if (empty($ret['stdout'])) {
-                $ret['stdout'] = "[" . date("Y-m-d H:i:s") . "]" . " Server MySQL didn't answered in time (delay max : " . $max_execution_time . " seconds)";
+                $ret['stdout'] = "[" . date("Y-m-d H:i:s") . "]" . " Server MySQL didn't answer in time (delay max : " . $max_execution_time . " seconds)";
             }
 
             $sql = "UPDATE mysql_server SET `error`='" . $db->sql_real_escape_string($ret['stdout']) . "', `date_refresh`='" . date("Y-m-d H:i:s") . "' where id = '" . $server['id'] . "'";
@@ -499,6 +505,8 @@ GROUP BY table_schema ;';
                 $sql = "DELETE FROM mysql_database WHERE id = '" . $tab['id'] . "'";
                 $db->sql_query($sql);
                 // push event DB deleted
+
+                $this->logger->info(Color::getColoredString('Databases deleted', "yellow"));
             }
 
             if ($slave) {
@@ -536,6 +544,31 @@ GROUP BY table_schema ;';
                         debug($db->sql_error());
                         throw new \Exception('PMACTRL-060 : insert in mysql_database !', 60);
                     }
+
+
+                    // bug there in case of multi source replication and we remove one thread !
+                }
+            } else {
+
+
+                $sql = "SELECT id from mysql_replication_thread where id_mysql_replication_stats = '" . $id_mysql_replication_stats . "'";
+
+                $res34 = $db->sql_query($sql);
+
+                while ($ob = $db->sql_fetch_object($res34)) {
+                    //$mysql_replication_thread['mysql_replication_thread']['id'] = $ob->id;
+
+                    $sql = "DELETE FROM mysql_replication_thread WHERE id = " . $ob->id;
+                    $out = $db->sql_query($sql);
+
+                    if (!$out) {
+                        $this->logger->info(Color::getColoredString(print_r($db->sql_error()), "red"));
+                    }
+
+                    $this->logger->info(Color::getColoredString($sql, "red"));
+                    $this->logger->info(Color::getColoredString('Slave deleted', "yellow"));
+
+                    //log delete of a slave !
                 }
             }
 
@@ -595,6 +628,10 @@ GROUP BY table_schema ;';
                 unset($all_server[$server]);
             } else {
                 echo "Add : " . $server . " to monitoring\n";
+
+                //to update
+                $data['mysql_server']['id_client'] = 1;
+                $data['mysql_server']['id_environment'] = 1;
             }
 
             $data['mysql_server']['name'] = $server;
@@ -603,10 +640,9 @@ GROUP BY table_schema ;';
             $data['mysql_server']['passwd'] = Crypt::encrypt($info_server['password']);
             $data['mysql_server']['port'] = empty($info_server['port']) ? 3306 : $info_server['port'];
             $data['mysql_server']['date_refresh'] = date('Y-m-d H:i:s');
-            
-            //to update
-            $data['mysql_server']['id_client'] = 1;
-            $data['mysql_server']['id_environment'] = 1;
+
+
+
 
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);
@@ -754,7 +790,24 @@ GROUP BY table_schema ;';
         foreach ($feed as $tmp) {
             $req = $sql[$i] . implode(',', $tmp) . ";";
             //echo $req."\n";
-            $db->sql_query($req);
+
+            try {
+                $ret = $db->sql_query($req);
+                if (!$ret) {
+                    
+                    //à changer : chopper l'exception mysql et l'afficher dans le log d'erreur de PmaControl
+                    $this->logger->error(Color::getColoredString("ERROR: Disk full ?", "white", "red"));
+                    $this->stop(array(1));
+                    
+                    throw new \Exception('PMACTRL-065 : ' . $ret->sql_error());
+                    
+                }
+            } catch (Exception $ex) {
+                
+                //à changer 
+                $this->logger->error(Color::getColoredString("ERROR: " . $ex->getMessage(), "white", "red"));
+            }
+
             $i++;
         }
 
@@ -858,7 +911,12 @@ GROUP BY table_schema ;';
 
 
         $data['log_file'] = $ob->log_file;
-        $data['log'] = file_get_contents($ob->log_file);
+
+        $data['log'] = __("Log file doens't exist yet !");
+
+        if (file_exists($ob->log_file)) {
+            $data['log'] = file_get_contents($ob->log_file);
+        }
 
         $_GET['daemon_main']['thread_concurency'] = $ob->thread_concurency;
 
@@ -906,11 +964,8 @@ GROUP BY table_schema ;';
     public function refreshHardware() {
 
         $this->view = false;
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-
         $sql = "SELECT * FROM `mysql_server` WHERE `key_public_path` != '' and `key_public_user` != ''";
-
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
@@ -940,8 +995,8 @@ GROUP BY table_schema ;';
 
             $os = trim($ssh->exec("lsb_release -ds"));
             $distributor = trim($ssh->exec("lsb_release -si"));
-            
-            
+
+
             if (empty($os)) {
                 $os = trim($ssh->exec("cat /etc/centos-release"));
                 $distributor = trim("Centos");
@@ -984,6 +1039,26 @@ GROUP BY table_schema ;';
                    WHERE id='" . $ob->id . "'";
 
             $db->sql_query($sql);
+        }
+    }
+
+    public function updateHaProxy() {
+        $this->view = false;
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $haproxys = $this->di['config']->get('haproxy');
+
+        foreach ($haproxys as $name => $haproxy) {
+
+            $table = [];
+            $talbe['haproxy_main']['hostname'] = $haproxy['hostname'];
+            $talbe['haproxy_main']['ip'] = $haproxy['hostname'];
+            $talbe['haproxy_main']['vip'] = $haproxy['vip'];
+            $talbe['haproxy_main']['csv'] = $haproxy['csv'];
+            $talbe['haproxy_main']['stats_login'] = $haproxy['csv'];
+            $talbe['haproxy_main']['stats_password'] = $haproxy['csv'];
+
+            print_r($haproxy);
         }
     }
 

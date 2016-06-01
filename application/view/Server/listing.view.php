@@ -6,24 +6,10 @@ use Glial\Html\Form\Form;
 <div class="well">
     <?php
     
-        echo '<div>';
-        echo '<form style="display:inline" action="" method="post">';
-    echo  __("Client") . " : ";
     
-    echo Form::select("client", "libelle", $data['client'], "", array("data-live-search" => "true", "class" => "selectpicker"));
-
-
-    echo " - " . __("Environment") . " : ";
+    \Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
     
-    echo Form::select("client", "libelle", $data['environment'], "", array("data-live-search" => "true", "class" => "selectpicker"));
-    
-    echo ' <button type="submit" class="btn btn-primary">' . __("Filter") . '</button>';
-    echo '</form>';
-    echo '</div>';
     echo '<br />';
-    
-    
-    
     
     echo '<div>';
     echo ' <div class="btn-group" role="group" aria-label="Default button group">';

@@ -19,4 +19,16 @@ class Error extends Controller
 
         //$this->javascript = array("");
     }
+    
+    
+    public function message($param)
+    {
+        
+        $data['title'] = $param[0];
+        $data['msg'] = $param[1];
+        $data['color'] = $param[2];
+        
+        $this->set('data',$data);
+        
+    }
 }
