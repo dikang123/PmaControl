@@ -43,91 +43,106 @@ echo '</div>';
 
 
 
-if (count($data['view_available']) > 0) {
-    ?>
-    <div class="row">
-        <div class="col-md-2">
+if (!empty($_GET['mysql_server']['id'])) {
 
-            <?php
-            echo '<table class="table table-condensed table-bordered table-striped">';
+    if (!empty($data['view_available']) && count($data['view_available']) > 0) {
+        ?>
+        <div class="row">
+            <div class="col-md-2">
 
-            echo '<tr>';
-            echo '<th>' . __("Reporting") . '</th>';
-            echo '</tr>';
+                <?php
+                echo '<table class="table table-condensed table-bordered table-striped">';
 
-
-            echo '<tr>';
-            echo '<td>';
-            foreach ($data['view_available'] as $view) {
-                //$url = $_GET['url'];
-
-                $url = remove(array("mysqlsys"));
-
-                if (!empty($_GET['mysqlsys']) && $view == $_GET['mysqlsys']) {
-                    echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '"><b>' . $view . '</b></a><br/>';
-                } else {
-                    echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '">' . $view . '</a><br/>';
-                }
-            }
-
-            echo '</td>';
-            echo '</tr>';
-            echo '</table>';
-            ?>
-
-        </div>
-        <div class="col-md-10">
-    <?php
-    $i = 0;
-
-
-    if (!empty($data['table'])) {
-
-        echo '<table class="table table-condensed table-bordered table-striped">';
-        foreach ($data['table'] as $key => $line) {
-            $i++;
-
-            if ($i === 1) {
                 echo '<tr>';
-
-                echo '<th>' . __("Top") . '</th>';
-                foreach ($line as $var => $val) {
-                    echo '<th>' . $var . '</th>';
-                }
+                echo '<th>' . __("Reporting") . '</th>';
                 echo '</tr>';
-            }
 
-            echo '<tr>';
-            echo '<td>' . $i . '</td>';
-            foreach ($line as $var => $val) {
-                echo '<td>' . $val . '</td>';
-            }
 
-            echo '</tr>';
+                echo '<tr>';
+                echo '<td>';
+                foreach ($data['view_available'] as $view) {
+                    //$url = $_GET['url'];
 
-            //print_r($val);
-        }
-        echo "</table>";
-    } else {
-        echo "<b>No data</b>";
-    }
-    ?>
+                    $url = remove(array("mysqlsys"));
 
+                    if (!empty($_GET['mysqlsys']) && $view == $_GET['mysqlsys']) {
+                        echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '"><b>' . $view . '</b></a><br/>';
+                    } else {
+                        echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '">' . $view . '</a><br/>';
+                    }
+                }
+
+                echo '</td>';
+                echo '</tr>';
+                echo '</table>';
+                ?>
+
+            </div>
+            <div class="col-md-10">
+                <?php
+                $i = 0;
+
+
+                if (!empty($data['table'])) {
+
+                    echo '<table class="table table-condensed table-bordered table-striped">';
+                    foreach ($data['table'] as $key => $line) {
+                        $i++;
+
+                        if ($i === 1) {
+                            echo '<tr>';
+
+                            echo '<th>' . __("Top") . '</th>';
+                            foreach ($line as $var => $val) {
+                                echo '<th>' . $var . '</th>';
+                            }
+                            echo '</tr>';
+                        }
+
+                        echo '<tr>';
+                        echo '<td>' . $i . '</td>';
+                        foreach ($line as $var => $val) {
+                            echo '<td>' . $val . '</td>';
+                        }
+
+                        echo '</tr>';
+
+                        //print_r($val);
+                    }
+                    echo "</table>";
+                } else {
+                    echo "<b>No data</b>";
+                }
+                ?>
+
+            </div>
         </div>
-    </div>
-    <?php
-} elseif (version_compare($data['variables'], "5.5", "<=")) {
+        <?php
+    } elseif ( version_compare($data['variables'], "5.5", "<=")) {
 
+        echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
+            <p><b>Error :</b></p>';
+
+        echo "This version of MySQL / MariaDB / Percona Server is not compatible with mysql-sys !<br />"
+        . " mysql-sys require version of MySQL / MariaDB / Percona Server 5.5 (<b>".$data['variables']."</b>) at minimum.";
+
+        echo '</div>';
+    } else {
+            echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
+            <p><b>Install:</b></p>';
+            
+        
+        echo 'Your version of MySQL / MariaDB / Percona Server: <b>'.$data['variables']."</b><br />";
+        echo 'mysql-sys is not yet installed on this server, do you want to install it ? ';
+        echo '<a href="'.LINK.'mysqlsys/install" role="button" class="btn btn-primary">Install MySQL-sys</a>';
+        
+            echo '</div>';
+    }
+} else {
     echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
             <p><b>Error :</b></p>';
 
-    echo "This version of MySQL / MariaDB / Percona Server is not compatible with mysql-sys !<br />"
-    . " mysql-sys require version of MySQL / MariaDB / Percona Server 5.5 at minimum.";
+    echo "Select the server";
 
     echo '</div>';
-} else {
-
-
-    echo 'mysql-sys is not yet installed on this server, do you want to install it ? ';
-    echo '<button type="link" class="btn btn-primary">Install MySQL-sys</button>';
 }

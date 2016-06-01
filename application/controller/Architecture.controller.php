@@ -50,12 +50,13 @@ class Architecture extends Controller {
 
 
         if (!empty($environment)) {
-            $where .= " AND a.id_environment = '" . $environment . "'";
+            $where .= " AND a.id_environment IN (" . implode(',',json_decode($environment, true)) . ")";
         }
 
         if (!empty($client)) {
-            $where .= " AND a.id_client = '" . $client . "'";
+            $where .= " AND a.id_client IN (" . implode(',',  json_decode($client, true)) . ")";
         }
+        
 
         return $where;
     }

@@ -12,10 +12,7 @@ use \Monolog\Handler\StreamHandler;
 //use phpseclib\Crypt;
 use phpseclib\Crypt\RSA;
 use phpseclib\Net\SSH2;
-
-
 use \Glial\Synapse\Config;
-
 
 class Agent extends Controller {
 
@@ -65,6 +62,8 @@ class Agent extends Controller {
         $res = $db->sql_query($sql);
 
         if ($db->sql_num_rows($res) !== 1) {
+
+
             $msg = I18n::getTranslation(__("Impossible to find the daemon with the id : ") . "'" . $id_daemon . "'");
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
@@ -147,7 +146,10 @@ class Agent extends Controller {
             $this->logger->info(Color::getColoredString('Stopped daemon with the pid : ' . $ob->pid, "white", "red"));
         } else {
 
-            $this->logger->info(Color::getColoredString('Impossible to find the daemon with the pid : ' . $pid, "yellow"));
+            if (!empty($pid)) {
+                $this->logger->info(Color::getColoredString('Impossible to find the daemon with the pid : ' . $pid, "yellow"));
+            }
+
             $msg = I18n::getTranslation(__("Impossible to find the daemon with the pid : ") . "'" . $ob->pid . "'");
             $title = I18n::getTranslation(__("Daemon was already stopped or in error"));
             set_flash("caution", $title, $msg);
@@ -319,7 +321,7 @@ class Agent extends Controller {
 
             //in case of no answer provided we create a msg of error
             if (empty($ret['stdout'])) {
-                $ret['stdout'] = "[" . date("Y-m-d H:i:s") . "]" . " Server MySQL didn't answered in time (delay max : " . $max_execution_time . " seconds)";
+                $ret['stdout'] = "[" . date("Y-m-d H:i:s") . "]" . " Server MySQL didn't answer in time (delay max : " . $max_execution_time . " seconds)";
             }
 
             $sql = "UPDATE mysql_server SET `error`='" . $db->sql_real_escape_string($ret['stdout']) . "', `date_refresh`='" . date("Y-m-d H:i:s") . "' where id = '" . $server['id'] . "'";
@@ -790,14 +792,22 @@ GROUP BY table_schema ;';
             //echo $req."\n";
 
             try {
-                $db->sql_query($req);
-            } catch (\Exception $ex) {
-                $db->sql_query("ROLLBACK");
-
-                $msg = $ex->getMessage();
-
-                throw new \Exception("PMACTRL-059 : (" . $msg . ")", 60);
+                $ret = $db->sql_query($req);
+                if (!$ret) {
+                    
+                    //à changer : chopper l'exception mysql et l'afficher dans le log d'erreur de PmaControl
+                    $this->logger->error(Color::getColoredString("ERROR: Disk full ?", "white", "red"));
+                    $this->stop(array(1));
+                    
+                    throw new \Exception('PMACTRL-065 : ' . $ret->sql_error());
+                    
+                }
+            } catch (Exception $ex) {
+                
+                //à changer 
+                $this->logger->error(Color::getColoredString("ERROR: " . $ex->getMessage(), "white", "red"));
             }
+
             $i++;
         }
 
@@ -901,7 +911,12 @@ GROUP BY table_schema ;';
 
 
         $data['log_file'] = $ob->log_file;
-        $data['log'] = file_get_contents($ob->log_file);
+
+        $data['log'] = __("Log file doens't exist yet !");
+
+        if (file_exists($ob->log_file)) {
+            $data['log'] = file_get_contents($ob->log_file);
+        }
 
         $_GET['daemon_main']['thread_concurency'] = $ob->thread_concurency;
 
@@ -1026,25 +1041,25 @@ GROUP BY table_schema ;';
             $db->sql_query($sql);
         }
     }
-    
-    public function updateHaProxy()
-    {
+
+    public function updateHaProxy() {
         $this->view = false;
         $db = $this->di['db']->sql(DB_DEFAULT);
-        
+
         $haproxys = $this->di['config']->get('haproxy');
-        
+
         foreach ($haproxys as $name => $haproxy) {
-            
-            $table =[];
+
+            $table = [];
             $talbe['haproxy_main']['hostname'] = $haproxy['hostname'];
             $talbe['haproxy_main']['ip'] = $haproxy['hostname'];
             $talbe['haproxy_main']['vip'] = $haproxy['vip'];
             $talbe['haproxy_main']['csv'] = $haproxy['csv'];
             $talbe['haproxy_main']['stats_login'] = $haproxy['csv'];
             $talbe['haproxy_main']['stats_password'] = $haproxy['csv'];
-            
+
             print_r($haproxy);
         }
     }
+
 }

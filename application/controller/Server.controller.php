@@ -38,6 +38,8 @@ class Server extends Controller {
 
     public function listing($param) {
 
+
+        // doc : http://silviomoreto.github.io/bootstrap-select/examples/#standard-select-boxes
         $this->di['js']->addJavascript(array('bootstrap-select.min.js'));
 
         $db = $this->di['db']->sql(DB_DEFAULT);
@@ -179,6 +181,13 @@ class Server extends Controller {
 
                 //start transaction !
                 $sql = "UPDATE mysql_server a SET is_monitored='0' WHERE 1 " . $this->getFilter();
+
+
+
+                echo $sql;
+
+                exit;
+
                 $db->sql_query($sql);
 
                 foreach ($_POST['monitored'] as $key => $val) {
@@ -338,16 +347,11 @@ class Server extends Controller {
     public function id($param) {
 
         $this->di['js']->addJavascript(array("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js")); //,
-
         $db = $this->di['db']->sql(DB_DEFAULT);
-
 
         if ($_SERVER['REQUEST_METHOD'] === "POST") {
             $sql = "SELECT * FROM mysql_server where id='" . $_POST['mysql_server']['id'] . "'";
-
             $res = $db->sql_query($sql);
-
-
             while ($ob = $db->sql_fetch_object($res)) {
                 $id_mysql_server = $ob->id;
 
@@ -406,21 +410,29 @@ class Server extends Controller {
                 $_GET['mysql_status_value_int']['date'] = "6 hour";
             }
 
-
-
-            if (!empty($_GET['mysql_server']['id'])) {
+            if (!empty($_GET['mysql_server']['id']) && !empty($_GET['mysql_status_name']['id']) && !empty($_GET['mysql_status_value_int']['date']) && !empty($_GET['mysql_status_value_int']['derivate'])
+            ) {
                 $sql = "SELECT * FROM mysql_status_value_int a
                     
                     WHERE a.id_mysql_server = " . $_GET['mysql_server']['id'] . " 
                     AND a.id_mysql_status_name = '" . $_GET['mysql_status_name']['id'] . "'
                     and a.`date` > date_sub(now(), INTERVAL " . $_GET['mysql_status_value_int']['date'] . ") ORDER BY a.`date` ASC;";
 
+
                 $data['sql'] = $sql;
                 $data['graph'] = $db->sql_fetch_yield($sql);
                 $dates = [];
                 $val = [];
 
+
+
+
+
                 $sql2 = "SELECT name FROM mysql_status_name WHERE id= '" . $_GET['mysql_status_name']['id'] . "'";
+
+
+                //debug($sql2);
+
                 $res2 = $db->sql_query($sql2);
 
                 while ($ob2 = $db->sql_fetch_object($res2)) {
@@ -501,6 +513,16 @@ var myChart = new Chart(ctx, {
 });
 ');
             }
+            else
+            {
+                if (empty($data['servers'])) $data['servers'] = "";
+                if (empty($data['status'])) $data['status'] = "";
+                if (empty($data['interval'])) $data['interval'] = "";
+                if (empty($data['derivate'])) $data['derivate'] = "";
+                
+                
+                $data['fields_required'] = 1;
+            }
 
 
 
@@ -532,12 +554,13 @@ var myChart = new Chart(ctx, {
 
 
         if (!empty($environment)) {
-            $where .= " AND a.id_environment = '" . $environment . "'";
+            $where .= " AND a.id_environment IN (" . implode(',', json_decode($environment, true)) . ")";
         }
 
         if (!empty($client)) {
-            $where .= " AND a.id_client = '" . $client . "'";
+            $where .= " AND a.id_client IN (" . implode(',', json_decode($client, true)) . ")";
         }
+
 
         return $where;
     }
@@ -590,9 +613,9 @@ var myChart = new Chart(ctx, {
     }
 
     public function getEnvironments() {
-        
+
         $db = $this->di['db']->sql(DB_DEFAULT);
-        
+
         $sql = "SELECT * from environment order by libelle";
         $res = $db->sql_query($sql);
 
@@ -605,8 +628,8 @@ var myChart = new Chart(ctx, {
 
             $data['environment'][] = $tmp;
         }
-        
-        
+
+
         return $data['environment'];
     }
 
