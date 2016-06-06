@@ -182,12 +182,6 @@ class Server extends Controller {
                 //start transaction !
                 $sql = "UPDATE mysql_server a SET is_monitored='0' WHERE 1 " . $this->getFilter();
 
-
-
-                echo $sql;
-
-                exit;
-
                 $db->sql_query($sql);
 
                 foreach ($_POST['monitored'] as $key => $val) {

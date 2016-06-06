@@ -72,6 +72,9 @@ fi
 
 
 php application/webroot/index.php install index
+
+php application/webroot/index.php install createOrganisation
+
 php application/webroot/index.php install createAdmin
 
 php application/webroot/index.php agent updateServerList
