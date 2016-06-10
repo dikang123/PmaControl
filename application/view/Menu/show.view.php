@@ -1,8 +1,5 @@
 
 <div>
-
-
-
     <nav class="navbar navbar-inverse navbar-static navbar-fixed-<?= $data['position'] ?>">
 
         <div class="container-fluid">
@@ -17,7 +14,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> PmaControl <span class="badge badge-info" style="font-variant: small-caps; font-size: 14px; vertical-align: middle; background-color: #4384c7" title="2015-12-04">v0.8 beta (2015-12-04)</span></a>
+                    <a class="navbar-brand" href="#" style="color:#fff"><i class="fa fa-database fa-lg"></i> <?=SITE_NAME ?> <span class="badge badge-info" style="font-variant: small-caps; font-size: 14px; vertical-align: middle; background-color: #4384c7" title="<?=SITE_LAST_UPDATE ?>"><?=SITE_VERSION ?> (<?=SITE_LAST_UPDATE ?>)</span></a>
                 </div>
                 <?php
             endif;
@@ -81,53 +78,6 @@
                     }
 
 
-                    /*
-
-                      <li class="dropdown">
-                      <a id="drop1" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">
-                      Dropdown
-                      <span class="caret"></span>
-                      </a>
-                      <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                     * 
-                     * 
-                      <li role=""><a role="" tabindex="-1" href="https://twitter.com/fat">Action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Another action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Something else here</a></li>
-                      <li role="presentation" class="divider"></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Separated link</a></li>
-                      </ul>
-                      </li>
-                      <li class="dropdown">
-                      <a id="drop2" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">
-                      Dropdown
-                      <span class="caret"></span>
-                      </a>
-                      <ul class="dropdown-menu" role="menu" aria-labelledby="drop2">
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Another action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Something else here</a></li>
-                      <li role="presentation" class="divider"></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Separated link</a></li>
-                      </ul>
-                      </li>
-                      </ul>
-                      <ul class="nav navbar-nav navbar-right">
-                      <li id="fat-menu" class="dropdown">
-                      <a id="drop3" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">
-                      Dropdown
-                      <span class="caret"></span>
-                      </a>
-                      <ul class="dropdown-menu" role="menu" aria-labelledby="drop3">
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Another action</a></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Something else here</a></li>
-                      <li role="presentation" class="divider"></li>
-                      <li role="presentation"><a role="menuitem" tabindex="-1" href="https://twitter.com/fat">Separated link</a></li>
-                      </ul>
-                      </li>
-
-                     */
                     ?>
 
 

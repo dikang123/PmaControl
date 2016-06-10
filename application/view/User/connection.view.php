@@ -55,8 +55,8 @@ use Glial\Html\Form\Form;
                 ?>
                 
                 <p>
-                    <a href="mailto:aurelien.lequoy@esysteme.com">
-                        <i class="icon-envelope" style="margin-right: 5px;"></i><?=__("Contacter le créateur de l'application","fr")?>
+                    <a href="https://github.com/Glial/PmaControl/issues" target="_BLANK">
+                        <i class="icon-envelope" style="margin-right: 5px;"></i><?=__("Contacter le créateur de l'application / Reporter un bug","fr")?>
                     </a>
                 </p>
             </div>
