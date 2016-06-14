@@ -1096,4 +1096,16 @@ GROUP BY table_schema ;';
             print_r($haproxy);
         }
     }
+
+    public function activateTokuDb()
+    {
+
+
+        $cmd = "echo never > /sys/kernel/mm/transparent_hugepage/enabled";
+        $cmd = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";
+
+
+
+
+    }
 }
