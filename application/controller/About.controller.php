@@ -13,8 +13,6 @@ class About extends Controller {
                 . $name;
         
         
-        $data['pmacontrol'] = self::version();
-        $data['date'] = self::date();
         $data['graphviz'] = shell_exec("dot -V");
         $data['php'] = phpversion();
         $data['mysql'] = shell_exec("mysql --version");
@@ -26,12 +24,6 @@ class About extends Controller {
         $this->set('data',$data);
     }
 
-    static public function version() {
-        return "v0.8 BETA";
-    }
 
-    static public function date() {
-        return "2016-05-27";
-    }
 
 }

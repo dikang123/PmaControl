@@ -5,273 +5,10 @@ use \Glial\Cli\Glial;
 use \Glial\Cli\Color;
 use \Glial\Sgbd\Sql\FactorySql;
 
+use \Glial\Security\Crypt\Crypt;
+
 class Install extends Controller
 {
-
-    function index2()
-    {
-        $this->view = false;
-
-//for display like putty in utf8
-        shell_exec('echo -ne \'\\\\e%G\\\\e[?47h\\\\e%G\\\\e[?47l\\\'');
-
-        echo PHP_EOL.Glial::header().PHP_EOL;
-
-        echo $this->out("Installation in progress ...", "OK");
-
-
-        $res = shell_exec("git --version");
-        if (!preg_match("/^git version [1]\.[0-9]+\.[0-9]/i", $res, $gg)) {
-            $errors['git'] = true;
-        }
-
-        if (version_compare(PHP_VERSION, '5.5.10', '<')) {
-            $errors['php'] = PHP_VERSION;
-        }
-
-        if (!extension_loaded('gd')) {
-            $errors['gd'] = true;
-        }
-
-        if (!extension_loaded('mysqli')) {
-            $errors['mysqli'] = true;
-        }
-
-        if (!extension_loaded('curl')) {
-            $errors['curl'] = true;
-        }
-
-        if (!extension_loaded('ssh2')) {
-            $errors['ssh2'] = true;
-        }
-
-
-        if (!empty($errors)) {
-            echo $this->out("Check dependencies ...", "KO");
-
-            echo Color::getColoredString("Some settings on your machine make Glial unable to work properly.",
-                "red").PHP_EOL;
-            echo Color::getColoredString("Make sure that you fix the issues listed below and run this script again:",
-                "red").PHP_EOL;
-
-
-
-
-            foreach ($errors as $error => $current) {
-
-                $displayIniMessage = false;
-
-                switch ($error) {
-                    case 'gd':
-                        $text              = PHP_EOL."The gd extension is missing.".PHP_EOL;
-                        $text .= "Install it (\# apt-get install php5-gd) or recompile php without --disable-gd";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'git':
-                        $text              = PHP_EOL."The git software is missing.".PHP_EOL;
-                        $text .= "Install it (\# apt-get install git)";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'mysqli':
-                        $text              = PHP_EOL."The mysqli extension is missing.".PHP_EOL;
-                        $text .= "Install it or recompile php without --disable-mysqli";
-                        $displayIniMessage = true;
-                        break;
-
-
-                    case 'curl':
-                        $text              = PHP_EOL."The curl extension is missing.".PHP_EOL;
-                        $text .= "Install it or recompile php without --disable-curl";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'phar':
-                        $text              = PHP_EOL."The phar extension is missing.".PHP_EOL;
-                        $text .= "Install it or recompile php without --disable-phar";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'unicode':
-                        $text              = PHP_EOL."The detect_unicode setting must be disabled.".PHP_EOL;
-                        $text .= "Add the following to the end of your `php.ini`:".PHP_EOL;
-                        $text .= "    detect_unicode = Off";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'suhosin':
-                        $text              = PHP_EOL."The suhosin.executor.include.whitelist setting is incorrect.".PHP_EOL;
-                        $text .= "Add the following to the end of your `php.ini` or suhosin.ini (Example path [for Debian]: /etc/php5/cli/conf.d/suhosin.ini):".PHP_EOL;
-                        $text .= "    suhosin.executor.include.whitelist = phar ".$current;
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'php':
-                        $text              = PHP_EOL."Your PHP ({$current}) is too old, you must upgrade to PHP 5.5.10 or higher.";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'allow_url_fopen':
-                        $text              = PHP_EOL."The allow_url_fopen setting is incorrect.".PHP_EOL;
-                        $text .= "Add the following to the end of your `php.ini`:".PHP_EOL;
-                        $text .= "    allow_url_fopen = On";
-                        $displayIniMessage = true;
-                        break;
-
-                    case 'ioncube':
-                        $text              = PHP_EOL."Your ionCube Loader extension ($current) is incompatible with Phar files.".PHP_EOL;
-                        $text .= "Upgrade to ionCube 4.0.9 or higher or remove this line (path may be different) from your `php.ini` to disable it:".PHP_EOL;
-                        $text .= "    zend_extension = /usr/lib/php5/20090626+lfs/ioncube_loader_lin_5.3.so";
-                        $displayIniMessage = true;
-                        break;
-                }
-                if ($displayIniMessage) {
-//$text .= $iniMessage;
-                    echo Color::getColoredString($text, "yellow").PHP_EOL;
-                }
-            }
-
-            $this->onError();
-        } else {
-            echo $this->out("Check dependencies ", "OK");
-        }
-
-
-//making tree directory
-
-        $fct = function($msg) {
-            $dirs = array("data", "data/img", "documentation", "tmp/crop", "tmp/documentation",
-                "application/webroot/js",
-                "application/webroot/css", "application/webroot/file", "application/webroot/video",
-                "application/webroot/image");
-
-            $error = array();
-            foreach ($dirs as $dir) {
-
-                $dir = $_SERVER['PWD']."/".$dir;
-
-                if (!file_exists($dir)) {
-                    if (!mkdir($dir)) {
-//echo $this->out("Impossible to create this directory : " . $key . " ", "KO");
-                    }
-                }
-            }
-
-            return array(true, $msg);
-        };
-        $this->anonymous($fct, "Making tree directory");
-
-
-
-
-        $fct = function ($msg) {
-
-
-            $name   = "jquery-latest.min.js";
-            $jQuery = $_SERVER['PWD']."/application/webroot/js/".$name;
-
-            $old_version = "";
-            if (file_exists($jQuery)) {
-                $data = file_get_contents($jQuery);
-                preg_match("/v[\d]+\.[\d]+\.[\d]+/", $data, $version);
-
-                $old_version = $version[0]." => ";
-                $this->cmd("rm ".$jQuery, "Delete old jQuery");
-            }
-
-            $this->cmd("cd ".$_SERVER['PWD']."/application/webroot/js && wget -q http://code.jquery.com/".$name,
-                "Download lastest jQuery");
-
-            if (file_exists($jQuery)) {
-                $data = file_get_contents($jQuery);
-
-                preg_match("/v[\d]+\.[\d]+\.[\d]+/", $data, $version);
-
-                $msg = sprintf($msg,
-                    $old_version.Color::getColoredString($version[0], "green"));
-
-                return array(true, $msg);
-            } else {
-                $msg = sprintf($msg, "NOT INSTALLED");
-                return array(false, $msg);
-            }
-        };
-
-
-        $this->anonymous($fct, "jQuery installed (%s)");
-
-
-        $this->cmd("chown www-data:www-data -R *",
-            "Setting right to www-data:www-data");
-
-
-        $this->cmd("php glial administration admin_index_unique",
-            "Generating DDL cash for index");
-        $this->cmd("php glial administration admin_table",
-            "Generating DDL cash for databases");
-        $this->cmd("php glial administration generate_model",
-            "Making model with reverse engineering of databases");
-
-
-        /*
-          shell_exec("find " . $_SERVER['PWD'] . " -type f -exec chmod 740 {} \;;");
-          echo $this->out("Setting chmod 440 to all files", "OK");
-
-          shell_exec("find " . $_SERVER['PWD'] . " -type d -exec chmod 750 {} \;;");
-          echo $this->out("Setting chmod 550 to all files", "OK");
-
-
-          shell_exec("find " . $_SERVER['PWD'] . "/tmp -type f -exec chmod 770 {} \;;");
-          echo $this->out("Setting chmod 660 to all files of /tmp", "OK");
-
-          shell_exec("find " . $_SERVER['PWD'] . "/tmp -type d -exec chmod 770 {} \;;");
-          echo $this->out("Setting chmod 660 to all directory of /tmp", "OK");
-
-          shell_exec("chmod +x glial");
-          echo $this->out("Setting chmod +x to executable 'glial'", "OK");
-         */
-
-
-        $fct = function ($msg) {
-            $file = $_SERVER['PWD']."/glial";
-            $data = file_get_contents($file);
-
-            $new_data = str_replace("php application",
-                "php ".$_SERVER['PWD']."/application", $data);
-            if (!file_put_contents($file, $new_data)) {
-                return array(false, $msg);
-            }
-            return array(true, $msg);
-        };
-
-        $this->anonymous($fct,
-            "Replace relative path by full path in Glial exec");
-
-        $fct = function ($msg) {
-
-            $file        = $_SERVER['PWD']."/glial";
-            $path_to_php = exec("which php", $res, $code);
-
-            if ($code !== 0) {
-                return array(false, $msg." $code:$path_to_php: can't find php");
-            }
-
-            $data    = file($file);
-            $data[0] = "#!".$path_to_php.PHP_EOL;
-            file_put_contents($file, implode("", $data));
-
-            return array(true, $msg);
-        };
-
-        $this->anonymous($fct, "get full path of php");
-
-        $this->cmd("chmod +x glial", "Setting chmod +x to executable 'glial'");
-        $this->cmd("cp -a glial /usr/local/bin/glial",
-            "Copy glial to /usr/local/bin/");
-
-        echo PHP_EOL;
-    }
 
     public function out($msg, $type)
     {
@@ -302,10 +39,8 @@ class Install extends Controller
     public function onError()
     {
 
-        echo PHP_EOL."To understand what happen : ".Color::getColoredString("glial/tmp/log/error_php.log",
-            "cyan").PHP_EOL;
-        echo "To resume the setup : ".Color::getColoredString("php composer.phar update",
-            "cyan").PHP_EOL;
+        echo PHP_EOL."To understand what happen : ".Color::getColoredString("glial/tmp/log/error_php.log", "cyan").PHP_EOL;
+        echo "To resume the setup : ".Color::getColoredString("php composer.phar update", "cyan").PHP_EOL;
         exit(10);
     }
 
@@ -329,8 +64,7 @@ class Install extends Controller
 
     function displayResult($msg, $fine)
     {
-        echo $this->out(Color::getColoredString("[".date("Y-m-d H:i:s")."] ",
-                "purple").$msg, $fine);
+        echo $this->out(Color::getColoredString("[".date("Y-m-d H:i:s")."] ", "purple").$msg, $fine);
     }
 
     public function anonymous($function, $msg)
@@ -350,24 +84,29 @@ class Install extends Controller
 
         echo "\n";
         echo SITE_LOGO;
-        echo Color::getColoredString(SITE_NAME, "green")." version ".Color::getColoredString(SITE_VERSION,
-            "yellow")." (".SITE_LAST_UPDATE.")\n";
-        echo "Powered by Glial (https://github.com/Esysteme/glial)\n";
+        echo Color::getColoredString(SITE_NAME, "green")." version ".Color::getColoredString(SITE_VERSION, "yellow")." (".SITE_LAST_UPDATE.")\n";
+        echo "Powered by Glial (https://github.com/Glial/Glial)\n";
+
+
+        $this->generate_key();
+
 
         $this->cadre("Select MySQL server for PmaControl");
         $server = $this->testMysqlServer();
 
-        sleep(1);
-        $this->importData($server);
+
+        usleep(1000);
+
+
         $this->updateConfig($server);
+
+        $this->importData($server);
+        
         $this->updateCache();
 
         $this->cmd("echo 1", "Testing system & configuration");
 
-
-
-        echo Color::getColoredString("\nPmaControl 0.8-beta has been successfully installed !\n",
-            "green");
+        echo Color::getColoredString("\nPmaControl 0.8-beta has been successfully installed !\n", "green");
         //Hoa\Console\Window::setTitle($title);
     }
 
@@ -399,12 +138,10 @@ class Install extends Controller
             $fp = @fsockopen($hostname, $port, $errno, $errstr, 30);
             if (!$fp) {
                 echo Color::getColoredString("$errstr ($errno)", "grey", "red")."\n";
-                echo "MySQL server : ".$hostname.":".$port." -> ".Color::getColoredString("KO",
-                    "grey", "red")."\n";
+                echo "MySQL server : ".$hostname.":".$port." -> ".Color::getColoredString("KO", "grey", "red")."\n";
                 echo str_repeat("-", 80)."\n";
             } else {
-                $this->cmd("echo 1",
-                    "MySQL server : ".$hostname.":".$port." available");
+                $this->cmd("echo 1", "MySQL server : ".$hostname.":".$port." available");
 
                 fclose($fp);
                 $good = true;
@@ -416,11 +153,7 @@ class Install extends Controller
         //login & password mysql
         $good = false;
 
-
-
         do {
-
-
             echo "MySQL account on (".$hostname.":".$port.")\n";
 
             $rl   = new Hoa\Console\Readline\Readline ();
@@ -439,8 +172,7 @@ class Install extends Controller
                 $good = true;
                 $this->cmd("echo 1", "Login/password for MySQL's server");
             } else {
-                echo Color::getColoredString('Connect Error ('.mysqli_connect_errno().') '.mysqli_connect_error(),
-                    "grey", "red")."\n";
+                echo Color::getColoredString('Connect Error ('.mysqli_connect_errno().') '.mysqli_connect_error(), "grey", "red")."\n";
                 //echo "credential (".$user." // ".$password.")\n";
                 echo str_repeat("-", 80)."\n";
             }
@@ -448,7 +180,55 @@ class Install extends Controller
             sleep(1);
         } while ($good === false);
 
-        // check database
+
+        //check TokuDB
+        //
+
+        $sql = "select count(1) as cpt from information_schema.engines where engine = 'TokuDB' and (SUPPORT = 'YES' OR SUPPORT = 'DEFAULT');";
+
+        $res = mysqli_query($link, $sql);
+
+        while ($ob = mysqli_fetch_object($res)) {
+
+            if ($ob->cpt !== "1") {
+                echo Color::getColoredString('Engine "TokuDB" is not installed yet', "grey", "red")."\n";
+
+
+                echo "To install TokuDB :\n";
+                echo "\t- Add : \"plugin-load-add=ha_tokudb.so\" in your my.cnf\n";
+                echo "\t- Disable transparent_hugepage : \"echo never > /sys/kernel/mm/transparent_hugepage/enabled\" \n";
+                echo "\t- Disable transparent_hugepage : \"echo never > /sys/kernel/mm/transparent_hugepage/defrag\" \n";
+                echo "\t- Restart MySQL server\n";
+                exit(2);
+            }
+        }
+
+
+
+        //check Spider
+        //
+
+        $sql = "select count(1) as cpt from information_schema.engines where engine = 'SPIDER' and (SUPPORT = 'YES' OR SUPPORT = 'DEFAULT');";
+
+        $res = mysqli_query($link, $sql);
+
+        while ($ob = mysqli_fetch_object($res)) {
+
+            if ($ob->cpt !== "1") {
+                echo Color::getColoredString('Engine "SPIDER" is not installed yet', "grey", "red")."\n";
+
+                echo "To install Spider, run the install_spider.sql script, located in the share directory, for example, from the command line:\n\n";
+                echo "\tmysql -uroot -p < /usr/share/mysql/install_spider.sql\n";
+                echo "\n";
+                echo "or, from within mysql\n\n";
+                echo "\tsource /usr/share/mysql/install_spider.sql\n\n";
+
+                exit(2);
+            }
+        }
+
+
+
         wrong_db:
         $good = false;
         do {
@@ -469,8 +249,7 @@ class Install extends Controller
             $ob = mysqli_fetch_object($result);
 
             if ($ob->cpt == "1") {
-                echo Color::getColoredString('Database -> KO (this database already exist)',
-                    "grey", "red")."\n";
+                echo Color::getColoredString('Database -> KO (this database already exist)', "grey", "red")."\n";
                 echo str_repeat("-", 80)."\n";
             } else {
                 $good = true;
@@ -486,19 +265,26 @@ class Install extends Controller
         if ($res) {
 
 
-            $this->cmd("echo 1",
-                'The database "'.mysqli_real_escape_string($link, $database).'" has been created');
+            $this->cmd("echo 1", 'The database "'.mysqli_real_escape_string($link, $database).'" has been created');
         } else {
-            echo Color::getColoredString('The database "'.mysqli_real_escape_string($link,
-                    $database).'" couldn\'t be created', "black", "red")."\n";
+            echo Color::getColoredString('The database "'.mysqli_real_escape_string($link, $database).'" couldn\'t be created', "black",
+                "red")."\n";
             goto wrong_db;
             echo str_repeat("-", 80)."\n";
         }
 
+
+        Crypt::$key = CRYPT_KEY;
+
+        $passwd = Crypt::encrypt($password);
+
+
+
+
         $mysql['hostname'] = $hostname;
         $mysql['port']     = $port;
         $mysql['user']     = $user;
-        $mysql['password'] = $password;
+        $mysql['password'] = $passwd;
         $mysql['database'] = $database;
         return $mysql;
     }
@@ -506,14 +292,18 @@ class Install extends Controller
     private function cadre($text, $elem = '#')
     {
         echo str_repeat($elem, 80)."\n";
-        echo $elem.str_repeat(' ', ceil((80 - strlen($text) - 2) / 2)).$text.str_repeat(' ',
-            floor((80 - strlen($text) - 2) / 2)).$elem."\n";
+        echo $elem.str_repeat(' ', ceil((80 - strlen($text) - 2) / 2)).$text.str_repeat(' ', floor((80 - strlen($text) - 2) / 2)).$elem."\n";
         echo str_repeat($elem, 80)."\n";
     }
 
     private function importData($server)
     {
-        $path = ROOT."/sql/*.sql";
+        //$path = ROOT."/sql/*.sql";
+        $path = ROOT."/sql/full/pmacontrol.sql";
+
+
+        Crypt::$key = CRYPT_KEY;
+        $server['password'] =  Crypt::decrypt($server['password']);
 
         foreach (glob($path) as $filename) {
             //echo "$filename size ".filesize($filename)."\n";
@@ -539,6 +329,7 @@ driver=mysql
 hostname=".$server["hostname"]."
 user=".$server['user']."
 password='".$server['password']."'
+crypted='1'
 database=".$server['database']."";
 
         $fp = fopen(CONFIG."/db.config.ini.php", 'w');
@@ -550,12 +341,9 @@ database=".$server['database']."";
 
     private function updateCache()
     {
-        $this->cmd("php glial administration admin_index_unique",
-            "Generating DDL cash for index");
-        $this->cmd("php glial administration admin_table",
-            "Generating DDL cash for databases");
-        $this->cmd("php glial administration generate_model",
-            "Making model with reverse engineering of databases");
+        $this->cmd("php glial administration admin_index_unique", "Generating DDL cash for index");
+        $this->cmd("php glial administration admin_table", "Generating DDL cash for databases");
+        $this->cmd("php glial administration generate_model", "Making model with reverse engineering of databases");
     }
 
     public function createAdmin()
@@ -672,11 +460,9 @@ database=".$server['database']."";
 
             if (!empty($pwd) && $pwd === $pwd2) {
                 $good = true;
-                $this->displayResult("The passwords must be the same & not empty",
-                    "OK");
+                $this->displayResult("The passwords must be the same & not empty", "OK");
             } else {
-                $this->displayResult("The passwords must be the same & not empty",
-                    "KO");
+                $this->displayResult("The passwords must be the same & not empty", "KO");
             }
         } while ($good !== true);
 
@@ -690,8 +476,7 @@ database=".$server['database']."";
         $data['user_main']['is_valid'] = 1;
         $data['user_main']['email']    = $email;
         $data['user_main']['login']    = $email;
-        $data['user_main']['password'] = \Glial\Auth\Auth::hashPassword($email,
-                $pwd);
+        $data['user_main']['password'] = \Glial\Auth\Auth::hashPassword($email, $pwd);
 
         //to set uppercase to composed name like 'Jean-Louis'
         $firstname = str_replace("-", " - ", $firstname);
@@ -699,8 +484,7 @@ database=".$server['database']."";
 
         $data['user_main']['firstname'] = str_replace(" - ", "-", $firstname);
 
-        $data['user_main']['name']                       = mb_convert_case($lastname,
-            MB_CASE_UPPER, "UTF-8");
+        $data['user_main']['name']                       = mb_convert_case($lastname, MB_CASE_UPPER, "UTF-8");
         $data['user_main']['ip']                         = $ip;
         $data['user_main']['date_created']               = date('Y-m-d H:i:s');
         $data['user_main']['id_group']                   = 4; // 4 = super admin
@@ -723,8 +507,7 @@ database=".$server['database']."";
             goto createUser;
         }
 
-        echo Color::getColoredString("\nAdministrator successfully created !\n",
-            "green");
+        echo Color::getColoredString("\nAdministrator successfully created !\n", "green");
 
         $ip_list = shell_exec('ifconfig -a | grep "inet ad" | cut -d ":" -f 2 | cut -d " " -f 1');
 
@@ -735,15 +518,17 @@ database=".$server['database']."";
                 continue;
             }
 
-            echo "You can connect to the application on this url : ".Color::getColoredString("http://".$ip.WWW_ROOT,
-                "yellow")."\n";
+            echo "You can connect to the application on this url : ".Color::getColoredString("http://".$ip.WWW_ROOT, "yellow")."\n";
         }
+
+
+        echo "You can connect to the application on this url : ".Color::getColoredString("http://".gethostname().WWW_ROOT, "yellow")."\n";
     }
 
     public function createOrganisation()
     {
         $this->view = false;
-        $DB  = $this->di['db']->sql(DB_DEFAULT);
+        $DB         = $this->di['db']->sql(DB_DEFAULT);
 
         createOragnisation:
         $this->cadre("create oraganisation");
@@ -756,31 +541,42 @@ database=".$server['database']."";
 
         $sql = "INSERT INTO client (`id`,`libelle`,`date`) VALUES (1,'".$oraganisation."', '".date('Y-m-d H:i:s')."')";
         $DB->sql_query($sql);
+    }
 
-        /*
-        $data = [];
-        $data['client']['id']      = 1;
-        $data['client']['libelle'] = $oraganisation;
-        $data['client']['date'] = date('Y-m-d H:i:s');
-
-        $id_client = $DB->sql_save($data);
-
-
-        print_r($id_client);
-
-        if ($id_client) {
-            $this->displayResult("Oraganisation successfully created", "OK");
-        } else {
-
-            print_r($data);
-            $error = $DB->sql_error();
-            print_r($error);
-
-            $this->displayResult("Oraganisation successfully created", "KO");
-
-            goto createOragnisation;
+    private function rand_char($length)
+    {
+        $random = '';
+        for ($i = 0; $i < $length; $i++) {
+            $random .= chr(mt_rand(33, 126));
         }
-         
-         */
+        return $random;
+    }
+
+    private function generate_key()
+    {
+
+        $key = str_replace("'", "", $this->rand_char(256));
+
+
+        $data = "<?php
+
+if (! defined('CRYPT_KEY'))
+{
+    define('CRYPT_KEY', '".$key."');
+}
+";
+        $path = "configuration/crypt.config.php";
+
+
+        $msg ="Generate key for encryption";
+
+        if (!file_exists($path)) {
+            file_put_contents($path, $data);
+            $this->displayResult($msg, "OK");
+            require_once $path;
+        } else {
+            $this->displayResult($msg, "NA");
+            
+        }
     }
 }

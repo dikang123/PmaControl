@@ -8,14 +8,15 @@
 <div style="margin: 0 auto 0 auto; width:500px">
     <span style="color:#000; font-size: 48px">
     <i class="fa fa-database fa-lg"></i>
-    PmaControl
+    <?=SITE_NAME ?>
     </span><br />
-    <span class="badge badge-info" style="font-variant: small-caps; font-size: 20px; vertical-align: middle; background-color: #4384c7">v0.8 beta (<?=$data['date']?>)</span>
+    <span class="badge badge-info" style="font-variant: small-caps; font-size: 20px; vertical-align: middle; background-color: #4384c7">
+<?=SITE_VERSION ?> (<?=SITE_LAST_UPDATE?>)</span>
 </div>
 <br />
 <h3>Product</h3>
 <ul>
-    <li>Product Version: <b>PmaControl IDE <?=$data['pmacontrol']?></b> (Build 123d00eab1c5d13e8f8d071e430e4369d8cb5c7b)</li>
+    <li>Product Version: <b><?=SITE_NAME ?> <?=SITE_VERSION?></b> (Build 123d00eab1c5d13e8f8d071e430e4369d8cb5c7b)</li>
     <li>Lisense: <b><a href="http://www.gnu.org/licenses/gpl-3.0.fr.html">GNU GPL v3</a></b></li>
 </ul>
 <h3>Dependencies</h3>
