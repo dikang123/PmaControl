@@ -825,13 +825,15 @@ GROUP BY table_schema ;';
 
             try {
                 $ret = $db->sql_query($req);
+
+                
                 if (!$ret) {
 
                     //à changer : chopper l'exception mysql et l'afficher dans le log d'erreur de PmaControl
-                    $this->logger->error(Color::getColoredString("ERROR: Disk full ?", "white", "red"));
-                    $this->stop(array(1));
+                    $this->logger->error(Color::getColoredString($ret->sql_error(), "white", "red"));
+                    //$this->stop(array(1));
 
-                    throw new \Exception('PMACTRL-065 : '.$ret->sql_error());
+                    //throw new \Exception('PMACTRL-065 : '.$ret->sql_error());
                 }
             } catch (Exception $ex) {
 
