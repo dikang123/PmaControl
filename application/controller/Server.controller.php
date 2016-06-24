@@ -340,6 +340,17 @@ class Server extends Controller {
 
     public function id($param) {
 
+        /*
+        select avg(Column), convert((min(datetime) div 500)*500 + 230, datetime) as time
+from Databasename.tablename
+where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
+group by datetime div 500
+         *
+         * select avg(Column), convert((min(datetime) div 500)*500 + 230, datetime) as time
+from Databasename.tablename
+where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
+group by datetime div 500
+        */
         $this->di['js']->addJavascript(array("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js")); //,
         $db = $this->di['db']->sql(DB_DEFAULT);
 

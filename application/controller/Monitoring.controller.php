@@ -257,7 +257,7 @@ class Monitoring extends Controller
                     ."/database:id:".$_GET['database']['id']
                     ."/field:id:".$_GET['field']['id']
                     ."/database:filter:".$_GET['database']['filter']."/orderby:id:".$_GET['orderby']['id']
-                    , $_GET['page'], $data['count'], 100, 30);
+                    , $_GET['page'], $data['count'], 50, 30);
 
                 $tab = $pagination->get_sql_limit();
 
@@ -310,4 +310,63 @@ class Monitoring extends Controller
 
         $this->set('data', $data);
     }
+
+    public function explain()
+    {
+
+        // update setup_instruments SET ENABLED='YES', TIMED='YES';
+        // UPDATE setup_consumers SET ENABLED = 'YES';
+
+        $db  = $this->di['db']->sql(DB_DEFAULT);
+        $sql = "SELECT * FROM mysql_server where id= ".$_GET['mysql_server']['id']."";
+        $res = $db->sql_query($sql);
+        while ($ob  = $db->sql_fetch_object($res)) {
+            $remote = $this->di['db']->sql($ob->name);
+        }
+
+        $sql = "select * from performance_schema.events_statements_history_long where DIGEST='".$_GET['digest']."'";
+
+        $data['table'] = $remote->sql_fetch_yield($sql);
+
+        $this->set('data', $data);
+    }
+
+    public function getExplain($param)
+    {
+
+    }
+
+    private function getServer()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $sql = "SELECT * FROM mysql_server where id= ".$_GET['mysql_server']['id']."";
+
+        $res = $db->sql_query($sql);
+
+        while ($ob = $db->sql_fetch_object($res)) {
+            $remote = $this->di['db']->sql($ob->name);
+        }
+
+        return $remote;
+    }
 }
+
+
+/*
+ *
+ * USE INFORMATION_SCHEMA;
+SELECT
+    TABLES.table_name
+FROM TABLES
+LEFT JOIN KEY_COLUMN_USAGE AS c
+ON (
+       TABLES.TABLE_NAME = c.TABLE_NAME
+   AND c.CONSTRAINT_SCHEMA = TABLES.TABLE_SCHEMA
+   AND c.constraint_name = 'PRIMARY'
+)
+WHERE
+    TABLES.table_schema = 'amdapplication_FR_fr'
+AND c.constraint_name IS NULL;
+ *
+ */

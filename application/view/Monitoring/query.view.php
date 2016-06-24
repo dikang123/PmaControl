@@ -125,7 +125,7 @@ if ($data['performance_schema']) {
         //echo '<td>' . $event['DIGEST'] . '</td>';
         echo '<td>' . number_format($event['COUNT_STAR'], 0, '.', ' ') . '</td>';
 
-        echo '<td>' . \SqlFormatter::format($sql) . '</td>';
+        echo '<td>' .'<a href="'.LINK.'monitoring/explain/mysql_server:id:'.$data['id_server'].'/digest:'.$event['DIGEST'].'">'.$event['DIGEST'].'</a>'.'<br />'. \SqlFormatter::format($sql) . '</td>';
 
         if (!empty($event['SUM_ROWS_AFFECTED'])) {
             echo '<td>' . number_format(round($event['SUM_ROWS_AFFECTED'] / $event['COUNT_STAR'], 2), 0, '.', ' ') . '</td>';
