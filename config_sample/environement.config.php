@@ -12,7 +12,7 @@ if (!defined('ENVIRONEMENT')) {
 }
 
 
-if (!ENVIRONEMENT) {
+if (ENVIRONEMENT) {
     error_reporting(-1);
     ini_set('display_errors', 1);
 }

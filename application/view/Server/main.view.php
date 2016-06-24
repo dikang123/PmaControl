@@ -58,7 +58,7 @@ foreach ($data['servers'] as $server) {
     echo '<td style="' . $style . '">' . $server['login'] . '</td>';
 
     Crypt::$key = CRYPT_KEY;
-    $passwd = Crypt::decrypt($server['passwd']);
+    //$passwd = Crypt::decrypt($server['passwd']);
 
     //echo '<td style="' . $style . '">' . $passwd . '</td>';
     echo '<td style="' . $style . '">' . '***' . '</td>';

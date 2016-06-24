@@ -1,9 +1,11 @@
 #!/bin/bash
 
-
 workFolder=$(readlink -f $(dirname $0))
 path=`echo $workFolder | awk -F"/" ' { print $(NF) } '`
 
+cp -a config_sample/*.config.php configuration/
+cp -a config_sample/*.ini.php configuration/
+cp -a config_sample/*.ini configuration/
 
 cat > configuration/db.config.ini.php << EOF
 [noname]
@@ -18,7 +20,6 @@ cat > configuration/db.config.php << EOF
      define("DB_DEFAULT", "pmacontrol");
  }
 EOF
-
 
 cat >  configuration/webroot.config.php << EOF
 <?php
@@ -37,23 +38,6 @@ if (! defined('WWW_ROOT'))
 }
 EOF
 
-cp -a config_sample/environement.config.php configuration/environement.config.php
-cp -a config_sample/router.config.php configuration/router.config.php
-cp -a config_sample/site.config.php configuration/site.config.php
-cp -a config_sample/acl.config.ini configuration/acl.config.ini
-cp -a config_sample/site.config.php configuration/site.config.php
-cp -a config_sample/auth.config.php configuration/auth.config.php
-cp -a config_sample/crypt.config.php configuration/crypt.config.php
-cp -a config_sample/developer.config.ini.php configuration/developer.config.ini.php
-cp -a config_sample/haproxy.config.ini.php configuration/haproxy.config.ini.php
-cp -a config_sample/history.config.php configuration/history.config.php
-cp -a config_sample/javascript.config.php configuration/javascript.config.php
-cp -a config_sample/language.config.php configuration/language.config.php
-cp -a config_sample/ldap.config.php configuration/ldap.config.php
-cp -a config_sample/photo.config.php configuration/photo.config.php
-cp -a config_sample/pmacontrol.config.php configuration/pmacontrol.config.php
-cp -a config_sample/translation.config.php configuration/translation.config.php
-
 chmod 777 -R tmp/
 
 ## disable support for transparent hugepages in Linux for TokuDB
@@ -70,6 +54,16 @@ if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
    echo never > /sys/kernel/mm/transparent_hugepage/defrag
 fi
 
+#check composer && composer install
+
+if test -f ./vendor/glial/glial/Glial/Bootstrap.php; then
+   echo "Glial Installed !"
+else
+    composer -V foo >/dev/null 2>&1 || { echo >&2 "PmaControl require composer but it's not installed.  Aborting."; echo "To install composer : ";echo ""; echo "        curl -sS https://getcomposer.org/installer | php";  echo "        \$ mv composer.phar /usr/local/bin/composer"; echo ""; exit 1;}
+
+    composer install
+fi
+
 
 php application/webroot/index.php install index
 
@@ -78,3 +72,10 @@ php application/webroot/index.php install createOrganisation
 php application/webroot/index.php install createAdmin
 
 php application/webroot/index.php agent updateServerList
+
+
+# install crontab
+#*      *       *       *       *       cd /data/www/pmacontrol && ./glial dot generateCache
+
+
+# set du daemon SELECT * FROM `daemon_main` (choisir les valeus en fonction de la machine) 
