@@ -53,12 +53,27 @@ class Agent extends Controller
 
     public function start($param)
     {
-        $id_daemon = $param[0];
-        $id_daemon = 1;
+
+        if (empty($param[0]))
+        {
+            $id_daemon = 1;
+        }
 
         $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->view        = false;
         $this->layout_name = false;
+
+
+        if (! $this->isTokuDbActivated())
+        {
+            $msg   = I18n::getTranslation(__("TokuDb is not actived on this MySQL server"));
+            $title = I18n::getTranslation(__("Error"));
+            set_flash("error", $title, $msg);
+            header("location: ".LINK.$this->url);
+            exit;
+        }
+
+
 
         $sql = "SELECT * FROM daemon_main where id ='".$id_daemon."'";
         $res = $db->sql_query($sql);
@@ -496,11 +511,15 @@ GROUP BY table_schema ;';
                 if (empty($database['index'])) $database['index']     = 0;
 
 
-                $mysql_database['mysql_database']['id_mysql_server']    = $id_server;
-                $mysql_database['mysql_database']['name']               = $database['table_schema'];
-                $mysql_database['mysql_database']['tables']             = $database['tables'];
-                $mysql_database['mysql_database']['rows']               = $database['rows'];
-                $mysql_database['mysql_database']['data_length']        = $database['data'];
+                $mysql_database['mysql_database']['id_mysql_server'] = $id_server;
+                $mysql_database['mysql_database']['name']            = $database['table_schema'];
+                $mysql_database['mysql_database']['tables']          = $database['tables'];
+
+                if (empty($database['rows'])) {
+                    $database['rows'] = 0;
+                }
+
+                $mysql_database['mysql_database']['rows']               = $mysql_database['mysql_database']['data_length']        = $database['data'];
                 $mysql_database['mysql_database']['data_free']          = $database['data_free'];
                 $mysql_database['mysql_database']['index_length']       = $database['index'];
                 $mysql_database['mysql_database']['character_set_name'] = $database['DEFAULT_CHARACTER_SET_NAME'];
@@ -826,13 +845,12 @@ GROUP BY table_schema ;';
             try {
                 $ret = $db->sql_query($req);
 
-                
+
                 if (!$ret) {
 
                     //à changer : chopper l'exception mysql et l'afficher dans le log d'erreur de PmaControl
                     $this->logger->error(Color::getColoredString($ret->sql_error(), "white", "red"));
                     //$this->stop(array(1));
-
                     //throw new \Exception('PMACTRL-065 : '.$ret->sql_error());
                 }
             } catch (Exception $ex) {
@@ -1105,9 +1123,25 @@ GROUP BY table_schema ;';
 
         $cmd = "echo never > /sys/kernel/mm/transparent_hugepage/enabled";
         $cmd = "echo never > /sys/kernel/mm/transparent_hugepage/defrag";
+    }
 
+    public function isTokuDbActivated()
+    {
 
+        $this->view = false;
+        $db         = $this->di['db']->sql(DB_DEFAULT);
+        $sql        = "select count(1) as cpt from information_schema.engines where engine = 'TokuDB' and (SUPPORT = 'YES' OR SUPPORT = 'DEFAULT');";
 
+        $res = mysqli_query($link, $sql);
 
+        while ($ob = mysqli_fetch_object($res)) {
+
+            if ($ob->cpt === "1") {
+                return true;
+            }
+        }
+        //$sql = "SHOW ENGINES WHERE ";
+
+        return false;
     }
 }

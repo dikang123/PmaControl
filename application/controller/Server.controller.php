@@ -572,6 +572,17 @@ var myChart = new Chart(ctx, {
 
     public function settings() {
 
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST")
+        {
+
+            debug($_POST);
+
+            die();
+        }
+
+
+
         $this->title = '<i class="fa fa-server"></i> ' . __("Servers");
         $this->ariane = ' > <a href⁼"">' . '<i class="fa fa-cog" style="font-size:14px"></i> '
                 . __("Settings") . '</a> > <i class="fa fa-server"  style="font-size:14px"></i> ' . __("Servers");

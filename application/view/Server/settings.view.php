@@ -9,6 +9,10 @@ use Glial\Html\Form\Form;
  * and open the template in the editor.
  */
 
+
+echo '<form action="" method="POST">';
+
+
 echo '<div class="well">';
 \Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
 echo '</div>';
@@ -66,10 +70,15 @@ foreach($data['servers'] as $server) {
     echo '</td>';
     echo '<td>'.__('Tags').'</td>';
     echo '<td>'.$server['name'].'</td>';
-    echo '<td>'.Form::input("mysql_server", "display_name", $server['name']).'</td>';
+
+
+
+    echo '<td>'.Form::input("mysql_server", "display_name").'</td>';
     echo '<td>'.$server['ip'].'</td>';
     echo '<td>'.$server['port'].'</td>';
     echo '</tr>';
 }
 
 echo '</table>';
+echo '<button type="submit" class="btn btn-primary">'.__("Update").'</button>';
+echo '<form>';
