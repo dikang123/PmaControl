@@ -4,7 +4,6 @@ use \Glial\Synapse\Controller;
 use \Glial\Cli\Glial;
 use \Glial\Cli\Color;
 use \Glial\Sgbd\Sql\FactorySql;
-
 use \Glial\Security\Crypt\Crypt;
 
 class Install extends Controller
@@ -98,10 +97,13 @@ class Install extends Controller
         usleep(1000);
 
 
+        $this->installCrontab();
+        $this->installLanguage();
+
         $this->updateConfig($server);
 
         $this->importData($server);
-        
+
         $this->updateCache();
 
         $this->cmd("echo 1", "Testing system & configuration");
@@ -203,6 +205,20 @@ class Install extends Controller
             }
         }
 
+        /*
+         *
+         * On Redhat and Centos
+         * Add line GRUB_CMDLINE_LINUX_DEFAULT="transparent_hugepage=never" to file /etc/default/grub
+
+          Update grub (boot loader):
+
+          grub2-mkconfig -o /boot/grub2/grub.cfg "$@"
+
+          echo never > /sys/kernel/mm/transparent_hugepage/enabled
+          echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+         */
+
 
 
         //check Spider
@@ -302,8 +318,8 @@ class Install extends Controller
         $path = ROOT."/sql/full/pmacontrol.sql";
 
 
-        Crypt::$key = CRYPT_KEY;
-        $server['password'] =  Crypt::decrypt($server['password']);
+        Crypt::$key         = CRYPT_KEY;
+        $server['password'] = Crypt::decrypt($server['password']);
 
         foreach (glob($path) as $filename) {
             //echo "$filename size ".filesize($filename)."\n";
@@ -568,7 +584,7 @@ if (! defined('CRYPT_KEY'))
         $path = "configuration/crypt.config.php";
 
 
-        $msg ="Generate key for encryption";
+        $msg = "Generate key for encryption";
 
         if (!file_exists($path)) {
             file_put_contents($path, $data);
@@ -576,7 +592,25 @@ if (! defined('CRYPT_KEY'))
             require_once $path;
         } else {
             $this->displayResult($msg, "NA");
-            
         }
     }
+
+
+    private function installCrontab()
+    {
+
+        shell_exec("cat > /tmp/cron.txt << EOF
+*      *       *       *       *       cd ".ROOT." && ./glial dot generateCache
+EOF
+");
+        shell_exec("crontab /tmp/cron.txt");
+
+    }
+
+
+    public function installLanguage()
+    {
+        \Glial\I18n\I18n::install();
+    }
+
 }

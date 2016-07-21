@@ -23,7 +23,4 @@ class About extends Controller {
         
         $this->set('data',$data);
     }
-
-
-
 }

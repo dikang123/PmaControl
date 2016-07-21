@@ -63,7 +63,6 @@ class Agent extends Controller
         $this->view        = false;
         $this->layout_name = false;
 
-
         if (! $this->isTokuDbActivated())
         {
             $msg   = I18n::getTranslation(__("TokuDb is not actived on this MySQL server"));
@@ -72,8 +71,6 @@ class Agent extends Controller
             header("location: ".LINK.$this->url);
             exit;
         }
-
-
 
         $sql = "SELECT * FROM daemon_main where id ='".$id_daemon."'";
         $res = $db->sql_query($sql);
@@ -1132,16 +1129,16 @@ GROUP BY table_schema ;';
         $db         = $this->di['db']->sql(DB_DEFAULT);
         $sql        = "select count(1) as cpt from information_schema.engines where engine = 'TokuDB' and (SUPPORT = 'YES' OR SUPPORT = 'DEFAULT');";
 
-        $res = mysqli_query($link, $sql);
+        $res = $db->sql_query( $sql);
 
-        while ($ob = mysqli_fetch_object($res)) {
+        while ($ob = $db->sql_fetch_object($res)) {
 
-            if ($ob->cpt === "1") {
-                return true;
+            if ($ob->cpt !== "1") {
+                return false;
             }
         }
         //$sql = "SHOW ENGINES WHERE ";
 
-        return false;
+        return true;
     }
 }
