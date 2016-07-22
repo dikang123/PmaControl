@@ -54,8 +54,7 @@ class Agent extends Controller
     public function start($param)
     {
 
-        if (empty($param[0]))
-        {
+        if (empty($param[0])) {
             $id_daemon = 1;
         }
 
@@ -63,8 +62,7 @@ class Agent extends Controller
         $this->view        = false;
         $this->layout_name = false;
 
-        if (! $this->isTokuDbActivated())
-        {
+        if (!$this->isTokuDbActivated()) {
             $msg   = I18n::getTranslation(__("TokuDb is not actived on this MySQL server"));
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
@@ -195,8 +193,6 @@ class Agent extends Controller
     public function launch($id)
     {
 
-
-
         while (1) {
 
             //$this->logger->info(Color::getColoredString('Start testAllMysql', "yellow"));
@@ -281,7 +277,6 @@ class Agent extends Controller
             $this->loop = 1;
         }
 
-
         foreach ($server_list as $server) {
             //echo str_repeat("#", count($child_processes)) . "\n";
 
@@ -291,8 +286,6 @@ class Agent extends Controller
             if ($pid == -1) {
                 throw new Exception('PMACTRL-057 : Couldn\'t fork thread !', 80);
             } else if ($pid) {
-
-
 
 
 
@@ -632,6 +625,7 @@ GROUP BY table_schema ;';
         if (version_compare($mysql_tested->getVersion(), '5.0', '>=')) {
             $this->saveStatus($status, $id_server);
         }
+
         $db->sql_close();
         $mysql_tested->sql_close();
 
@@ -647,7 +641,6 @@ GROUP BY table_schema ;';
      * @since 0.8 First time this was introduced.
      * @description refresh list of MySQL according pmacontrol/configuration/db.config.ini.php
      * @access public
-     * 
      */
 
     public function updateServerList()
@@ -681,18 +674,27 @@ GROUP BY table_schema ;';
                 $data['mysql_server']['id_environment'] = 1;
             }
 
-            $data['mysql_server']['name']         = $server;
-            $data['mysql_server']['ip']           = $info_server['hostname'];
-            $data['mysql_server']['login']        = $info_server['user'];
-            $data['mysql_server']['passwd']       = Crypt::encrypt($info_server['password']);
+
+            $data['mysql_server']['name']  = $server;
+            $data['mysql_server']['ip']    = $info_server['hostname'];
+            $data['mysql_server']['login'] = $info_server['user'];
+
+            if (!empty($info_server['crypted']) && $info_server['crypted'] == 1) {
+                $passwd = $info_server['password'];
+            } else {
+                $passwd = Crypt::encrypt($info_server['password']);
+            }
+
+
+            $data['mysql_server']['passwd']       = $passwd;
             $data['mysql_server']['port']         = empty($info_server['port']) ? 3306 : $info_server['port'];
             $data['mysql_server']['date_refresh'] = date('Y-m-d H:i:s');
             $data['mysql_server']['is_monitored'] = 1;
 
-
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);
             }
+
             if (!empty($info_server['ssh_password'])) {
                 $data['mysql_server']['ssh_password'] = Crypt::encrypt($info_server['ssh_password']);
             }
@@ -716,11 +718,8 @@ GROUP BY table_schema ;';
 
     public function index()
     {
-        $db = $this->di['db']->sql(DB_DEFAULT);
-
-
+        $db  = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM `daemon_main` order by id";
-
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_array($res, MYSQLI_ASSOC)) {
@@ -1129,7 +1128,7 @@ GROUP BY table_schema ;';
         $db         = $this->di['db']->sql(DB_DEFAULT);
         $sql        = "select count(1) as cpt from information_schema.engines where engine = 'TokuDB' and (SUPPORT = 'YES' OR SUPPORT = 'DEFAULT');";
 
-        $res = $db->sql_query( $sql);
+        $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
 
