@@ -57,7 +57,8 @@ plugin-load=ha_tokudb
 
 
 ### Deploy this project
-* `git clone git@github.com:Glial/PmaControl.git pmacontrol`
+
+* `git clone https://github.com/Glial/PmaControl.git pmacontrol`
 
 
 ###Install dependencies
