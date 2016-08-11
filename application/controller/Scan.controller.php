@@ -11,7 +11,7 @@ use Glial\Cli\Table;
 class Scan extends Controller
 {
     public $data  = array();
-    var $port  = array(22 => "SSH", 3306 => "MySQL", 3307 => "MySQL load-balanced", 
+    var $port  = array(22 => "SSH", 3306 => "MySQL", 3307 => "MySQL load-balanced",
         33306 => "MySQL load-balanced (Master)",
         33307 => "MySQL load-balanced (R/W Splitting)",
         33308 => "MySQL load-balanced (Read only)",
@@ -89,12 +89,17 @@ class Scan extends Controller
         // arp -a -n => fastest way
 
         $this->view = false;
-        $xml        = shell_exec($this->generateNmap());
+
+
+        $nmap = $this->generateNmap();
+
+
+        $xml  = shell_exec($nmap);
 
         $arr = $this->xmlToArray($xml);
 
-        //$data = $this->extract($res);
-        //$json = $this->parse($data);
+        $data = $this->extract($res);
+        $json = $this->parse($data);
 
         $this->data = $arr;
 
@@ -186,9 +191,9 @@ class Scan extends Controller
         foreach ($port_to_scan as $port => $service_name) {
             $ports .= 'T:'.$port.',';
         }
-        $ports = substr($ports, 0, -1);
-        $ips   = $this->getIpMonitored();
-        $range = [];
+        $ports   = substr($ports, 0, -1);
+        $ips     = $this->getIpMonitored();
+        $range   = [];
         $uniq_ip = [];
         foreach ($ips as $ip) {
             if ($ip === "127.0.0.1" || $ip === "localhost") {
@@ -202,14 +207,16 @@ class Scan extends Controller
                 $range[] = $new_range;
             }
 
-            if ($tmp[0] != "10" && ($tmp[0] != "192" || $tmp[0] != "168"))
-            {
+            /*
+            if ($tmp[0] != "10" && ($tmp[0] != "192" || $tmp[0] != "168")) {
                 $uniq_ip[] = $ip;
-            }
+            }*/
         }
 
+
+
         $ext  = '.0/24';
-        $nmap = "nmap -p ".$ports." -oX - ".implode($ext.' ', $range).$ext. " ".implode(' ',$uniq_ip);
+        $nmap = "nmap -p ".$ports." -oX - ".implode($ext.' ', $range).$ext.""; // ".implode(' ', $uniq_ip);
         return trim($nmap);
     }
 

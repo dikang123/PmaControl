@@ -32,7 +32,6 @@ use Glial\Html\Form\Form;
     
 
     echo '<div style="float:right" class="btn-group" role="group" aria-label="Default button group">';
-    echo ' <a href="/pmacontrol/en/Cleaner/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a> ';
     echo '</div>';
 
 

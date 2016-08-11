@@ -7,24 +7,25 @@ use \Glial\Sgbd\Sgbd;
 use \Glial\Net\Ssh;
 use \Glial\Security\Crypt\Crypt;
 
-class Server extends Controller {
+class Server extends Controller
+{
 
     //dba_source
-
-    public function hardware() {
+    public function hardware()
+    {
 
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $this->title = __("Hardware");
-        $this->ariane = " > " . $this->title;
+        $this->title  = __("Hardware");
+        $this->ariane = " > ".$this->title;
 
         $sql = "SELECT c.libelle as client,d.libelle as environment,a.*, b.version, b.is_available 
             FROM mysql_server a 
                  INNER JOIN client c on c.id = a.id_client 
                  INNER JOIN environment d on d.id = a.id_client 
          LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
-         WHERE 1 " . $this->getFilter() . "
+         WHERE 1 ".$this->getFilter()."
          order by `name`;";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
@@ -32,11 +33,13 @@ class Server extends Controller {
         $this->set('data', $data);
     }
 
-    public function before($param) {
+    public function before($param)
+    {
         $this->layout_name = 'pmacontrol';
     }
 
-    public function listing($param) {
+    public function listing($param)
+    {
 
 
         // doc : http://silviomoreto.github.io/bootstrap-select/examples/#standard-select-boxes
@@ -49,106 +52,104 @@ class Server extends Controller {
 
         $ob = $db->sql_fetch_object($res);
 
-        $data['pid'] = $ob->pid;
-        $data['date'] = $ob->date;
+        $data['pid']      = $ob->pid;
+        $data['date']     = $ob->date;
         $data['log_file'] = $ob->log_file;
 
-
-
-        $data['client'] = $this->getClients();
+        $data['client']      = $this->getClients();
         $data['environment'] = $this->getEnvironments();
 
 
-        $data['menu']['main']['name'] = __('Servers');
+        $data['menu']['main']['name']  = __('Servers');
         $data['menu']['main']['icone'] = '<i class="fa fa-server" aria-hidden="true" style="font-size:14px"></i>';
         //$data['menu']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
-        $data['menu']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
+        $data['menu']['main']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
 
-        $data['menu']['hardware']['name'] = __('Hardware');
+        $data['menu']['hardware']['name']  = __('Hardware');
         $data['menu']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
-        $data['menu']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
+        $data['menu']['hardware']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/hardware';
 
-        $data['menu']['database']['name'] = __('Databases');
+        $data['menu']['database']['name']  = __('Databases');
         $data['menu']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
-        $data['menu']['database']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/database';
+        $data['menu']['database']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/database';
 
-        $data['menu']['statistics']['name'] = __('Statistics');
+        $data['menu']['statistics']['name']  = __('Statistics');
         $data['menu']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
-        $data['menu']['statistics']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/statistics';
+        $data['menu']['statistics']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/statistics';
 
-        $data['menu']['memory']['name'] = __('Memory');
+        $data['menu']['memory']['name']  = __('Memory');
         $data['menu']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
-        $data['menu']['memory']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/memory';
+        $data['menu']['memory']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/memory';
 
-        $data['menu']['index']['name'] = __('Index');
+        $data['menu']['index']['name']  = __('Index');
         $data['menu']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
-        $data['menu']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+        $data['menu']['index']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
-        $data['menu']['system']['name'] = __('System');
+        $data['menu']['system']['name']  = __('System');
         $data['menu']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
-        $data['menu']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
+        $data['menu']['system']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/system';
 
-        $data['menu']['logs']['name'] = __('Logs');
+        $data['menu']['logs']['name']  = __('Logs');
         $data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-        $data['menu']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+        $data['menu']['logs']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
-        $data['menu']['id']['name'] = __('Server');
+        $data['menu']['id']['name']  = __('Server');
         $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-        $data['menu']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
+        $data['menu']['id']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/id';
 
 
         /*         * ***** */
 
-        $data['menu_select']['main']['name'] = __('Servers');
+        $data['menu_select']['main']['name']  = __('Servers');
         $data['menu_select']['main']['icone'] = '<span class="glyphicon glyphicon-th-large" style="font-size:12px"></span>';
-        $data['menu_select']['main']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/main';
+        $data['menu_select']['main']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/main';
 
-        $data['menu_select']['hardware']['name'] = __('Hardware');
+        $data['menu_select']['hardware']['name']  = __('Hardware');
         $data['menu_select']['hardware']['icone'] = '<span class="glyphicon glyphicon-hdd" style="font-size:12px"></span>';
-        $data['menu_select']['hardware']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/hardware';
+        $data['menu_select']['hardware']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/hardware';
 
 
-        $data['menu_select']['database']['name'] = __('Databases');
+        $data['menu_select']['database']['name']  = __('Databases');
         $data['menu_select']['database']['icone'] = '<i class="fa fa-database fa-lg" style="font-size:14px"></i>';
-        $data['menu_select']['database']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/database';
+        $data['menu_select']['database']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/database';
 
-        $data['menu_select']['statistics']['name'] = __('Statistics');
+        $data['menu_select']['statistics']['name']  = __('Statistics');
         $data['menu_select']['statistics']['icone'] = '<span class="glyphicon glyphicon-signal" style="font-size:12px"></span>';
-        $data['menu_select']['statistics']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/statistics';
+        $data['menu_select']['statistics']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/statistics';
 
-        $data['menu_select']['memory']['name'] = __('Memory');
+        $data['menu_select']['memory']['name']  = __('Memory');
         $data['menu_select']['memory']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
-        $data['menu_select']['memory']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/memory';
+        $data['menu_select']['memory']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/memory';
 
-        $data['menu_select']['index']['name'] = __('Index');
+        $data['menu_select']['index']['name']  = __('Index');
         $data['menu_select']['index']['icone'] = '<span class="glyphicon glyphicon-th-list" style="font-size:12px"></span>';
-        $data['menu_select']['index']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+        $data['menu_select']['index']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
 
-        $data['menu_select']['system']['name'] = __('System');
+        $data['menu_select']['system']['name']  = __('System');
         $data['menu_select']['system']['icone'] = '<span class="glyphicon glyphicon-cog" style="font-size:12px"></span>';
-        $data['menu_select']['system']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/system';
+        $data['menu_select']['system']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/system';
 
-        $data['menu_select']['logs']['name'] = __('Logs');
+        $data['menu_select']['logs']['name']  = __('Logs');
         $data['menu_select']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-        $data['menu_select']['logs']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/index';
+        $data['menu_select']['logs']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
 
-        $data['menu_select']['id']['name'] = __('Server');
+        $data['menu_select']['id']['name']  = __('Server');
         $data['menu_select']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
-        $data['menu_select']['id']['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/id';
+        $data['menu_select']['id']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/id';
 
 
 
         if (!empty($param[0])) {
             if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id"))) {
-                $_GET['path'] = LINK . __CLASS__ . '/' . __FUNCTION__ . '/' . $param[0];
+                $_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
             }
         }
 
         if (empty($_GET['path']) && empty($param[0])) {
             $_GET['path'] = $data['menu']['main']['path'];
-            $param[0] = 'main';
+            $param[0]     = 'main';
         }
 
         if (empty($_GET['path'])) {
@@ -156,17 +157,18 @@ class Server extends Controller {
         }
 
 
-        $this->title = '<span class="glyphicon glyphicon glyphicon-home"></span> ' . __("Dashboard");
-        $this->ariane = ' > <a href⁼"">' . '<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> ' . __("Dashboard") . '</a> > ' . $data['menu'][$param[0]]['icone'] . ' ' . $data['menu'][$param[0]]['name'];
+        $this->title  = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
+        $this->ariane = ' > <a href⁼"">'.'<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard").'</a> > '.$data['menu'][$param[0]]['icone'].' '.$data['menu'][$param[0]]['name'];
 
         $this->set('data', $data);
     }
 
-    public function main() {
+    public function main()
+    {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $this->title = __("Dashboard");
-        $this->ariane = " > " . $this->title;
+        $this->title  = __("Dashboard");
+        $this->ariane = " > ".$this->title;
 
         $this->di['js']->code_javascript('
         $("#checkAll").click(function(){
@@ -180,14 +182,14 @@ class Server extends Controller {
             if (!empty($_POST['is_monitored'])) {
 
                 //start transaction !
-                $sql = "UPDATE mysql_server a SET is_monitored='0' WHERE 1 " . $this->getFilter();
+                $sql = "UPDATE mysql_server a SET is_monitored='0' WHERE 1 ".$this->getFilter();
 
                 $db->sql_query($sql);
 
                 foreach ($_POST['monitored'] as $key => $val) {
                     //ugly to optimize but no time now
                     if ($val == "on") {
-                        $sql = "UPDATE mysql_server a SET is_monitored='1' WHERE id='" . $key . "' " . $this->getFilter();
+                        $sql = "UPDATE mysql_server a SET is_monitored='1' WHERE id='".$key."' ".$this->getFilter();
                         $db->sql_query($sql);
                     }
                 }
@@ -201,7 +203,7 @@ class Server extends Controller {
                      INNER JOIN client c on c.id = a.id_client 
                  INNER JOIN environment d on d.id = a.id_environment
                  LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
-                 WHERE 1 " . $this->getFilter() . "
+                 WHERE 1 ".$this->getFilter()."
                  order by `name`;";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
@@ -209,7 +211,8 @@ class Server extends Controller {
         $this->set('data', $data);
     }
 
-    public function database() {
+    public function database()
+    {
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -226,19 +229,21 @@ class Server extends Controller {
 			GROUP_CONCAT('',b.rows) as rows
 			FROM mysql_server a
 			INNER JOIN mysql_database b ON b.id_mysql_server = a.id
-                        " . $this->getFilter() . "
+                        ".$this->getFilter()."
 			GROUP BY a.id";
 
         $data['servers'] = $db->sql_fetch_yield($sql);
         $this->set('data', $data);
     }
 
-    public function statistics() {
+    public function statistics()
+    {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime", "Com_commit", "Com_rollback", "Com_begin", "Com_replace");
-        $sql = $this->buildQuery($fields);
-        $res = $db->sql_query($sql);
+        $fields = array("Com_select", "Com_update", "Com_insert", "Com_delete", "Threads_connected", "Uptime", "Com_commit", "Com_rollback",
+            "Com_begin", "Com_replace");
+        $sql    = $this->buildQuery($fields);
+        $res    = $db->sql_query($sql);
 
         $data['servers'] = $db->sql_fetch_yield($sql);
 
@@ -247,14 +252,16 @@ class Server extends Controller {
         $this->set('data', $data);
     }
 
-    public function logs() {
+    public function logs()
+    {
         //used with recursive
     }
 
-    private function buildQuery($fields) {
+    private function buildQuery($fields)
+    {
         $sql = 'select a.ip, a.port, a.id, a.name,';
 
-        $i = 0;
+        $i   = 0;
         $tmp = [];
         foreach ($fields as $field) {
             $tmp[] = " c$i.value as $field";
@@ -266,19 +273,19 @@ class Server extends Controller {
         $sql .= " INNER JOIN mysql_status_max_date b ON a.id = b.id_mysql_server ";
 
         $tmp = [];
-        $i = 0;
+        $i   = 0;
         foreach ($fields as $field) {
             $sql .= " INNER JOIN mysql_status_value_int c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
             $sql .= " INNER JOIN mysql_status_name d$i ON d$i.id = c$i.id_mysql_status_name ";
             $i++;
         }
 
-        $sql .= " WHERE 1 " . $this->getFilter() . "";
+        $sql .= " WHERE 1 ".$this->getFilter()."";
 
         $tmp = [];
-        $i = 0;
+        $i   = 0;
         foreach ($fields as $field) {
-            $sql .= " AND d$i.name = '" . $field . "'  ";
+            $sql .= " AND d$i.name = '".$field."'  ";
             $i++;
         }
 
@@ -286,154 +293,159 @@ class Server extends Controller {
         return $sql;
     }
 
-    public function memory() {
+    public function memory()
+    {
         $this->layout_name = 'pmacontrol';
-        $this->title = __("Memory");
-        $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
+        $this->title       = __("Memory");
+        $this->ariane      = " > ".__("Tools Box")." > ".$this->title;
 
         $default = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM mysql_server a
+        $sql     = "SELECT * FROM mysql_server a
             INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server 
-            WHERE is_available = 1 " . $this->getFilter() . "
+            WHERE is_available = 1 ".$this->getFilter()."
             order by a.`name`";
-        $res50 = $default->sql_query($sql);
+        $res50   = $default->sql_query($sql);
 
         $data = [];
         while ($ob50 = $default->sql_fetch_object($res50)) {
-            $db = $this->di['db']->sql($ob50->name);
+            $db                             = $this->di['db']->sql($ob50->name);
             $data['variables'][$ob50->name] = $db->getVariables();
-            $data['status'][$ob50->name] = $db->getStatus();
-            $data['memory'][$ob50->name] = $ob50->memory_kb;
+            $data['status'][$ob50->name]    = $db->getStatus();
+            $data['memory'][$ob50->name]    = $ob50->memory_kb;
         }
         $this->set('data', $data);
     }
 
-    public function index() {
+    public function index()
+    {
         $this->layout_name = 'pmacontrol';
 
-        $this->title = __("Index usage");
-        $this->ariane = " > " . __("Tools Box") . " > " . $this->title;
+        $this->title  = __("Index usage");
+        $this->ariane = " > ".__("Tools Box")." > ".$this->title;
 
         $default = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT * FROM mysql_server a
+        $sql     = "SELECT * FROM mysql_server a
             INNER JOIN `mysql_replication_stats` b ON a.id = b.id_mysql_server
-            WHERE is_available = 1 " . $this->getFilter() . "
+            WHERE is_available = 1 ".$this->getFilter()."
             order by `name`";
-        $res50 = $default->sql_query($sql);
+        $res50   = $default->sql_query($sql);
 
         $data = [];
         while ($ob50 = $default->sql_fetch_object($res50)) {
 
-            $db = $this->di['db']->sql($ob50->name);
+            $db                          = $this->di['db']->sql($ob50->name);
             $data['status'][$ob50->name] = $db->getStatus();
         }
 
 
         $this->set('data', $data);
     }
-
     /*
      * 
      * graph with Chart.js
      * 
      */
 
-    public function id($param) {
+    public function id($param)
+    {
 
         /*
-        select avg(Column), convert((min(datetime) div 500)*500 + 230, datetime) as time
-from Databasename.tablename
-where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
-group by datetime div 500
+          select avg(Column), convert((min(datetime) div 500)*500 + 230, datetime) as time
+          from Databasename.tablename
+          where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
+          group by datetime div 500
          *
          * select avg(Column), convert((min(datetime) div 500)*500 + 230, datetime) as time
-from Databasename.tablename
-where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
-group by datetime div 500
-        */
+          from Databasename.tablename
+          where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
+          group by datetime div 500
+         */
         $this->di['js']->addJavascript(array("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js")); //,
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         if ($_SERVER['REQUEST_METHOD'] === "POST") {
-            $sql = "SELECT * FROM mysql_server where id='" . $_POST['mysql_server']['id'] . "'";
+            $sql = "SELECT * FROM mysql_server where id='".$_POST['mysql_server']['id']."'";
             $res = $db->sql_query($sql);
-            while ($ob = $db->sql_fetch_object($res)) {
+            while ($ob  = $db->sql_fetch_object($res)) {
                 $id_mysql_server = $ob->id;
 
-                header('location: ' . LINK . __CLASS__
-                        . '/listing/id/mysql_server:id:' . $id_mysql_server
-                        . '/mysql_status_name:id:' . $_POST['mysql_status_name']['id']
-                        . '/mysql_status_value_int:date:' . $_POST['mysql_status_value_int']['date']
-                        . '/mysql_status_value_int:derivate:' . $_POST['mysql_status_value_int']['derivate']);
+                header('location: '.LINK.__CLASS__
+                    .'/listing/id/mysql_server:id:'.$id_mysql_server
+                    .'/mysql_status_name:id:'.$_POST['mysql_status_name']['id']
+                    .'/mysql_status_value_int:date:'.$_POST['mysql_status_value_int']['date']
+                    .'/mysql_status_value_int:derivate:'.$_POST['mysql_status_value_int']['derivate']);
             }
         } else {
 
             // get server available
-            $sql = "SELECT * FROM mysql_server a WHERE error = '' " . $this->getFilter() . " order by a.name ASC";
-            $res = $db->sql_query($sql);
+            $sql             = "SELECT * FROM mysql_server a WHERE error = '' ".$this->getFilter()." order by a.name ASC";
+            $res             = $db->sql_query($sql);
             $data['servers'] = array();
-            while ($ob = $db->sql_fetch_object($res)) {
-                $tmp = [];
-                $tmp['id'] = $ob->id;
-                $tmp['libelle'] = $ob->name . " (" . $ob->ip . ")";
+            while ($ob              = $db->sql_fetch_object($res)) {
+                $tmp               = [];
+                $tmp['id']         = $ob->id;
+                $tmp['libelle']    = $ob->name." (".$ob->ip.")";
                 $data['servers'][] = $tmp;
             }
 
 
             // get server available
-            $sql = "SELECT * FROM mysql_status_name order by name ASC";
-            $res = $db->sql_query($sql);
+            $sql            = "SELECT * FROM mysql_status_name order by name ASC";
+            $res            = $db->sql_query($sql);
             $data['status'] = array();
-            while ($ob = $db->sql_fetch_object($res)) {
-                $tmp = [];
-                $tmp['id'] = $ob->id;
-                $tmp['libelle'] = $ob->name;
+            while ($ob             = $db->sql_fetch_object($res)) {
+                $tmp              = [];
+                $tmp['id']        = $ob->id;
+                $tmp['libelle']   = $ob->name;
                 $data['status'][] = $tmp;
             }
 
 
             $interval = array('5 minute', '15 minute', '1 hour', '2 hour', '6 hour', '12 hour', '1 day', '2 day', '1 week', '2 week', '1 month');
-            $libelles = array('5 minutes', '15 minutes', '1 hour', '2 hours', '6 hours', '12 hours', '1 day', '2 days', '1 week', '2 weeks', '1 month');
-            $elems = array(60 * 5, 60 * 15, 3600, 3600 * 2, 3600 * 6, 3600 * 12, 3600 * 24, 3600 * 48, 3600 * 24 * 7, 3600 * 24 * 14, 3600 * 24 * 30);
+            $libelles = array('5 minutes', '15 minutes', '1 hour', '2 hours', '6 hours', '12 hours', '1 day', '2 days', '1 week', '2 weeks',
+                '1 month');
+            $elems    = array(60 * 5, 60 * 15, 3600, 3600 * 2, 3600 * 6, 3600 * 12, 3600 * 24, 3600 * 48, 3600 * 24 * 7, 3600 * 24 * 14, 3600
+                * 24 * 30);
 
             $data['interval'] = array();
-            $i = 0;
+            $i                = 0;
             foreach ($libelles as $libelle) {
-                $tmp = [];
-                $tmp['id'] = $interval[$i];
-                $tmp['libelle'] = $libelle;
+                $tmp                = [];
+                $tmp['id']          = $interval[$i];
+                $tmp['libelle']     = $libelle;
                 $data['interval'][] = $tmp;
                 $i++;
             }
 
-            $data['derivate'][0]['id'] = 1;
+            $data['derivate'][0]['id']      = 1;
             $data['derivate'][0]['libelle'] = __("Yes");
-            $data['derivate'][1]['id'] = 2;
+            $data['derivate'][1]['id']      = 2;
             $data['derivate'][1]['libelle'] = __("No");
 
             if (empty($_GET['mysql_status_value_int']['date'])) {
                 $_GET['mysql_status_value_int']['date'] = "6 hour";
             }
 
-            if (!empty($_GET['mysql_server']['id']) && !empty($_GET['mysql_status_name']['id']) && !empty($_GET['mysql_status_value_int']['date']) && !empty($_GET['mysql_status_value_int']['derivate'])
+            if (!empty($_GET['mysql_server']['id']) && !empty($_GET['mysql_status_name']['id']) && !empty($_GET['mysql_status_value_int']['date'])
+                && !empty($_GET['mysql_status_value_int']['derivate'])
             ) {
                 $sql = "SELECT * FROM mysql_status_value_int a
                     
-                    WHERE a.id_mysql_server = " . $_GET['mysql_server']['id'] . " 
-                    AND a.id_mysql_status_name = '" . $_GET['mysql_status_name']['id'] . "'
-                    and a.`date` > date_sub(now(), INTERVAL " . $_GET['mysql_status_value_int']['date'] . ") ORDER BY a.`date` ASC;";
+                    WHERE a.id_mysql_server = ".$_GET['mysql_server']['id']." 
+                    AND a.id_mysql_status_name = '".$_GET['mysql_status_name']['id']."'
+                    and a.`date` > date_sub(now(), INTERVAL ".$_GET['mysql_status_value_int']['date'].") ORDER BY a.`date` ASC;";
 
 
-                $data['sql'] = $sql;
+                $data['sql']   = $sql;
                 $data['graph'] = $db->sql_fetch_yield($sql);
-                $dates = [];
-                $val = [];
+                $dates         = [];
+                $val           = [];
 
 
 
 
 
-                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '" . $_GET['mysql_status_name']['id'] . "'";
+                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '".$_GET['mysql_status_name']['id']."'";
 
 
                 //debug($sql2);
@@ -447,13 +459,13 @@ group by datetime div 500
                 $i = 0;
 
                 $old_date = "";
-                $points = [];
+                $points   = [];
 
                 foreach ($data['graph'] as $value) {
 
                     if (empty($old_date) && $_GET['mysql_status_value_int']['derivate'] == "1") {
 
-                        $old_date = $value['date'];
+                        $old_date  = $value['date'];
                         $old_value = $value['value'];
                         continue;
                     } elseif ($_GET['mysql_status_value_int']['derivate'] == "1") {
@@ -483,7 +495,7 @@ group by datetime div 500
 
                     $dates[] = $value['date'];
 
-                    $old_date = $value['date'];
+                    $old_date  = $value['date'];
                     $old_value = $value['value'];
                 }
 
@@ -500,10 +512,10 @@ var ctx = document.getElementById("myChart");
 var myChart = new Chart(ctx, {
     type: "line",
     data: {
-        labels: ["' . $date . '"],
+        labels: ["'.$date.'"],
         datasets: [{    
-            label: "' . ucwords($name) . '",
-            data: [' . $vals . ']
+            label: "'.ucwords($name).'",
+            data: ['.$vals.']
         }]
     },
     options: {
@@ -517,15 +529,13 @@ var myChart = new Chart(ctx, {
     }
 });
 ');
-            }
-            else
-            {
-                if (empty($data['servers'])) $data['servers'] = "";
-                if (empty($data['status'])) $data['status'] = "";
+            } else {
+                if (empty($data['servers'])) $data['servers']  = "";
+                if (empty($data['status'])) $data['status']   = "";
                 if (empty($data['interval'])) $data['interval'] = "";
                 if (empty($data['derivate'])) $data['derivate'] = "";
-                
-                
+
+
                 $data['fields_required'] = 1;
             }
 
@@ -536,7 +546,8 @@ var myChart = new Chart(ctx, {
     }
 
     //to mutualize
-    private function getFilter() {
+    private function getFilter()
+    {
 
         $where = "";
 
@@ -545,7 +556,7 @@ var myChart = new Chart(ctx, {
             $environment = $_GET['environment']['libelle'];
         }
         if (!empty($_SESSION['environment']['libelle']) && empty($_GET['environment']['libelle'])) {
-            $environment = $_SESSION['environment']['libelle'];
+            $environment                    = $_SESSION['environment']['libelle'];
             $_GET['environment']['libelle'] = $environment;
         }
 
@@ -553,53 +564,84 @@ var myChart = new Chart(ctx, {
             $client = $_SESSION['client']['libelle'];
         }
         if (!empty($_GET['client']['libelle']) && empty($_GET['client']['libelle'])) {
-            $client = $_GET['client']['libelle'];
+            $client                    = $_GET['client']['libelle'];
             $_GET['client']['libelle'] = $client;
         }
 
 
         if (!empty($environment)) {
-            $where .= " AND a.id_environment IN (" . implode(',', json_decode($environment, true)) . ")";
+            $where .= " AND a.id_environment IN (".implode(',', json_decode($environment, true)).")";
         }
 
         if (!empty($client)) {
-            $where .= " AND a.id_client IN (" . implode(',', json_decode($client, true)) . ")";
+            $where .= " AND a.id_client IN (".implode(',', json_decode($client, true)).")";
         }
 
 
         return $where;
     }
 
-    public function settings() {
+    public function settings()
+    {
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+            if (!empty($_POST['settings'])) {
+
+                foreach ($_POST['id'] as $key => $value) {
+
+                    if(empty($_POST['mysql_server'][$key]['is_monitored']))
+                    {
+                        $_POST['mysql_server'][$key]['is_monitored'] = 0;
+                    }
+                    else
+                    {
+                        $_POST['mysql_server'][$key]['is_monitored'] = 1;
+                    }
 
 
-        if ($_SERVER['REQUEST_METHOD'] == "POST")
-        {
+                    $server_main                                   = array();
+                    $server_main['mysql_server']['id']             = $value;
+                    $server_main['mysql_server']['display_name']   = $_POST['mysql_server'][$key]['display_name'];
+                    $server_main['mysql_server']['id_client']      = $_POST['mysql_server'][$key]['id_client'];
+                    $server_main['mysql_server']['id_environment'] = $_POST['mysql_server'][$key]['id_environment'];
+                    $server_main['mysql_server']['is_monitored']   = $_POST['mysql_server'][$key]['is_monitored'];
 
-            debug($_POST);
 
-            die();
+                    $ret = $db->sql_save($server_main);
+
+                    if (!$ret) {
+                        debug($server_main);
+                        print_r($db->sql_error());
+                    }
+                }
+
+                header("location: ".LINK."Server/settings");
+                exit;
+            }
         }
 
 
 
-        $this->title = '<i class="fa fa-server"></i> ' . __("Servers");
-        $this->ariane = ' > <a href⁼"">' . '<i class="fa fa-cog" style="font-size:14px"></i> '
-                . __("Settings") . '</a> > <i class="fa fa-server"  style="font-size:14px"></i> ' . __("Servers");
+        $this->title  = '<i class="fa fa-server"></i> '.__("Servers");
+        $this->ariane = ' > <a href⁼"">'.'<i class="fa fa-cog" style="font-size:14px"></i> '
+            .__("Settings").'</a> > <i class="fa fa-server"  style="font-size:14px"></i> '.__("Servers");
 
 
-        $db = $this->di['db']->sql(DB_DEFAULT);
+
 
 
         if ($_SERVER['REQUEST_METHOD'] === "POST") {
             
         }
 
-        $sql = "SELECT * FROM mysql_server ORDER by name";
+        $sql             = "SELECT * FROM mysql_server a WHERE 1=1 ".$this->getFilter()." ORDER by name";
         $data['servers'] = $db->sql_fetch_yield($sql);
 
 
-        $data['clients'] = $this->getClients();
+        $data['clients']      = $this->getClients();
         $data['environments'] = $this->getEnvironments();
 
 
@@ -607,7 +649,8 @@ var myChart = new Chart(ctx, {
         $this->set('data', $data);
     }
 
-    public function getClients() {
+    public function getClients()
+    {
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -618,8 +661,8 @@ var myChart = new Chart(ctx, {
         $data['client'] = array();
 
         while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->id;
+            $tmp            = [];
+            $tmp['id']      = $ob->id;
             $tmp['libelle'] = $ob->libelle;
 
             $data['client'][] = $tmp;
@@ -628,7 +671,8 @@ var myChart = new Chart(ctx, {
         return $data['client'];
     }
 
-    public function getEnvironments() {
+    public function getEnvironments()
+    {
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
@@ -637,9 +681,9 @@ var myChart = new Chart(ctx, {
 
 
         $data['environment'] = array();
-        while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->id;
+        while ($ob                  = $db->sql_fetch_object($res)) {
+            $tmp            = [];
+            $tmp['id']      = $ob->id;
             $tmp['libelle'] = $ob->libelle;
 
             $data['environment'][] = $tmp;
@@ -649,4 +693,8 @@ var myChart = new Chart(ctx, {
         return $data['environment'];
     }
 
+    public function add()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+    }
 }

@@ -1140,4 +1140,13 @@ GROUP BY table_schema ;';
 
         return true;
     }
+
+
+    public function isGaleraCluster()
+    {
+
+    }
+
+
+
 }

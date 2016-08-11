@@ -10,12 +10,14 @@ use Glial\Html\Form\Form;
 
 
 echo '<form action="" method="POST">';
-
-
 echo '<div class="well">';
 \Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
+echo '<br />';
+echo ' <a href="'.LINK.'Server/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a> ';
 echo '</div>';
+echo '</form>';
 
+echo '<form action="" method="POST">';
 echo '<table class="table table-bordered table-striped" id="table">';
 echo '<tr>';
 echo '<th>'.__('Top').'</th>';
@@ -45,7 +47,11 @@ foreach ($data['servers'] as $server) {
     $i++;
     echo '<tr>';
     echo '<td>'.$i.'</td>';
-    echo '<td>'.$server['id'].'</td>';
+    echo '<td>'.$server['id'];
+    //print_r($server);
+    echo '<input type="hidden" name="id['.($i-1).']" value="'.$server['id'].'" />';
+
+    echo '</td>';
 
     echo '<td style="'.$style.'">';
     echo '<span class="glyphicon '.(empty($server['error']) ? "glyphicon-ok" : "glyphicon-remove").'" aria-hidden="true"></span>';
@@ -55,20 +61,32 @@ foreach ($data['servers'] as $server) {
     echo '<span class="glyphicon '.(empty($server['ssh_available']) ? "glyphicon-remove" : "glyphicon-ok").'" aria-hidden="true"></span>';
     echo '</td>';
 
-    echo '<td style="'.$style.'">'.'<input type="checkbox" name="monitored['.$server['id'].']" '.($server['is_monitored'] == 1 ? 'checked="checked"'
-            : '').'" />'.'</td>';
+
+    $checked = $server['is_monitored'] == 1 ? 'checked="checked"':   '';
+
+    echo '<td style="'.$style.'">'
+        
+        .'<input type="checkbox" name="mysql_server['.($i-1).'][is_monitored]" '.$checked.' />'.'</td>';
     
     echo '<td>';
-    echo Form::select("client", "libelle", $data['clients'], $server['id_client'], array());
+    echo Form::select("mysql_server", "id_client", $data['clients'], $server['id_client'], array());
     echo '</td>';
 
 
     echo '<td>';
-    echo Form::select("environment", "libelle", $data['environments'], $server['id_environment'], array());
+    echo Form::select("mysql_server", "id_environment", $data['environments'], $server['id_environment'], array());
     echo '</td>';
     echo '<td>'.__('Tags').'</td>';
     echo '<td>'.$server['name'].'</td>';
 
+
+    if (empty($server['display_name']))
+    {
+        $server['display_name'] = $server['name'];
+    }
+
+
+    $_GET["mysql_server"][($i-1)]["display_name"] = $server['display_name'];
     echo '<td>'.Form::input("mysql_server", "display_name").'</td>';
     echo '<td>'.$server['ip'].'</td>';
     echo '<td>'.$server['port'].'</td>';
@@ -78,5 +96,7 @@ foreach ($data['servers'] as $server) {
 Form::setIndice(false);
 
 echo '</table>';
+
+echo '<input type="hidden" name="settings" value="1" />';
 echo '<button type="submit" class="btn btn-primary">'.__("Update").'</button>';
-echo '<form>';
+echo '</form>';
