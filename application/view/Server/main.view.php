@@ -60,8 +60,7 @@ foreach ($data['servers'] as $server) {
     Crypt::$key = CRYPT_KEY;
 
 
-    
-
+   
     $passwd = Crypt::decrypt($server['passwd']);
 
     //echo '<td style="' . $style . '">' . $server['passwd'] . '</td>';
@@ -72,6 +71,9 @@ foreach ($data['servers'] as $server) {
 
 
     echo '<td style="' . $style . '">' . $server['version'] . '</td>';
+
+
+
     echo '<td style="' . $style . '">' . $server['date_refresh'] . '</td>';
 
     echo '<td style="max-width:600px;' . $style . '" class="">';

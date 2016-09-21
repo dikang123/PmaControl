@@ -13,17 +13,14 @@ class Spider extends Controller
 
     //dba_source
 
+
 	public function index()
 	{
 		$this->title  = '<img src="/pmacontrol/image/main/spider-icon32.png" height="16" width="16px">'."Spider";
 		$this->ariane = '> <i style="font-size: 16px" class="fa fa-puzzle-piece"></i> Plugins > '.$this->title;
 
-
-
 		$db = $this->di['db']->sql(DB_DEFAULT);
-
 		$sql = "SELECT * FROM mysql_database";
-
 	}
 
 	
@@ -113,7 +110,7 @@ class Spider extends Controller
 		$comment = stristr($createTable, 'COMMENT=');
 		$main = substr($comment,8,1);
 		$tmp = [];
-		preg_match("/COMMENT=\\".$main."(.*)\\".$main."/", $comment, $output_array);
+		preg_match("@COMMENT=\\".$main."(.*)\\".$main."@", $comment, $output_array);
 		$resultats = $output_array[1];
 		$results = explode(',', $resultats);
 

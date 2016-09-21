@@ -123,8 +123,7 @@ class Monitoring extends Controller
         } else {
             $_GET['database']['id']     = empty($_GET['database']['id']) ? "" : $_GET['database']['id'];
             $_GET['field']['id']        = empty($_GET['field']['id']) ? "" : $_GET['field']['id'];
-            $_GET['database']['filter'] = empty($_GET['database']['filter']) ? ""
-                    : $_GET['database']['filter'];
+            $_GET['database']['filter'] = empty($_GET['database']['filter']) ? "" : $_GET['database']['filter'];
             $_GET['orderby']['id']      = empty($_GET['orderby']['id']) ? "" : $_GET['orderby']['id'];
         }
 
@@ -176,19 +175,37 @@ class Monitoring extends Controller
 
         $res = $db->sql_query($sql);
 
+        $data['error'] = false;
+
         while ($ob = $db->sql_fetch_object($res)) {
             if ($ob->Value == "ON") {
                 $data['performance_schema'] = true;
+            } else {
+                $data['error'] = true;
             }
         }
 
 
+        $data['mysql_upgrade'] = true;
+
         if ($data['performance_schema']) {
-
-
-
             $sql = "select * FROM `information_schema`.`COLUMNS` WHERE `TABLE_SCHEMA` = 'performance_schema' AND `TABLE_NAME` = 'events_statements_summary_by_digest'";
             $res = $db->sql_query($sql);
+
+            //in case of table doesn't exist (mysql_upgrade not made)
+
+
+            
+            if ($db->sql_num_rows($res) == 0) {
+                $data['mysql_upgrade'] = false;
+                $data['error']         = true;
+            }
+        }
+
+
+        if ($data['error'] === false) {
+
+
 
             $data['fields'] = [];
             while ($ob             = $db->sql_fetch_object($res)) {
@@ -235,6 +252,8 @@ class Monitoring extends Controller
 
 
             //$sql3 = " order by a.COUNT_STAR DESC "; //$sql3 = " order by a.date_validated desc";
+            //$sql = ""
+
 
 
             $res = $db->sql_query($sql2.$sql);
@@ -351,8 +370,6 @@ class Monitoring extends Controller
         return $remote;
     }
 }
-
-
 /*
  *
  * USE INFORMATION_SCHEMA;

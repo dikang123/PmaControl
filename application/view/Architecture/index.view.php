@@ -16,7 +16,11 @@ echo '</div>';
 
 foreach ($data['graphs'] as $graph) {
     if (!empty($graph['display'])) {
+        echo '<div style="float:left; border:#000 0px solid">';
+        //echo $graph['height'];
         echo $graph['display'];
+        echo '</div>';
     }
 }
 
+echo '<div style="clear:both"></div>';

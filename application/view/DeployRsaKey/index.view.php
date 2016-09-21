@@ -1,12 +1,28 @@
 <?php
-
-use Glial\Html\Form\Form;
-
-/*
+/* 
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
+/*
+ * login
+ * password
+ * sudo su -
+ * 
+ * login public key => generate auto ?
+ * login private key
+ * private key
+ *
+ * select server
+ *
+ */
+echo '<div class="well">';
+\Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
+echo '</div>';
+
+
+
 
 
 echo '<form action="" method="POST">';
@@ -43,7 +59,7 @@ $style = '';
 Form::setIndice(true);
 
 foreach ($data['servers'] as $server) {
-    
+
     $i++;
     echo '<tr>';
     echo '<td>'.$i.'</td>';
@@ -65,9 +81,9 @@ foreach ($data['servers'] as $server) {
     $checked = $server['is_monitored'] == 1 ? 'checked="checked"':   '';
 
     echo '<td style="'.$style.'">'
-        
+
         .'<input type="checkbox" name="mysql_server['.($i-1).'][is_monitored]" '.$checked.' />'.'</td>';
-    
+
     echo '<td>';
     echo Form::select("mysql_server", "id_client", $data['clients'], $server['id_client'], array());
     echo '</td>';

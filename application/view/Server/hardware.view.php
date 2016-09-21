@@ -9,6 +9,7 @@ echo '<th>' . __("Top") . '</th>';
 echo '<th>' . __("ID") . '</th>';
 echo '<th>' . __("Available") . '</th>';
 echo '<th>' . __("Name") . '</th>';
+echo '<th>' . __("Hostname") . '</th>';
 echo '<th>' . __("IP") . '</th>';
 echo '<th>' . __("Port") . '</th>';
 
@@ -23,18 +24,21 @@ echo '<th>' . "Mhz" . '</th>';
 
 echo '<th>' . __("Memory") . '</th>';
 echo '<th>Swapiness</th>';
-echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">' . __("Indice") . '</th>';
+//echo '<th title="0.75*CPU*GHZ + 0.5 Memory Go">' . __("Indice") . '</th>';
 echo '</tr>';
 
 
 $i = 0;
+
+
 foreach ($data['servers'] as $server) {
     $i++;
 
 
+    /*
     if (empty($server['operating_system'])) {
         continue;
-    }
+    }*/
 
     $style = "";
     if (empty($server['is_available'])) {
@@ -49,6 +53,7 @@ foreach ($data['servers'] as $server) {
     echo '<span class="glyphicon ' . ($server['is_available'] == 1 ? "glyphicon-ok" : "glyphicon-remove") . '" aria-hidden="true"></span>';
     echo '</td>';
     echo '<td style="' . $style . '">' . str_replace('_', '-', $server['name']) . '</td>';
+    echo '<td style="' . $style . '">' . $server['hostname']. '</td>';
     echo '<td style="' . $style . '">' . $server['ip'] . '</td>';
     echo '<td style="' . $style . '">' . $server['port'] . '</td>';
     echo '<td style="' . $style . '"><img src="' . IMG . '/os/' . $server['distributor'] . '.png" alt="Icon" title="" style="width:16px;height:16px;vertical-align:middle;"> '
@@ -61,7 +66,7 @@ foreach ($data['servers'] as $server) {
     echo '<td style="' . $style . '">' . $server['cpu_mhz'] . '</td>';
     echo '<td style="' . $style . '">' . round($server['memory_kb'] / 1024 / 1024, 2) . ' Go</td>';
     echo '<td style="' . $style . '">' . $server['swappiness'] . ' </td>';
-    echo '<td style="' . $style . '">' . round(0.75 * $server['processor'] * ($server['cpu_mhz'] / 1024) + 0.5 * ($server['memory_kb'] / 1024 / 1024), 2) . '</td>';
+    //echo '<td style="' . $style . '">' . round(0.75 * $server['processor'] * ($server['cpu_mhz'] / 1024) + 0.5 * ($server['memory_kb'] / 1024 / 1024), 2) . '</td>';
 
 
     echo '</tr>';

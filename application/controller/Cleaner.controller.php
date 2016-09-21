@@ -29,8 +29,6 @@ class Cleaner extends Controller
 
         $default = $this->di['db']->sql(DB_DEFAULT);
 
-
-
         /*
           $this->di['js']->addJavascript(array('jquery-latest.min.js',
           'jQplot/jquery.jqplot.min.js',
@@ -393,8 +391,7 @@ class Cleaner extends Controller
             ));
 
 
-
-
+        
         /*
           $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
 

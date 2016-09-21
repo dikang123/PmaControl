@@ -23,10 +23,12 @@ class Server extends Controller
         $sql = "SELECT c.libelle as client,d.libelle as environment,a.*, b.version, b.is_available 
             FROM mysql_server a 
                  INNER JOIN client c on c.id = a.id_client 
-                 INNER JOIN environment d on d.id = a.id_client 
+                 INNER JOIN environment d on d.id = a.id_environment
          LEFT JOIN mysql_replication_stats b ON a.id = b.id_mysql_server
          WHERE 1 ".$this->getFilter()."
          order by `name`;";
+
+        //echo SqlFormatter::format($sql);
 
         $data['servers'] = $db->sql_fetch_yield($sql);
 
@@ -157,6 +159,8 @@ class Server extends Controller
         }
 
 
+        //@TODO bug with item not selected (empty) need put case by default
+
         $this->title  = '<span class="glyphicon glyphicon glyphicon-home"></span> '.__("Dashboard");
         $this->ariane = ' > <a href⁼"">'.'<span class="glyphicon glyphicon glyphicon-home" style="font-size:12px"></span> '.__("Dashboard").'</a> > '.$data['menu'][$param[0]]['icone'].' '.$data['menu'][$param[0]]['name'];
 
@@ -186,11 +190,13 @@ class Server extends Controller
 
                 $db->sql_query($sql);
 
-                foreach ($_POST['monitored'] as $key => $val) {
-                    //ugly to optimize but no time now
-                    if ($val == "on") {
-                        $sql = "UPDATE mysql_server a SET is_monitored='1' WHERE id='".$key."' ".$this->getFilter();
-                        $db->sql_query($sql);
+                if (!empty($_POST['monitored'])) {
+                    foreach ($_POST['monitored'] as $key => $val) {
+                        //ugly to optimize but no time now
+                        if ($val == "on") {
+                            $sql = "UPDATE mysql_server a SET is_monitored='1' WHERE id='".$key."' ".$this->getFilter();
+                            $db->sql_query($sql);
+                        }
                     }
                 }
             }
@@ -245,6 +251,8 @@ class Server extends Controller
         $sql    = $this->buildQuery($fields);
         $res    = $db->sql_query($sql);
 
+        //echo \SqlFormatter::format($sql);
+
         $data['servers'] = $db->sql_fetch_yield($sql);
 
         //$db->sql_query("DROP TABLE IF EXISTS `temp`");
@@ -270,13 +278,13 @@ class Server extends Controller
 
         $sql .= implode(",", $tmp);
         $sql .= " from mysql_server a ";
-        $sql .= " INNER JOIN mysql_status_max_date b ON a.id = b.id_mysql_server ";
+        $sql .= " INNER JOIN status_max_date b ON a.id = b.id_mysql_server ";
 
         $tmp = [];
         $i   = 0;
         foreach ($fields as $field) {
-            $sql .= " INNER JOIN mysql_status_value_int c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
-            $sql .= " INNER JOIN mysql_status_name d$i ON d$i.id = c$i.id_mysql_status_name ";
+            $sql .= " LEFT JOIN status_value_int c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
+            $sql .= " LEFT JOIN status_name d$i ON d$i.id = c$i.id_status_name ";
             $i++;
         }
 
@@ -360,7 +368,7 @@ class Server extends Controller
           where datetime BETWEEN '2012-09-08 00:00:00' AND '2012-09-08 15:30:00'
           group by datetime div 500
          */
-        $this->di['js']->addJavascript(array("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js")); //,
+        $this->di['js']->addJavascript(array("Chart.min.js")); //,
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         if ($_SERVER['REQUEST_METHOD'] === "POST") {
@@ -371,9 +379,9 @@ class Server extends Controller
 
                 header('location: '.LINK.__CLASS__
                     .'/listing/id/mysql_server:id:'.$id_mysql_server
-                    .'/mysql_status_name:id:'.$_POST['mysql_status_name']['id']
-                    .'/mysql_status_value_int:date:'.$_POST['mysql_status_value_int']['date']
-                    .'/mysql_status_value_int:derivate:'.$_POST['mysql_status_value_int']['derivate']);
+                    .'/status_name:id:'.$_POST['status_name']['id']
+                    .'/status_value_int:date:'.$_POST['status_value_int']['date']
+                    .'/status_value_int:derivate:'.$_POST['status_value_int']['derivate']);
             }
         } else {
 
@@ -390,7 +398,7 @@ class Server extends Controller
 
 
             // get server available
-            $sql            = "SELECT * FROM mysql_status_name order by name ASC";
+            $sql            = "SELECT * FROM status_name order by name ASC";
             $res            = $db->sql_query($sql);
             $data['status'] = array();
             while ($ob             = $db->sql_fetch_object($res)) {
@@ -422,18 +430,17 @@ class Server extends Controller
             $data['derivate'][1]['id']      = 2;
             $data['derivate'][1]['libelle'] = __("No");
 
-            if (empty($_GET['mysql_status_value_int']['date'])) {
-                $_GET['mysql_status_value_int']['date'] = "6 hour";
+            if (empty($_GET['status_value_int']['date'])) {
+                $_GET['status_value_int']['date'] = "6 hour";
             }
 
-            if (!empty($_GET['mysql_server']['id']) && !empty($_GET['mysql_status_name']['id']) && !empty($_GET['mysql_status_value_int']['date'])
-                && !empty($_GET['mysql_status_value_int']['derivate'])
+            if (!empty($_GET['mysql_server']['id']) && !empty($_GET['status_name']['id']) && !empty($_GET['status_value_int']['date']) && !empty($_GET['status_value_int']['derivate'])
             ) {
-                $sql = "SELECT * FROM mysql_status_value_int a
+                $sql = "SELECT * FROM status_value_int a
                     
                     WHERE a.id_mysql_server = ".$_GET['mysql_server']['id']." 
-                    AND a.id_mysql_status_name = '".$_GET['mysql_status_name']['id']."'
-                    and a.`date` > date_sub(now(), INTERVAL ".$_GET['mysql_status_value_int']['date'].") ORDER BY a.`date` ASC;";
+                    AND a.id_status_name = '".$_GET['status_name']['id']."'
+                    and a.`date` > date_sub(now(), INTERVAL ".$_GET['status_value_int']['date'].") ORDER BY a.`date` ASC;";
 
 
                 $data['sql']   = $sql;
@@ -445,7 +452,7 @@ class Server extends Controller
 
 
 
-                $sql2 = "SELECT name FROM mysql_status_name WHERE id= '".$_GET['mysql_status_name']['id']."'";
+                $sql2 = "SELECT name FROM status_name WHERE id= '".$_GET['status_name']['id']."'";
 
 
                 //debug($sql2);
@@ -463,12 +470,12 @@ class Server extends Controller
 
                 foreach ($data['graph'] as $value) {
 
-                    if (empty($old_date) && $_GET['mysql_status_value_int']['derivate'] == "1") {
+                    if (empty($old_date) && $_GET['status_value_int']['derivate'] == "1") {
 
                         $old_date  = $value['date'];
                         $old_value = $value['value'];
                         continue;
-                    } elseif ($_GET['mysql_status_value_int']['derivate'] == "1") {
+                    } elseif ($_GET['status_value_int']['derivate'] == "1") {
 
                         $datetime1 = strtotime($old_date);
                         $datetime2 = strtotime($value['date']);
@@ -592,12 +599,9 @@ var myChart = new Chart(ctx, {
 
                 foreach ($_POST['id'] as $key => $value) {
 
-                    if(empty($_POST['mysql_server'][$key]['is_monitored']))
-                    {
+                    if (empty($_POST['mysql_server'][$key]['is_monitored'])) {
                         $_POST['mysql_server'][$key]['is_monitored'] = 0;
-                    }
-                    else
-                    {
+                    } else {
                         $_POST['mysql_server'][$key]['is_monitored'] = 1;
                     }
 

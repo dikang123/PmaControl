@@ -22,14 +22,14 @@ use Glial\Html\Form\Form;
     echo Form::select("mysql_server", "id", $data['servers'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
     echo ' ';
 
-    echo Form::select("mysql_status_name", "id", $data['status'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
+    echo Form::select("status_name", "id", $data['status'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
     echo ' ';
 
-    echo Form::select("mysql_status_value_int", "date", $data['interval'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
+    echo Form::select("status_value_int", "date", $data['interval'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
 
     echo ' Derivate : ';
 
-    echo Form::select("mysql_status_value_int", "derivate", $data['derivate'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
+    echo Form::select("status_value_int", "derivate", $data['derivate'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
 
 
     echo ' <button type="submit" class="btn btn-primary">' . __("Filter") . '</button>';

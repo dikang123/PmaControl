@@ -277,6 +277,8 @@ class Agent extends Controller
             $this->loop = 1;
         }
 
+
+        $father = false;
         foreach ($server_list as $server) {
             //echo str_repeat("#", count($child_processes)) . "\n";
 
@@ -393,8 +395,10 @@ class Agent extends Controller
 
         $variables = $mysql_tested->getVariables();
         $status    = $mysql_tested->getStatus();
-        $master    = $mysql_tested->isMaster();
-        $slave     = $mysql_tested->isSlave();
+
+
+        $master = $mysql_tested->isMaster();
+        $slave  = $mysql_tested->isSlave();
 
         $sql       = "SELECT now() as date_time";
         $res2      = $mysql_tested->sql_query($sql);
@@ -541,6 +545,7 @@ GROUP BY table_schema ;';
 
                 $this->logger->info(Color::getColoredString('['.$name_server.'] Databases deleted', "yellow"));
             }
+            /*             * ********************** */
 
             if ($slave) {
                 foreach ($slave as $thread_slave) {
@@ -626,6 +631,11 @@ GROUP BY table_schema ;';
             $this->saveStatus($status, $id_server);
         }
 
+
+        if (version_compare($mysql_tested->getVersion(), '5.0', '>=')) {
+            $this->saveVariables($variables, $id_server);
+        }
+
         $db->sql_close();
         $mysql_tested->sql_close();
 
@@ -674,7 +684,6 @@ GROUP BY table_schema ;';
                 $data['mysql_server']['id_environment'] = 1;
             }
 
-
             $data['mysql_server']['name']  = $server;
             $data['mysql_server']['ip']    = $info_server['hostname'];
             $data['mysql_server']['login'] = $info_server['user'];
@@ -685,11 +694,11 @@ GROUP BY table_schema ;';
                 $passwd = Crypt::encrypt($info_server['password']);
             }
 
-
             $data['mysql_server']['passwd']       = $passwd;
             $data['mysql_server']['port']         = empty($info_server['port']) ? 3306 : $info_server['port'];
             $data['mysql_server']['date_refresh'] = date('Y-m-d H:i:s');
-            $data['mysql_server']['is_monitored'] = 1;
+
+            //$data['mysql_server']['is_monitored'] = 1;
 
             if (!empty($info_server['ssh_login'])) {
                 $data['mysql_server']['ssh_login'] = Crypt::encrypt($info_server['ssh_login']);
@@ -774,7 +783,7 @@ GROUP BY table_schema ;';
         $default  = $this->di['db']->sql(DB_DEFAULT);
         $all_name = array_keys($all_status);
 
-        $sql = "SELECT * FROM mysql_status_name";
+        $sql = "SELECT * FROM status_name";
 
         $index = [];
         $data  = [];
@@ -787,22 +796,19 @@ GROUP BY table_schema ;';
             $data[$ob->name]['type'] = strtolower($ob->type);
         }
 
-
         foreach ($all_status as $name => $status) {
-
             $name = strtolower($name);
 
             if (!in_array($name, $index)) {
                 echo "add ".$name."\n";
 
+                $status_name['status_name']['name'] = $name;
+                $status_name['status_name']['type'] = self::getTypeOfData($status);
+                //$status_name['status_name']['value'] = $status;
 
-                $mysql_status_name['mysql_status_name']['name'] = $name;
-                $mysql_status_name['mysql_status_name']['type'] = self::getTypeOfData($status);
-                //$mysql_status_name['mysql_status_name']['value'] = $status;
-
-                $id = $default->sql_save($mysql_status_name);
+                $id = $default->sql_save($status_name);
                 if (!$id) {
-                    debug($mysql_status_name);
+                    debug($status_name);
                     debug($default->sql_error());
 
                     throw new Exception('PMACTRL : Impossible to save');
@@ -811,16 +817,34 @@ GROUP BY table_schema ;';
         }
         $this->saveValue($data, $all_status, $id_mysql_server);
     }
+    /*
+     *
+     *  $data => contient les données préformaté des entêtes
+     *
+     *
+     */
 
-    public function saveValue($data, $all_status, $id_mysql_server)
+    public function saveValue($data, $all_status, $id_mysql_server, $variables = 0)
     {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $tables = array('mysql_status_value_int', 'mysql_status_value_double', 'mysql_status_value_text');
+        if ($variables === 0) {
+            $table_name = 'status';
+        } else {
+            $table_name = 'variables';
+        }
+
+        /*
+         * text : 0
+         * int : 1
+         * double : 2
+         */
+
+        $tables = array($table_name.'_value_text', $table_name.'_value_int', $table_name.'_value_double');
 
         $i = 0;
         foreach ($tables as $table) {
-            $sql[$i] = "INSERT INTO `".$table."` (`id_mysql_server`, `id_mysql_status_name`,`date`, `value`) VALUES ";
+            $sql[$i] = "INSERT INTO `".$table."` (`id_mysql_server`, `id_".$table_name."_name`,`date`, `value`) VALUES ";
             $i++;
         }
 
@@ -830,18 +854,19 @@ GROUP BY table_schema ;';
         foreach ($all_status as $name => $status) {
 
             $name                         = strtolower($name);
-            $feed[$data[$name]['type']][] = "(".$id_mysql_server.",".$data[$name]['id'].",'".$date."','".$status."')";
+            $feed[$data[$name]['type']][] = "(".$id_mysql_server.",".$data[$name]['id'].",'".$date."','".$db->sql_real_escape_string($status)."')";
         }
 
+        debug($feed);
+
         $i = 0;
-        foreach ($feed as $tmp) {
-            $req = $sql[$i].implode(',', $tmp).";";
-            //echo $req."\n";
+        for ($i = 0; $i < 3; $i++) {
+            $req = $sql[$i].implode(',', $feed[$i]).";";
+
+            echo SqlFormatter::format($req);
 
             try {
                 $ret = $db->sql_query($req);
-
-
                 if (!$ret) {
 
                     //à changer : chopper l'exception mysql et l'afficher dans le log d'erreur de PmaControl
@@ -854,11 +879,13 @@ GROUP BY table_schema ;';
                 //à changer
                 $this->logger->error(Color::getColoredString("ERROR: ".$ex->getMessage(), "white", "red"));
             }
-
-            $i++;
         }
 
-        $db->sql_query("REPLACE INTO mysql_status_max_date  (`id_mysql_server`,`date`) VALUES ('".$id_mysql_server."', '".$date."');");
+        $db->sql_query("REPLACE INTO ".$table_name."_max_date_history  (`id_mysql_server`,`date`) SELECT `id_mysql_server`,`date` FROM ".$table_name."_max_date WHERE id_mysql_server=".$id_mysql_server."");
+        $db->sql_query("REPLACE INTO ".$table_name."_max_date  (`id_mysql_server`,`date`) VALUES ('".$id_mysql_server."', '".$date."');");
+
+        //$sql =
+        //$db->sql_query("REPLACE INTO ".$table_name."_max_date SELECT * FROM ".$table_name."_max_date WHERE ;
     }
 
     static private function isFloat($value)
@@ -901,10 +928,12 @@ GROUP BY table_schema ;';
 
     public function testData()
     {
+        $this->view = false;
+
         $nogood = 0;
 
-        $tests  = [1452, 0.125, 254.25, "0.0000", "0.254", "254.25", "15", "1e25", "ggg.ggg", "fghg"];
-        $result = [1, 2, 2, 2, 2, 2, 1, 2, 0, 0];
+        $tests  = [1452, 0.125, 254.25, "0.0000", "0.254", "254.25", "15", "1e25", "ggg.ggg", "fghg", "my_cluster_test"];
+        $result = [1, 2, 2, 2, 2, 2, 1, 2, 0, 0, 0];
 
         if (count($tests) !== count($result)) {
             throw new \Exception("PMACTRL : array not the same size");
@@ -918,7 +947,7 @@ GROUP BY table_schema ;';
                 echo "#".$i." -- ".$test.":".$val.":".$result[$i]." no good \n";
                 $nogood++;
             } else {
-                echo "#".$i." -- ".$test.":".$val.":".$result[$i]."GOOOOOOOOOOD \n";
+                echo "#".$i." -- ".$test.":".$val.":".$result[$i]."\t => GOOOD \n";
             }
             $i++;
         }
@@ -1015,22 +1044,43 @@ GROUP BY table_schema ;';
 
         $this->view = false;
         $db         = $this->di['db']->sql(DB_DEFAULT);
-        $sql        = "SELECT * FROM `mysql_server` WHERE `key_public_path` != '' and `key_public_user` != ''";
+        $sql        = "SELECT * FROM `mysql_server` WHERE id_client = 9";
         $res        = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
 
-            echo $ob->ip."\n";
+            
 
             $ssh = new SSH2($ob->ip);
-            $key = new RSA();
-            $key->loadKey(file_get_contents($ob->key_public_path));
-            if (!$ssh->login($ob->key_public_user, $key)) {
-                echo "Login Failed";
+            
+
+            $rsa = new RSA();
+
+            $privatekey = file_get_contents($ob->key_private_path);
+
+            
+            if ($rsa->loadKey($privatekey) === false) {
+                exit("private key loading failed!");
+            }
+
+            //debug($rsa);
+
+            echo $ob->ip." : ". $ob->key_private_user. " ". $ob->key_private_path."\n";
+            
+            if (!$ssh->login($ob->key_private_user, $rsa)) {
+                echo "Login Failed\n";
                 continue;
             }
 
-            $memory      = $ssh->exec("grep MemTotal /proc/meminfo | awk '{print $2}'");
+
+            // cat /proc/version
+            // dmesg | head -1
+            // cat /etc/issue
+
+
+            // cat /etc/issue
+
+            $memory      = $ssh->exec("grep MemTotal /proc/meminfo | awk '{print $2}'") or die("error");
             $nb_cpu      = $ssh->exec("cat /proc/cpuinfo | grep processor | wc -l");
             $brut_memory = $ssh->exec("cat /proc/meminfo | grep MemTotal");
             preg_match("/[0-9]+/", $brut_memory, $memory);
@@ -1061,11 +1111,8 @@ GROUP BY table_schema ;';
 
             /*
               $system = $ssh->exec("uptime");// get the uptime stats
-
               $uptime = explode(" ", $system); // break up the stats into an array
-
               $up_days = $uptime[4]; // grab the days from the array
-
               $hours = explode(":", $uptime[7]); // split up the hour:min in the stats
 
               $up_hours = $hours[0]; // grab the hours
@@ -1074,7 +1121,6 @@ GROUP BY table_schema ;';
 
               echo "The server has been up for " . $up_days . " days, " . $up_hours . " hours, and " . $up_mins . " minutes.";
              */
-
 
             $sql = "UPDATE mysql_server SET operating_system='".$db->sql_real_escape_string($os)."',
                    distributor='".trim($distributor)."',
@@ -1087,6 +1133,11 @@ GROUP BY table_schema ;';
                    memory_kb='".trim($mem)."', 
                    swappiness='".trim($swapiness)."' 
                    WHERE id='".$ob->id."'";
+
+            echo SqlFormatter::format($sql);
+
+
+
 
             $db->sql_query($sql);
         }
@@ -1141,12 +1192,183 @@ GROUP BY table_schema ;';
         return true;
     }
 
-
     public function isGaleraCluster()
     {
 
+        $this->view = false;
+        $db         = $this->di['db']->sql(DB_DEFAULT);
+
+
+        $sql   = "SELECT * FROM galera_cluster_node";
+        $res10 = $db->sql_query($sql);
+
+        $nodes = array();
+        while ($ob    = $db->sql_fetch_object($res10)) {
+            $nodes[$ob->id_mysql_server] = $ob->id_mysql_server;
+        }
+
+        $fields = array("wsrep_cluster_name", "wsrep_on");
+        $sql    = $this->buildQuery($fields, "variables");
+
+        echo SqlFormatter::format($sql)."\n";
+
+        $res = $db->sql_query($sql);
+
+        while ($ob = $db->sql_fetch_object($res)) {
+            if ($ob->wsrep_on === "ON") {
+
+                $sql  = "SELECT * FROM galera_cluster_main WHERE name='".$ob->wsrep_cluster_name."'";
+                $res2 = $db->sql_query($sql);
+
+                if ($db->sql_num_rows($res2) !== 0) {
+                    while ($ob2 = $db->sql_fetch_object($res2)) {
+                        $id_galera_cluster_main = $ob2->id;
+                    }
+                } else {
+                    $sql                    = "INSERT INTO galera_cluster_main SET name='".$ob->wsrep_cluster_name."'";
+                    $db->sql_query($sql);
+                    $id_galera_cluster_main = $db->_insert_id();
+                }
+
+                if (in_array($ob->id, $nodes)) {
+                    $sql = "UPDATE galera_cluster_node SET id_galera_cluster_main =".$id_galera_cluster_main." WHERE id=".$ob->id."";
+                    $db->sql_query($sql);
+                } else {
+                    $sql = "INSERT INTO galera_cluster_node SET id_galera_cluster_main =".$id_galera_cluster_main.", id_mysql_server=".$ob->id."";
+                    $db->sql_query($sql);
+                }
+                echo SqlFormatter::format($sql)."\n";
+            }
+        }
     }
 
+    public function saveVariables($all_variables, $id_mysql_server)
+    {
+        $default  = $this->di['db']->sql(DB_DEFAULT);
+        $all_name = array_keys($all_variables);
+
+        $sql = "SELECT * FROM variables_name";
+
+        $index = [];
+        $data  = [];
+
+        $res = $default->sql_query($sql);
+
+        while ($ob = $default->sql_fetch_object($res)) {
+            $index[]                 = $ob->name;
+            $data[$ob->name]['id']   = $ob->id;
+            $data[$ob->name]['type'] = strtolower($ob->type);
+        }
 
 
+        foreach ($all_variables as $name => $status) {
+
+            $name = strtolower($name);
+
+            if (!in_array($name, $index)) {
+                //echo "add ".$name."\n";
+
+                $variables_name['variables_name']['name'] = $name;
+                $variables_name['variables_name']['type'] = self::getTypeOfData($status);
+                //$status_name['status_name']['value'] = $status;
+
+                $id = $default->sql_save($variables_name);
+                if (!$id) {
+                    debug($status_name);
+                    debug($default->sql_error());
+
+                    throw new Exception('PMACTRL : Impossible to save');
+                }
+            }
+        }
+        $this->saveValue($data, $all_variables, $id_mysql_server, 1);
+    }
+
+    private function buildQuery($fields, $table = "status")
+    {
+
+        $elems = array("text", "int", "double");
+
+        $sqls = [];
+
+        $j     = 0;
+        $ofset = count($fields);
+
+        foreach ($elems as $elem) {
+            $sql = 'select a.ip, a.port, a.id, a.name,';
+
+            $i   = $j;
+            $tmp = [];
+            foreach ($fields as $field) {
+                $tmp[] = " c$i.value as $field";
+                $i++;
+            }
+
+            $sql .= implode(",", $tmp);
+            $sql .= " from mysql_server a ";
+            $sql .= " INNER JOIN ".$table."_max_date b ON a.id = b.id_mysql_server ";
+
+            $tmp = [];
+            $i   = $j;
+            foreach ($fields as $field) {
+                $sql .= " INNER JOIN ".$table."_value_".$elem." c$i ON c$i.id_mysql_server = a.id AND b.date = c$i.date";
+                $sql .= " INNER JOIN ".$table."_name d$i ON d$i.id = c$i.id_".$table."_name ";
+                $i++;
+            }
+
+            $sql .= " WHERE 1 ";
+            $tmp = [];
+            $i   = $j;
+            foreach ($fields as $field) {
+                $sql .= " AND d".$i.".name = '".$field."' ";
+                $i++;
+            }
+
+            $j      = $ofset + $j;
+            $sqls[] = $sql;
+        }
+
+        $sqlret = "(".implode(") UNION (", $sqls).");";
+        return $sqlret;
+    }
 }
+/*
+ * select a.ip, a.port, a.id, a.name, c0.value as wsrep_cluster_name
+ * from mysql_server a
+ * INNER JOIN status_max_date b ON a.id = b.id_mysql_server
+ * INNER JOIN variables_value_int c0 ON c0.id_mysql_server = a.id AND b.date = c0.date
+ * INNER JOIN variables_name d0 ON d0.id = c0.id_variables_name
+ * WHERE 1  AND d0.name = 'wsrep_cluster_name'  ;
+ *
+ */
+
+
+/*
+ *
+ *
+ * test spider  	status_value_int
+ *
+ *  	status_value_int_idserver
+ *
+ * CREATE TABLE `status_value_int_test7` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_mysql_server` int(11) NOT NULL,
+  `id_status_name` int(11) NOT NULL,
+  `date` datetime NOT NULL,
+  `value` int(11) NOT NULL,
+  PRIMARY KEY (`id`,`id_mysql_server`),
+  UNIQUE KEY `id_mysql_server` (`id_mysql_server`,`id_status_name`,`date`),
+  KEY `id_mysql_server_4` (`id_mysql_server`,`id_status_name`),
+  KEY `date` (`date`,`id_mysql_server`,`id_status_name`),
+  KEY `id_mysql_status_name` (`id_status_name`)
+) ENGINE=SPIDER AUTO_INCREMENT=13765810 DEFAULT CHARSET=latin1
+PARTITION BY LIST(`id_mysql_server`)
+(
+ PARTITION pt1 VALUES IN (488) COMMENT = 'table "status_value_int_487"' ENGINE = SPIDER,
+ PARTITION pt2 VALUES IN (491) COMMENT = 'table "status_value_int"' ENGINE = SPIDER
+);
+
+ *
+ *
+ *
+ */
