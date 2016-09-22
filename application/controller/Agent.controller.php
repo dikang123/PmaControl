@@ -1052,8 +1052,6 @@ GROUP BY table_schema ;';
             
 
             $ssh = new SSH2($ob->ip);
-            
-
             $rsa = new RSA();
 
             $privatekey = file_get_contents($ob->key_private_path);

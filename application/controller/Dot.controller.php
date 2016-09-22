@@ -156,9 +156,9 @@ rankdir=LR;
         $graph .= '}';
 
         /*
-        if (!empty($gg2)) {
-            echo $graph;
-        }*/
+          if (!empty($gg2)) {
+          echo $graph;
+          } */
 
 
         return $graph;
@@ -254,6 +254,8 @@ rankdir=LR;
             $edge['color'] = self::COLOR_SUCCESS;
         } elseif ($object->thread_io === "1" && $object->thread_sql === "1" && $object->time_behind !== "0") {
             $edge['color'] = self::COLOR_DELAY;
+        } elseif ($object->last_io_errno !== "0" && $object->last_sql_errno !== "0" && $object->thread_io == "0" && $object->thread_sql == "0") {
+            $edge['color'] = self::COLOR_BLACKOUT;
         } else if ($object->last_io_errno !== "0" && $object->last_sql_errno !== "0") {
             $edge['color'] = self::COLOR_ERROR;
         } else if ($object->thread_io == "0" && $object->thread_sql == "0") {
@@ -261,7 +263,6 @@ rankdir=LR;
         } else {
             $edge['color'] = "pink";
         }
-
         return $edge['color'];
     }
 
@@ -490,7 +491,7 @@ rankdir=LR;
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
-            $ret .= 'subgraph cluster_'.str_replace('-','_',$ob->name).' {';
+            $ret .= 'subgraph cluster_'.str_replace('-', '_', $ob->name).' {';
             $ret .= 'rankdir="LR";';
             $ret .= 'color=black;fontname="arial";';
             $ret .= 'label = "Galera cluster : '.$ob->name.'";';
@@ -569,10 +570,5 @@ rankdir=LR;
         }
 
         return $ret;
-    }
-
-    public function array_order_by_count_desc($array)
-    {
-        
     }
 }

@@ -5,6 +5,9 @@
  * and open the template in the editor.
  */
 
+use phpseclib\Crypt\RSA;
+use phpseclib\Net\SSH2;
+use phpseclib\Net\SFTP;
 use \Glial\Synapse\Controller;
 
 class DeployRsaKey extends Controller
@@ -27,29 +30,58 @@ class DeployRsaKey extends Controller
                 $list_id = [];
                 foreach ($_POST['id'] as $key => $value) {
 
-                    if (!empty($_POST['mysql_server'][$key]["is_monitored"]) && $_POST['mysql_server'][$key]["is_monitored"] === "on")
-                    {
+                    if (!empty($_POST['mysql_server'][$key]["is_monitored"]) && $_POST['mysql_server'][$key]["is_monitored"] === "on") {
                         $list_id[] = $value;
                     }
                 }
 
-
-                $ids = implode(",",$list_id);
+                $ids = implode(",", $list_id);
 
                 $sql = "SELECT * FROM mysql_server WHERE id IN (".$ids.")";
                 $res = $db->sql_query($sql);
 
-
                 shell_exec("mkdir ".DATA."keys/");
 
-                while ($ob = $db->sql_fetch_object($res))
-                {
-                    $cmd ='ssh-keygen -t rsa -N "" -b 4096 -C "PmaControl@esysteme.com" -f '.DATA."/keys/".$ob->ip.'.key';
-                    shell_exec($cmd);
-                    
+                while ($ob = $db->sql_fetch_object($res)) {
+                    $path_private_key = DATA."keys/".$ob->ip.'.key';
+                    $path_puplic_key  = $path_private_key.'.pub';
+
+                    $checks = [$path_private_key, $path_puplic_key];
+                    foreach ($checks as $file) {
+                        if (file_exists($file)) {
+                            $ret = shell_exec("rm -f ".$file);
+                        }
+                    }
+
+                    $cmd = 'ssh-keygen -t rsa -N "" -b 4096 -C "PmaControl@esysteme.com" -f '.$path_private_key;
+                    $ret = shell_exec($cmd);
+
+                    echo "<pre>".$ret."</pre>\n";
+
+
+                    $this->deploy($ob->ip, $_POST['mysql_server']['login_ssh'], $_POST['mysql_server']['password_ssh'], $path_puplic_key);
+
+                    if ($this->testConnection($ob->ip, "root", $path_private_key) === true)
+                    {
+                        $table = [];
+                        $table['mysql_server']['id'] = $ob->id;
+                        $table['mysql_server']['ssh_login'] = $_POST['mysql_server']['login_ssh'];
+                        $table['mysql_server']['ssh_password'] = $_POST['mysql_server']['password_ssh'];
+                        $table['mysql_server']['key_private_path'] = $path_private_key;
+                        $table['mysql_server']['key_private_user'] = "root";
+
+                        $ret = $db->sql_save($table);
+
+                        if (!$ret)
+                        {
+                            debug($table);
+                            debug($ret->sql_error());
+                        }
+                    }
                 }
 
                 debug($list_id);
+
 
                 //header("location: ".LINK."DeployRsaKey/index/");
                 //exit;
@@ -110,11 +142,89 @@ class DeployRsaKey extends Controller
         return $where;
     }
 
-
     private function deploy($ip, $login, $password, $path_public_key)
     {
+        echo "$ip, $login, $password<br />";
+
+        //deploy public key by SCP
+        $sftp = new SFTP($ip);
+        if (!$sftp->login($login, $password)) {
+            echo 'SCP Login Failed';
+            return false;
+        }
+
+        $data      = file_get_contents($path_public_key);
+        $file_name = pathinfo($path_public_key)['basename'];
+        $sftp->put($file_name, $data);
+
+        $files = $sftp->rawlist();
 
 
-        
+        $found = false;
+        foreach ($files as $file) {
+            if ($file['filename'] === $file_name) {
+                $found = true;
+                break;
+            }
+        }
+
+        if ($found === false) {
+            return false;
+        }
+
+        //connect with user and then with sudo su - and move key to root
+        $ssh2 = new SSH2($ip);
+        $ssh2->login($login, $password);
+
+
+        if ($login === "root") {
+            $ssh2->exec("mkdir -p /root/.ssh && cat /home/".$login."/".$file_name." >> /root/.ssh/authorized_keys\n");
+        } else {
+
+            $ssh2->setTimeout(1);
+            $output = $ssh2->read('/.*@.*[$|#]/');
+            debug($output);
+
+            $ssh2->write("sudo su -\n");
+            $ssh2->setTimeout(1);
+
+            $ssh2->write($password."\n");
+            $output = $ssh2->read('/.*@.*[$|#]/');
+            debug($output);
+
+            $ssh2->write("whoami\n");
+            $ssh2->write("mkdir -p /root/.ssh && cat /home/".$login."/".$file_name." >> /root/.ssh/authorized_keys\n");
+
+            $output = $ssh2->read('/.*@.*[$|#]/');
+            debug($output);
+        }
+
+        if ($login === "root") {
+            $cmd = "rm /root/".$file_name;
+        } else {
+            $cmd = "rm /home/".$login."/".$file_name."";
+        }
+        $output = $ssh2->exec($cmd);
+        debug($output);
+
+        return true;
+    }
+
+    private function testConnection($ip, $login, $path_private_key)
+    {
+        $ssh2 = new SSH2($ip);
+        $rsa  = new RSA();
+
+        $privatekey = file_get_contents($path_private_key);
+
+        if ($rsa->loadKey($privatekey) === false) {
+            return false;
+        }
+
+        if (!$ssh2->login($login, $rsa)) {
+            return false;
+        }
+
+        return true;
     }
 }
