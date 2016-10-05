@@ -208,6 +208,9 @@ class Agent extends Controller
                 $refresh_time = $ob->refresh_time;
             }
 
+            //shell_exec("cd /data/www/pma_good && ./glial dot generateCache");
+
+
             sleep($refresh_time);
         }
     }
@@ -1049,22 +1052,22 @@ GROUP BY table_schema ;';
 
         while ($ob = $db->sql_fetch_object($res)) {
 
-            
+
 
             $ssh = new SSH2($ob->ip);
             $rsa = new RSA();
 
             $privatekey = file_get_contents($ob->key_private_path);
 
-            
+
             if ($rsa->loadKey($privatekey) === false) {
                 exit("private key loading failed!");
             }
 
             //debug($rsa);
 
-            echo $ob->ip." : ". $ob->key_private_user. " ". $ob->key_private_path."\n";
-            
+            echo $ob->ip." : ".$ob->key_private_user." ".$ob->key_private_path."\n";
+
             if (!$ssh->login($ob->key_private_user, $rsa)) {
                 echo "Login Failed\n";
                 continue;
@@ -1074,8 +1077,6 @@ GROUP BY table_schema ;';
             // cat /proc/version
             // dmesg | head -1
             // cat /etc/issue
-
-
             // cat /etc/issue
 
             $memory      = $ssh->exec("grep MemTotal /proc/meminfo | awk '{print $2}'") or die("error");
@@ -1192,10 +1193,20 @@ GROUP BY table_schema ;';
 
     public function isGaleraCluster()
     {
+        //@TODO : a mettre en transactionel
 
         $this->view = false;
         $db         = $this->di['db']->sql(DB_DEFAULT);
 
+
+        $sql = "BEGIN";
+        $db->sql_query($sql);
+
+
+        $sql = "DELETE FROM galera_cluster_node WHERE id_mysql_server IN (SELECT id FROM mysql_server where error= '')";
+        $db->sql_query($sql);
+
+        echo SqlFormatter::format($sql)."\n";
 
         $sql   = "SELECT * FROM galera_cluster_node";
         $res10 = $db->sql_query($sql);
@@ -1238,6 +1249,9 @@ GROUP BY table_schema ;';
                 echo SqlFormatter::format($sql)."\n";
             }
         }
+
+        $sql = "COMMIT";
+        $db->sql_query($sql);
     }
 
     public function saveVariables($all_variables, $id_mysql_server)
