@@ -99,6 +99,9 @@ class Server extends Controller
         $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu']['id']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/id';
 
+        $data['menu']['cache']['name']  = __('Cache');
+        $data['menu']['cache']['icone'] = '<span class="glyphicon glyphicon-floppy-disk" style="font-size:12px"></span>';
+        $data['menu']['cache']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/cache';
 
         /*         * ***** */
 
@@ -144,7 +147,7 @@ class Server extends Controller
 
 
         if (!empty($param[0])) {
-            if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id"))) {
+            if (in_array($param[0], array("main", "database", "statistics", "logs", "memory", "index", "hardware", "system", "id","cache"))) {
                 $_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
             }
         }
@@ -700,5 +703,14 @@ var myChart = new Chart(ctx, {
     public function add()
     {
         $db = $this->di['db']->sql(DB_DEFAULT);
+    }
+
+
+    public function cache()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        
+
+        // Qcache_hits / (Qcache_hits + Com_select )
     }
 }

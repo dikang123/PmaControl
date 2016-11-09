@@ -4,11 +4,12 @@ use \Glial\Synapse\Controller;
 
 class Migration extends Controller
 {
-    var $database = "test21";
-    var $dump     = "/data/client/humanis/structure.sql";
+    var $database = "test36";
+    var $dump     = "/data/client/humanis/migration/version2.sql";
     //var $dump = "/data/client/humanis/sql_workbench/migration_script.sql";
+    
+    var $path           = "/data/client/humanis/migration/version2/";
 
-    var $path           = "/data/client/humanis/lot2/";
     var $exclude_tables = array("cache", "cache_block", "cache_bootstrap", "cache_eck", "cache_entity_embed", "cache_features", "cache_field",
         "cache_filter", "cache_form", "cache_geocoder", "cache_image", "cache_l10n_update", "cache_libraries", "cache_menu", "cache_menu",
         "cache_metatag", "cache_page", "cache_panels", "cache_path", "cache_rules", "cache_search_api_solr", "cache_token",
@@ -19,7 +20,7 @@ class Migration extends Controller
         $db         = $this->di['db']->sql(DB_DEFAULT);
         $this->view = false;
 
-        $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'autonomie'";
+        $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'version2'";
 
         $res = $db->sql_query($sql);
         while ($ob  = $db->sql_fetch_object($res)) {
@@ -49,6 +50,9 @@ class Migration extends Controller
             // sql sever nous fourni du latin 1 xD
             //$sql = 'LOAD DATA INFILE "'.$file.'" INTO TABLE `'.$this->database.'`.`'.$table_name.'` COLUMNS TERMINATED BY "||" LINES TERMINATED BY "++";';
             $sql = 'LOAD DATA INFILE "'.$file.'" INTO TABLE `'.$this->database.'`.`'.$table_name.'` CHARACTER SET latin1 COLUMNS TERMINATED BY "||" LINES TERMINATED BY "++";';
+            //$sql = 'LOAD DATA INFILE "'.$file.'" INTO TABLE `'.$this->database.'`.`'.$table_name.'` CHARACTER SET latin1 COLUMNS TERMINATED BY "|###|" LINES TERMINATED BY "+++++";';
+            //$sql = 'LOAD DATA INFILE "'.$file.'" INTO TABLE `'.$this->database.'`.`'.$table_name.'` COLUMNS TERMINATED BY "|###|" LINES TERMINATED BY "+++++";';
+
 
             echo $sql."\n";
             $db->sql_query($sql);
@@ -213,3 +217,42 @@ class Migration extends Controller
       AND a.table_schema = "autonomie_mig"
       AND b.data_type LIKE '%blob%';
      */
+
+
+/**
+ERROR : actions parameters
+UPDATE `test31`.`commerce_customer_profile` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_customer_profile_revision` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_line_item` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_order` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_order_revision` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_payment_transaction` SET `message_variables`=UNHEX(`message_variables`);
+UPDATE `test31`.`commerce_payment_transaction` SET `payload`=UNHEX(`payload`);
+UPDATE `test31`.`commerce_payment_transaction` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_payment_transaction_revision` SET `message_variables`=UNHEX(`message_variables`);
+UPDATE `test31`.`commerce_payment_transaction_revision` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_product` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`commerce_product_revision` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`field_config` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`field_config_instance` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`file_metadata` SET `value`=UNHEX(`value`);
+UPDATE `test31`.`filter` SET `settings`=UNHEX(`settings`);
+UPDATE `test31`.`locales_target` SET `translation`=UNHEX(`translation`);
+UPDATE `test31`.`menu_links` SET `options`=UNHEX(`options`);
+ERROR : menu_router load_functions
+ERROR : menu_router to_arg_functions
+UPDATE `test31`.`menu_router` SET `access_arguments`=UNHEX(`access_arguments`);
+UPDATE `test31`.`menu_router` SET `page_arguments`=UNHEX(`page_arguments`);
+UPDATE `test31`.`metatag` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`metatag_config` SET `config`=UNHEX(`config`);
+UPDATE `test31`.`migrate_group` SET `arguments`=UNHEX(`arguments`);
+UPDATE `test31`.`migrate_status` SET `arguments`=UNHEX(`arguments`);
+UPDATE `test31`.`queue` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`rules_config` SET `data`=UNHEX(`data`);
+ERROR : sessions session
+UPDATE `test31`.`system` SET `info`=UNHEX(`info`);
+UPDATE `test31`.`users` SET `data`=UNHEX(`data`);
+UPDATE `test31`.`variable` SET `value`=UNHEX(`value`);
+UPDATE `test31`.`watchdog` SET `variables`=UNHEX(`variables`);
+Converted (30/76)  zero : 573
+ */

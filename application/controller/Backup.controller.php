@@ -144,7 +144,7 @@ class Backup extends Controller
                 }
             } catch (\Exception $ex) {
 
-                echo 'Exception found : ', $e->getMessage(), "\n";
+                echo 'Exception found : ', $ex->getMessage(), "\n";
             }
         }
     }
