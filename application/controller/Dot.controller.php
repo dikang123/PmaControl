@@ -3,58 +3,7 @@
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
-
- *
- *
- *
- *
- *
- *
- * digraph G {
-
-  rankdir=LR; // graph from left to right
-  fontname=ubuntu; // ubuntu is our standard font
-  labeljust=l; // cluster labels aligned left
-  splines=ortho; // arrows are straight and w 90 deg angles
-  penwidth=2; // for cluster borders
-  color=gray; // for cluster borders
-
-  /* default node config:
-  node [shape=box fontsize=14 width=1.5 height=1 fixedsize=true ]
-
-  subgraph cluster0
-  {
-
-  subgraph cluster3{
-  margin=8
-  style=dashed
-  color=grey
-  choice [height=2.2 width=1]
-  b
-  c
-  }
-  subgraph cluster4{
-  margin=8
-  style=dashed
-  color=grey
-  choice [height=2.2 width=1]
-  z
-  x
-  }
-
-  d
-  aout -> a
-  a -> choice
-  choice -> {b c}
-  {b c} -> d
-  d -> aout [tailport=s headport=e color=blue constraint=false] /* arrow leaves south of block, reaches east of another block, same as saying: d:s -> aout:e
-
-  }
-  }
- *
- *
- *
- *  */
+ */
 
 use \Glial\Synapse\Controller;
 use \Glial\Form\Upload;
@@ -66,18 +15,30 @@ use \Glial\Cli\Color;
 
 class Dot extends Controller
 {
-    CONST COLOR_SUCCESS        = "green";
-    CONST COLOR_ERROR          = "red";
-    CONST COLOR_DELAY          = "orange";
-    CONST COLOR_DONOR          = "yellow";
-    CONST COLOR_DONOR_DESYNCED = "yellow";
-    CONST COLOR_STOPPED        = "#5c5cb8";
-    CONST COLOR_BLACKOUT       = "#000000";
-    CONST COLOR_NO_PRIMARY     = "#0000ff";
-    CONST COLOR_BUG            = "pink"; //this case should be never happen on Graph
+    CONST COLOR_SUCCESS          = "green";
+    CONST COLOR_ERROR            = "red";
+    CONST COLOR_DELAY            = "orange";
+    CONST COLOR_DONOR            = "#90EE90"; //liht green
+    CONST COLOR_DONOR_DESYNCED   = "yellow";
+    CONST COLOR_ARROW_SST        = "#0000ff";
+    CONST COLOR_STOPPED          = "#5c5cb8";
+    CONST COLOR_BLACKOUT         = "#000000";
+    CONST COLOR_NO_PRIMARY       = "red";
+    CONST COLOR_BUG              = "pink"; //this case should be never happen on Graph
+    CONST COLOR_MANUAL_DESYNC    = "cyan";
+    CONST COLOR_CONNECTING       = "green";
+    CONST COLOR_SPLIT_BRAIN      = "orange";
+    CONST COLOR_NODE_RECEIVE_SST = "#000000";
 
     var $node    = array();
     var $segment = array();
+
+    /*
+     *
+     * Contient les serveur suceptible de recevoir le SST
+     * A ne pas pas prendre en compte dans el cache des cluster & master / slave
+     */
+    var $exclude = array();
     var $debug   = false;
 
     public function index()
@@ -110,12 +71,9 @@ class Dot extends Controller
         $graphs = [];
         foreach ($ret['groups'] as $list) {
 
-
             if ($this->debug) {
                 debug($list);
             }
-
-
 
             $tmp = [];
 
@@ -128,8 +86,6 @@ class Dot extends Controller
         //generate standalone server
 
         $server_alone = $this->getServerStandAlone($ret['grouped']);
-
-
 
         foreach ($server_alone as $server) {
             $tmp            = [];
@@ -211,7 +167,7 @@ rankdir=LR;
     {
         //label=\"Step 2\";
         $graph = "digraph PmaControl {
-rankdir=LR;
+rankdir=LR; splines=ortho;
  graph [fontname = \"helvetica\"];
  node [fontname = \"helvetica\"];
  edge [fontname = \"helvetica\"];
@@ -229,9 +185,12 @@ rankdir=LR;
 
         //$gg2 = $this->generateMerge($list_id);
         $graph .= $this->generateEdge($list_id);
+        $graph .= $this->generateEdgeSst();
 
         $graph .= $gg;
         $graph .= $gg2;
+
+
         $graph .= '}';
 
         /*
@@ -285,6 +244,7 @@ rankdir=LR;
             $ret .= $this->nodeMain($ob->id_mysql_server, $ob->name, $lines, $tmp_db);
         }
 
+
         return $ret;
     }
 
@@ -303,44 +263,73 @@ rankdir=LR;
             echo SqlFormatter::format($sql);
         }
 
-        $res   = $db->sql_query($sql);
-        $label = "";
-        $ret   = "";
+        $res = $db->sql_query($sql);
+
+        $ret = "";
 
         while ($ob = $db->sql_fetch_object($res)) {
 
-            $color_edge = $this->getColorEdge($ob);
 
-            $ret .= " ".$ob->id_master." -> ".$ob->id_slave
-                ." [ arrowsize=\"1.5\" penwidth=\"2\" fontname=\"arial\" fontsize=8 color =\""
-                .$color_edge."\" label =\"".$label."\"  edgetarget=\"".LINK."mysql/thread/"
-                .str_replace('_', '-', $ob->name)."/\" edgeURL=\"".LINK."mysql/thread/"
-                .str_replace('_', '-', $ob->name)."/".$ob->thread_name."\"];\n";
+            if (empty($this->exclude[$ob->id_mysql_server])) {
+                $ret .= $this->getColorEdge($ob);
+            }
         }
+
+
+
 
 
         return $ret;
     }
 
-    public function getColorEdge($object)
+    public function getColorEdge($ob)
     {
 
         $edge = [];
 
-        if ($object->thread_io === "1" && $object->thread_sql === "1" && $object->time_behind === "0") {
+        $label = "";
+        $style = "filled";
+
+        if ($ob->thread_io === "Yes" && $ob->thread_sql === "Yes" && $ob->time_behind === "0") {
             $edge['color'] = self::COLOR_SUCCESS;
-        } elseif ($object->thread_io === "1" && $object->thread_sql === "1" && $object->time_behind !== "0") {
+        } elseif ($ob->thread_io === "Yes" && $ob->thread_sql === "Yes" && $ob->time_behind !== "0") {
             $edge['color'] = self::COLOR_DELAY;
-        } elseif ($object->last_io_errno !== "0" && $object->last_sql_errno !== "0" && $object->thread_io == "0" && $object->thread_sql == "0") {
-            $edge['color'] = self::COLOR_BLACKOUT;
-        } else if ($object->last_io_errno !== "0" && $object->last_sql_errno !== "0") {
+            $label         = $ob->time_behind;
+        } else if (($ob->last_io_errno !== "0" || $ob->last_sql_errno !== "0") && ( $ob->thread_io == "Yes" || $ob->thread_sql == "Yes")) {
             $edge['color'] = self::COLOR_ERROR;
-        } else if ($object->thread_io == "0" && $object->thread_sql == "0") {
+        } else if ($ob->last_io_errno !== "0" || $ob->last_sql_errno !== "0" && $ob->thread_io == "No" && $ob->thread_sql == "No") {
+            $edge['color'] = self::COLOR_BLACKOUT;
+        } else if ($ob->thread_io == "0" && $ob->thread_sql == "0") {
             $edge['color'] = self::COLOR_STOPPED;
+        } else if ($ob->thread_io == "0" && $ob->thread_sql == "Connecting") { // replace int by sth else
+            $edge['color'] = self::COLOR_CONNECTING;
+            $style         = "dotted";
         } else {
             $edge['color'] = "pink";
         }
-        return $edge['color'];
+
+        return " ".$ob->id_master." -> ".$ob->id_slave
+            ." [ arrowsize=\"1.5\" style=".$style.",penwidth=\"2\" fontname=\"arial\" fontsize=8 color =\""
+            .$edge['color']."\" label=\"".$label."\"  edgetarget=\"".LINK."mysql/thread/"
+            .str_replace('_', '-', $ob->name)."/\" edgeURL=\"".LINK."mysql/thread/"
+            .str_replace('_', '-', $ob->name)."/".$ob->thread_name."\"];\n";
+        ;
+    }
+
+    public function generateEdgeSst()
+    {
+
+        $ret = "";
+        foreach ($this->exclude as $key => $value) {
+            $label = "SST 67%";
+
+            $ret .= " ".$value." -> ".$key
+                ." [ arrowsize=\"1.5\" ,penwidth=\"2\" fontname=\"arial\" fontsize=8 color =\""
+                .self::COLOR_ARROW_SST."\" label=\"".$label."\"];\n";
+        }
+
+
+        return $ret;
     }
 
     public function getColorNode($object)
@@ -357,6 +346,10 @@ rankdir=LR;
             }
         } else {
             $color_node = self::COLOR_ERROR;
+        }
+
+        if (!empty($this->exclude[$object->id_mysql_server])) {
+            $color_node = self::COLOR_NODE_RECEIVE_SST;
         }
 
         return "node [color = \"".$color_node."\"];\n";
@@ -428,7 +421,7 @@ rankdir=LR;
 
 
 
-        //case serveurs avec plusieurs instances
+        //cas des serveurs avec plusieurs instances
         $sql = "SELECT group_concat(id) as allid from mysql_server GROUP BY ip having count(1) > 1;";
         $res = $db->sql_query($sql);
 
@@ -608,6 +601,7 @@ rankdir=LR;
              INNER JOIN galera_cluster_node b ON a.id = b.id_galera_cluster_main
              WHERE b.id_mysql_server IN (".$id_mysql_servers.") ORDER BY NAME;";
 
+
         if ($this->debug) {
             echo SqlFormatter::format($sql);
         }
@@ -626,6 +620,10 @@ rankdir=LR;
 
         while ($ob = $db->sql_fetch_object($res)) {
 
+            if ($ob->comment === "Donor/Desynced" && $ob->desync === "OFF") {
+                $this->getDestinationSst($ob);
+            }
+
             $display_name = $ob->name;
             if (in_array($ob->name, $galera_name)) {
                 $display_name = $ob->name."()";
@@ -642,23 +640,43 @@ rankdir=LR;
                         $ret .= ' }'."\n";
                     }
 
-                    $ret .= 'subgraph cluster_'.str_replace('-', '_', $ob->name).' {';
+                    $ret .='penwidth=1.5; color=gray;style=dotted;';
+
+                    $ret .= 'subgraph cluster_'.str_replace('-', '', $ob->name).' {';
                     $ret .= 'rankdir="LR";';
 
                     $super_cluster_open = true;
                 }
-            }
-            else{
+            } else {
                 $super_cluster_open = false;
             }
 
-            $ret .= 'subgraph cluster_'.str_replace('-', '_', $ob->name).'_'.$ob->segment.' {';
-            $ret .= 'rankdir="LR";';
-            $ret .= 'color='.$color_cluster.';style=dashed;fontname="arial";';
 
+            if ($super_cluster_open) {
+                $ret .= 'color='.$color_cluster.';style=dashed;fontname="arial";';
+            }
+            $ret .= 'subgraph cluster_'.str_replace('-', '', $ob->name).''.$ob->segment.' {';
+            $ret .= 'rankdir="LR";';
             $ret .= 'label = "Galera : '.$name.'";';
 
             $ret .= ''.$ob->id_mysql_server.';';
+
+
+            debug($ob->id_mysql_server);
+            debug($this->exclude);
+
+            if (in_array($ob->id_mysql_server, $this->exclude)) {
+                $tab = array_flip($this->exclude);
+
+
+
+                $ret .= ''.$tab[$ob->id_mysql_server].';';
+
+
+                echo "xfhxfgxfh ".$tab[$ob->id_mysql_server];
+            }
+
+
             $ret .= ' }'."\n";
 
             $this->node[$ob->id_mysql_server] = $this->getColorGalera($ob);
@@ -747,6 +765,8 @@ rankdir=LR;
         //COLOR_DONOR
         if ($ob->comment === "Synced") {
             $color_node = self::COLOR_SUCCESS;
+        } else if ($ob->desync == "ON") {
+            $color_node = self::COLOR_MANUAL_DESYNC;
         } else if ($ob->comment == "Donor/Desynced" && stristr($ob->comment, "xtrabackup")) {
             $color_node = self::COLOR_DONOR;
         } else if ($ob->comment == "Donor/Desynced" && stristr($ob->comment, "xtrabackup") === false) {
@@ -755,13 +775,41 @@ rankdir=LR;
             $color_node = self::COLOR_ERROR;
         } else if ($ob->comment == "Joining") {
             $color_node = self::COLOR_ERROR;
-        } else if ($ob->comment == "Joining") {
-            $color_node = self::COLOR_ERROR;
+        } else if ($ob->cluster_status == "non-Primary") {
+            $color_node = self::COLOR_SPLIT_BRAIN;
         } else {
             $color_node = self::COLOR_BUG;
         }
 
         return $color_node;
+    }
+
+    public function getDestinationSst($ob)
+    {
+
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $addrs = explode(",", $ob->incoming_addresses);
+
+        $couple = [];
+        foreach ($addrs as $addr) {
+            $part     = explode(":", $addr);
+            $couple[] = "SELECT * FROM mysql_server WHERE `ip`='".$part[0]."' AND port='".$part[1]."' and error != ''";
+        }
+
+
+        $sql = "(".implode(") UNION (", $couple).");";
+
+        //echo SqlFormatter::format($sql);
+
+        $res = $db->sql_query($sql);
+
+        while ($ob2 = $db->sql_fetch_object($res)) {
+
+
+            $this->exclude[$ob2->id] = $ob->id_mysql_server;
+        }
     }
 
     public function groupEdgeSegment($list_id)
@@ -770,7 +818,7 @@ rankdir=LR;
         $id_mysql_servers = implode(',', $list_id);
 
         $db  = $this->di['db']->sql(DB_DEFAULT);
-        $sql = "SELECT a.name,a.segment as segment, a.id as id,min(b.id_mysql_server) as id_mysql_server
+        $sql = "SELECT a.name,a.segment as segment, a.id as id,group_concat(b.id_mysql_server) as id_mysql_server
             FROM `galera_cluster_main` a
             INNER JOIN galera_cluster_node b ON b.id_galera_cluster_main = a.id
             WHERE a.name in(SELECT name FROM `galera_cluster_main` GROUP BY name having count(1) > 1)
@@ -791,8 +839,10 @@ rankdir=LR;
             $this->segment[$ob->name][$ob->id]['segment']         = $ob->segment;
             $this->segment[$ob->name][$ob->id]['id_mysql_server'] = $ob->id_mysql_server;
 
-            $val[]                              = $ob->id_mysql_server;
-            $cluster_name[$ob->id_mysql_server] = 'cluster_'.str_replace('-', '_', $ob->name).'_'.$ob->segment;
+            $median_id = $this->median(explode(",", $ob->id_mysql_server));
+
+            $val[]                    = $median_id;
+            $cluster_name[$median_id] = 'cluster_'.str_replace('-', '', $ob->name).$ob->segment;
         }
 
         $nb_segments = count($val);
@@ -801,9 +851,16 @@ rankdir=LR;
             for ($on = $pn + 1; $on <= $nb_segments; $on++) {
                 //printf("%u link %u\n", $pn, $on);
 
+                $contrainte = '';
 
-                $ret .= $val[$pn - 1].' -> '.$val[$on - 1]." [arrowsize=\"1.5\", color=green, penwidth=\"2\", dir=both,ltail=\""
-                    .$cluster_name[$val[$on - 1]]."\" lhead=\"".$cluster_name[$val[$pn - 1]]."\"]\n";
+
+
+                $gg = $val[$pn - 1].' -> '.$val[$on - 1]." [arrowsize=0, color=green, penwidth=0, ".$contrainte." dir=both,ltail="
+                    .$cluster_name[$val[$pn - 1]].",lhead=".$cluster_name[$val[$on - 1]]."];\n";
+
+                //debug($gg);
+
+                $ret .= $gg;
 
                 /* */
                 //$ret .= $cluster_name[$val[$on - 1]].' -> '.$cluster_name[$val[$pn - 1]]." [arrowsize=\"1.5\", penwidth=\"2\", dir=both]\n";
@@ -812,6 +869,19 @@ rankdir=LR;
 
 
         return $ret;
+    }
+
+    public function median($arr)
+    {
+        //Sort Array Numerically, because Median calculation has to have a set in order
+        sort($arr, SORT_NUMERIC);
+
+        //Get Total Amount Of Elements
+        $count = count($arr);
+
+        //Need to get the mid point of array.  Use Floor because we always want to round down.
+        $mid = floor($count / 2);
+        return $arr[$mid];
     }
 }
 /*

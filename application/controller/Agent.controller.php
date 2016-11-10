@@ -399,9 +399,20 @@ class Agent extends Controller
         $master = $mysql_tested->isMaster();
         $slave  = $mysql_tested->isSlave();
 
-        $sql       = "SELECT now() as date_time";
-        $res2      = $mysql_tested->sql_query($sql);
-        $date_time = $mysql_tested->sql_fetch_object($res2);  //can be empty ???????????
+
+        /*
+          $sql       = "SELECT now() as date_time";
+          $res2      = $mysql_tested->sql_query($sql);
+          $date_time = $mysql_tested->sql_fetch_object($res2);  //can be empty ???????????
+         *
+          $date_time =  $date_time->date_time;
+         *
+         */
+
+        $date_time;
+
+
+        $date_time = date('c');
 
         $schema = array();
         if (version_compare($mysql_tested->getVersion(), '5.0', '>=')) {
@@ -459,7 +470,7 @@ GROUP BY table_schema ;';
             $table['mysql_replication_stats']['date']            = date("Y-m-d H:i:s");
             $table['mysql_replication_stats']['ping']            = 1;
             $table['mysql_replication_stats']['version']         = $mysql_tested->getServerType()." : ".$mysql_tested->getVersion();
-            $table['mysql_replication_stats']['date']            = $date_time->date_time;
+            $table['mysql_replication_stats']['date']            = $date_time;
             $table['mysql_replication_stats']['is_master']       = ($master) ? 1 : 0;
             $table['mysql_replication_stats']['is_slave']        = ($slave) ? 1 : 0;
             $table['mysql_replication_stats']['uptime']          = ($mysql_tested->getStatus('Uptime')) ? $mysql_tested->getStatus('Uptime')
@@ -563,23 +574,21 @@ GROUP BY table_schema ;';
                     $mysql_replication_thread['mysql_replication_thread']['id_mysql_replication_stats'] = $id_mysql_replication_stats;
                     $mysql_replication_thread['mysql_replication_thread']['relay_master_log_file']      = $thread_slave['Relay_Master_Log_File'];
                     $mysql_replication_thread['mysql_replication_thread']['exec_master_log_pos']        = $thread_slave['Exec_Master_Log_Pos'];
-                    $mysql_replication_thread['mysql_replication_thread']['thread_io']                  = ($thread_slave['Slave_IO_Running']
-                        === 'Yes') ? 1 : 0;
-                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']                 = ($thread_slave['Slave_SQL_Running']
-                        === 'Yes') ? 1 : 0;
+                    $mysql_replication_thread['mysql_replication_thread']['thread_io']                  = $thread_slave['Slave_IO_Running'];
+                    $mysql_replication_thread['mysql_replication_thread']['thread_sql']                 = $thread_slave['Slave_SQL_Running'];
                     $mysql_replication_thread['mysql_replication_thread']['thread_name']                = (empty($thread_slave['Thread_name']))
                             ? '' : $thread_slave['Thread_name'];
                     $mysql_replication_thread['mysql_replication_thread']['time_behind']                = $thread_slave['Seconds_Behind_Master'];
                     $mysql_replication_thread['mysql_replication_thread']['master_host']                = $thread_slave['Master_Host'];
                     $mysql_replication_thread['mysql_replication_thread']['master_port']                = $thread_slave['Master_Port'];
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']             = (empty($thread_slave['Last_sql_Error']))
-                            ? $thread_slave['Last_Error'] : $thread_slave['Last_sql_Error'];
-                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']             = (empty($thread_slave['Last_sql_Errno']))
-                            ? $thread_slave['Last_Errno'] : $thread_slave['Last_sql_Errno'];
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']              = (empty($thread_slave['Last_Io_Error']))
-                            ? $thread_slave['Last_Error'] : $thread_slave['Last_io_Error'];
-                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']              = (empty($thread_slave['Last_io_Errno']))
-                            ? $thread_slave['Last_Errno'] : $thread_slave['Last_io_Errno'];
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_error']             = (empty($thread_slave['Last_SQL_Error']))
+                            ? $thread_slave['Last_Error'] : $thread_slave['Last_SQL_Error'];
+                    $mysql_replication_thread['mysql_replication_thread']['last_sql_errno']             = (empty($thread_slave['Last_SQL_Errno']))
+                            ? $thread_slave['Last_Errno'] : $thread_slave['Last_SQL_Errno'];
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_error']              = (empty($thread_slave['Last_IO_Error']))
+                            ? $thread_slave['Last_Error'] : $thread_slave['Last_IO_Error'];
+                    $mysql_replication_thread['mysql_replication_thread']['last_io_errno']              = (empty($thread_slave['Last_IO_Errno']))
+                            ? $thread_slave['Last_Errno'] : $thread_slave['Last_IO_Errno'];
 
                     $res8 = $db->sql_save($mysql_replication_thread);
 
@@ -1235,7 +1244,7 @@ GROUP BY table_schema ;';
         }
 
 
-        $fields = array("wsrep_cluster_name", "wsrep_provider_options", "wsrep_on", "wsrep_sst_method");
+        $fields = array("wsrep_cluster_name", "wsrep_provider_options", "wsrep_on", "wsrep_sst_method", "wsrep_desync");
         $sql    = $this->buildQuery($fields, "variables");
 
         if ($this->debug) {
@@ -1276,7 +1285,8 @@ GROUP BY table_schema ;';
                         ." comment='".$status[$ob->id]['wsrep_local_state_comment']."',"
                         ." sst_method ='".$ob->wsrep_sst_method."', "
                         ." cluster_status ='".$status[$ob->id]['wsrep_cluster_status']."', "
-                        ." incoming_addresses ='".$status[$ob->id]['wsrep_incoming_addresses']."' "
+                        ." incoming_addresses ='".$status[$ob->id]['wsrep_incoming_addresses']."', "
+                        ." desync  ='".$ob->wsrep_desync."' "
                         ."WHERE id=".$ob->id."";
                     $db->sql_query($sql);
                     if ($this->debug) {
@@ -1289,6 +1299,7 @@ GROUP BY table_schema ;';
                         ." sst_method ='".$ob->wsrep_sst_method."', "
                         ." cluster_status ='".$status[$ob->id]['wsrep_cluster_status']."', "
                         ." incoming_addresses ='".$status[$ob->id]['wsrep_incoming_addresses']."', "
+                        ." desync  ='".$ob->wsrep_desync."', "
                         ." id_mysql_server=".$ob->id."";
                     $db->sql_query($sql);
                     if ($this->debug) {
