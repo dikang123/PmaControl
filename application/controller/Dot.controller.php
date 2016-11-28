@@ -321,7 +321,7 @@ rankdir=LR; splines=ortho;
 
         $ret = "";
         foreach ($this->exclude as $key => $value) {
-            $label = "SST 67%";
+            $label = "SST";
 
             $ret .= " ".$value." -> ".$key
                 ." [ arrowsize=\"1.5\" ,penwidth=\"2\" fontname=\"arial\" fontsize=8 color =\""
@@ -357,9 +357,7 @@ rankdir=LR; splines=ortho;
 
     public function generateGroup()
     {
-
         $this->view = false;
-
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         //case of Master / Slave
@@ -368,14 +366,11 @@ rankdir=LR; splines=ortho;
             INNER JOIN mysql_replication_thread c ON c.id_mysql_replication_stats = b.id
             INNER JOIN mysql_server d ON d.ip = c.master_host AND d.port = a.port WHERE 1 ".$this->getFilter();
 
-
         if ($this->debug) {
             debug($sql);
         }
 
-
         $res = $db->sql_query($sql);
-
 
         $id_group = 0;
 
@@ -662,8 +657,8 @@ rankdir=LR; splines=ortho;
             $ret .= ''.$ob->id_mysql_server.';';
 
 
-            debug($ob->id_mysql_server);
-            debug($this->exclude);
+            //debug($ob->id_mysql_server);
+            //debug($this->exclude);
 
             if (in_array($ob->id_mysql_server, $this->exclude)) {
                 $tab = array_flip($this->exclude);

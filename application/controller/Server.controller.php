@@ -532,10 +532,11 @@ var myChart = new Chart(ctx, {
         scales: {
             yAxes: [{
                 ticks: {
-                    beginAtZero:true
+                    beginAtZero:false
                 }
             }]
-        }
+        },
+        pointDot : false,
     }
 });
 ');
