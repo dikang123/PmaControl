@@ -32,6 +32,7 @@ class Dot extends Controller
 
     var $node    = array();
     var $segment = array();
+    var $sst     = false;
 
     /*
      *
@@ -71,9 +72,6 @@ class Dot extends Controller
         $graphs = [];
         foreach ($ret['groups'] as $list) {
 
-            if ($this->debug) {
-                debug($list);
-            }
 
             $tmp = [];
 
@@ -81,6 +79,12 @@ class Dot extends Controller
             $tmp['servers'] = $list;
 
             $graphs[] = $tmp;
+
+            if ($this->debug) {
+                echo str_repeat("#", 79)."\n";
+                echo "SERVER List : ".implode(",", $list)."\n";
+                echo str_repeat("#", 79)."\n";
+            }
         }
 
         //generate standalone server
@@ -174,9 +178,6 @@ rankdir=LR; splines=ortho;
  node [shape=rect style=filled fontsize=8 fontname=\"arial\" ranksep=0 concentrate=true splines=true overlap=false];\n";
 
 
-        if ($this->debug) {
-            debug($list_id);
-        }
 
 
         $gg2 = $this->groupEdgeSegment($list_id);
@@ -185,7 +186,10 @@ rankdir=LR; splines=ortho;
 
         //$gg2 = $this->generateMerge($list_id);
         $graph .= $this->generateEdge($list_id);
-        $graph .= $this->generateEdgeSst();
+
+        if ($this->sst) {
+            $graph .= $this->generateEdgeSst();
+        }
 
         $graph .= $gg;
         $graph .= $gg2;
@@ -260,7 +264,7 @@ rankdir=LR; splines=ortho;
                 WHERE a.id IN (".$id_mysql_servers.") ".$this->getFilter();
 
         if ($this->debug) {
-            echo SqlFormatter::format($sql);
+            //echo SqlFormatter::format($sql);
         }
 
         $res = $db->sql_query($sql);
@@ -275,18 +279,12 @@ rankdir=LR; splines=ortho;
             }
         }
 
-
-
-
-
         return $ret;
     }
 
     public function getColorEdge($ob)
     {
-
-        $edge = [];
-
+        $edge  = [];
         $label = "";
         $style = "filled";
 
@@ -294,7 +292,7 @@ rankdir=LR; splines=ortho;
             $edge['color'] = self::COLOR_SUCCESS;
         } elseif ($ob->thread_io === "Yes" && $ob->thread_sql === "Yes" && $ob->time_behind !== "0") {
             $edge['color'] = self::COLOR_DELAY;
-            $label         = $ob->time_behind;
+            $label         = $ob->time_behind." sec";
         } else if (($ob->last_io_errno !== "0" || $ob->last_sql_errno !== "0") && ( $ob->thread_io == "Yes" || $ob->thread_sql == "Yes")) {
             $edge['color'] = self::COLOR_ERROR;
         } else if ($ob->last_io_errno !== "0" || $ob->last_sql_errno !== "0" && $ob->thread_io == "No" && $ob->thread_sql == "No") {
@@ -325,9 +323,10 @@ rankdir=LR; splines=ortho;
 
             $ret .= " ".$value." -> ".$key
                 ." [ arrowsize=\"1.5\" ,penwidth=\"2\" fontname=\"arial\" fontsize=8 color =\""
-                .self::COLOR_ARROW_SST."\" label=\"".$label."\"];\n";
+                .self::COLOR_ARROW_SST."\" label=\"".$label." 67%\"];\n";
         }
 
+        $this->sst = false;
 
         return $ret;
     }
@@ -358,7 +357,7 @@ rankdir=LR; splines=ortho;
     public function generateGroup()
     {
         $this->view = false;
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db         = $this->di['db']->sql(DB_DEFAULT);
 
         //case of Master / Slave
         $sql = "SELECT a.*, b.*, c.*, d.id as id_master, a.id as id_slave FROM mysql_server a
@@ -401,8 +400,20 @@ rankdir=LR; splines=ortho;
         $galera = $tmp_group;
 
 
+        // cas des SST (regrouper les serveurs en cours de transfert avec le cluster auquel il est censé être rataché)
+        $sst = [];
+        $sql = "SELECT * FROM galera_cluster_node b WHERE b.comment = 'Donor/Desynced'";
+        $res = $db->sql_query($sql);
+        while ($ob  = $db->sql_fetch_object($res)) {
+
+            $id_mysql_server = $this->getDestinationSst($ob);
+
+            $sst[$ob->id_mysql_server] = $id_mysql_server;
+        }
+
         // cas des segments (cluster lier : un galera cluster de 3 noeuds sur 2 continents)
-        $sql = "SELECT group_concat(b.id_mysql_server) as id_mysql_server FROM `galera_cluster_main` a
+        $sql = "SELECT group_concat(b.id_mysql_server) as id_mysql_server
+            FROM `galera_cluster_main` a
             INNER JOIN galera_cluster_node b ON a.id = b.id_galera_cluster_main
             GROUP BY a.name";
 
@@ -410,11 +421,20 @@ rankdir=LR; splines=ortho;
         $tmp_group = [];
         $res       = $db->sql_query($sql);
         while ($ob        = $db->sql_fetch_object($res)) {
-            $tmp_group[] = explode(',', $ob->id_mysql_server);
+
+            $tmp = explode(',', $ob->id_mysql_server);
+
+
+            //ratachement des serveur en cours de SST
+            foreach ($sst as $key => $value) {
+                if (in_array($key, $tmp)) {
+                    $tmp[] = $value;
+                }
+            }
+
+            $tmp_group[] = $tmp;
         }
         $segments = $tmp_group;
-
-
 
         //cas des serveurs avec plusieurs instances
         $sql = "SELECT group_concat(id) as allid from mysql_server GROUP BY ip having count(1) > 1;";
@@ -427,11 +447,12 @@ rankdir=LR; splines=ortho;
         }
         $instance = $tmp_group;
 
-
         $groups = $this->array_merge_group(array_merge($galera, $instance, $master_slave, $segments));
 
         $result['groups']  = $groups;
         $result['grouped'] = $this->array_values_recursive($result['groups']);
+
+        debug($result);
 
         return $result;
     }
@@ -442,7 +463,6 @@ rankdir=LR; splines=ortho;
         $data['svg']    = [];
 
         foreach ($data['groups'] as $dot) {
-
             $data['svg'][] = $this->dotToSvg($dot['graph']);
         }
 
@@ -508,14 +528,16 @@ rankdir=LR; splines=ortho;
             $where .= " AND a.id_client = '".$client."'";
         }
 
+        if (!empty($this->exclude)) {
+            $where .= " AND a.id NOT IN  (".implode(',', $this->exclude).")";
+        }
+
         return $where;
     }
 
     //each minutes ?
     public function generateCache($param)
     {
-
-
         if (!empty($param)) {
             foreach ($param as $elem) {
                 if ($elem == "--debug") {
@@ -524,6 +546,7 @@ rankdir=LR; splines=ortho;
                 }
             }
         }
+
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $this->view = false;
@@ -566,7 +589,6 @@ rankdir=LR; splines=ortho;
                 $id_architecture = $ob->last;
             }
 
-
             foreach ($graph['servers'] as $id_mysql_server) {
                 /* $table =[];
                   $table['link__architecture__mysql_server']['id_architecture'] = $id_architecture;
@@ -598,7 +620,7 @@ rankdir=LR; splines=ortho;
 
 
         if ($this->debug) {
-            echo SqlFormatter::format($sql);
+            //echo SqlFormatter::format($sql);
         }
 
         $ret = "";
@@ -635,10 +657,11 @@ rankdir=LR; splines=ortho;
                         $ret .= ' }'."\n";
                     }
 
-                    $ret .='penwidth=1.5; color=gray;style=dotted;';
+                    $ret .='penwidth=1.5; color=gray;';
 
                     $ret .= 'subgraph cluster_'.str_replace('-', '', $ob->name).' {';
                     $ret .= 'rankdir="LR";';
+                     $ret .= 'label = "Galera : '.$ob->name.'";';
 
                     $super_cluster_open = true;
                 }
@@ -651,10 +674,14 @@ rankdir=LR; splines=ortho;
                 $ret .= 'color='.$color_cluster.';style=dashed;fontname="arial";';
             }
             $ret .= 'subgraph cluster_'.str_replace('-', '', $ob->name).''.$ob->segment.' {';
-            $ret .= 'rankdir="LR";';
-            $ret .= 'label = "Galera : '.$name.'";';
+            //$ret .= 'rankdir="LR";';
+            $ret .= 'label = "Segment : '.$this->segment[$ob->name][$ob->id_galera_cluster_main]['segment'].'";';
 
             $ret .= ''.$ob->id_mysql_server.';';
+
+
+            // nodeA -> nodeB [style=invis]
+            // outputorder="edgesfirst"  
 
 
             //debug($ob->id_mysql_server);
@@ -666,7 +693,7 @@ rankdir=LR; splines=ortho;
 
 
                 $ret .= ''.$tab[$ob->id_mysql_server].';';
-
+                $this->sst = true;
 
                 echo "xfhxfgxfh ".$tab[$ob->id_mysql_server];
             }
@@ -800,11 +827,19 @@ rankdir=LR; splines=ortho;
 
         $res = $db->sql_query($sql);
 
+
+        $i   = 0;
         while ($ob2 = $db->sql_fetch_object($res)) {
-
-
             $this->exclude[$ob2->id] = $ob->id_mysql_server;
+            $id_mysql_server         = $ob2->id;
+            $i++;
         }
+
+        if ($i > 1) {
+            throw new \Exception("Warning : SST more than 1 candidate", 80);
+        }
+
+        return $id_mysql_server;
     }
 
     public function groupEdgeSegment($list_id)
@@ -822,7 +857,7 @@ rankdir=LR; splines=ortho;
 
         if ($this->debug) {
 
-            echo SqlFormatter::format($sql);
+            //echo SqlFormatter::format($sql);
         }
 
         $res = $db->sql_query($sql);

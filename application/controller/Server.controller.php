@@ -525,7 +525,10 @@ var myChart = new Chart(ctx, {
         labels: ["'.$date.'"],
         datasets: [{    
             label: "'.ucwords($name).'",
-            data: ['.$vals.']
+            data: ['.$vals.'],
+                borderWidth: 1,
+             pointBackgroundColor: "#000",
+             pointRadius :0
         }]
     },
     options: {

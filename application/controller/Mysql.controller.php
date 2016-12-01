@@ -853,7 +853,7 @@ class Mysql extends Controller
 
         if ($fp = fopen($path.'/'.$file.'.dot', "w")) {
 
-            fwrite($fp, "digraph Replication { rankdir = LR; ".PHP_EOL);
+            fwrite($fp, "digraph Replication { splines=ortho; rankdir = LR; ".PHP_EOL);
 //fwrite($fp, "\t size=\"10,1000\";");
 
             fwrite($fp, "\t edge [color=\"#5cb85c\"];".PHP_EOL);
@@ -934,8 +934,6 @@ class Mysql extends Controller
         foreach ($this->di['db']->getAll() as $key => $db_name) {
 
             $db = $this->di['db']->sql($db_name);
-
-
 
             $sql = "GRANT SELECT, PROCESS, SUPER ON *.* TO 'nagios'@'127.0.0.1' IDENTIFIED BY PASSWORD '*D4E97961BFEE8EB3E2CA39A541946FB7A9208590';";
             $db->sql_query($sql);

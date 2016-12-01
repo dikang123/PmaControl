@@ -1,5 +1,4 @@
 <?php
-
 /*
  * j'ai ajouté un mail automatique en cas d'erreur ou de manque sur une PK 
  */
@@ -9,8 +8,6 @@ use Glial\Neuron\PmaCli\PmaCliDraining;
 use Glial\Cli\Table;
 use \Glial\I18n\I18n;
 use \Glial\Cli\Color;
-
-
 
 class Cleaner extends Controller
 {
@@ -292,8 +289,6 @@ class Cleaner extends Controller
 
           /***** */
 
-
-
         $this->set('data', $data);
     }
 
@@ -302,10 +297,10 @@ class Cleaner extends Controller
 
         $default = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT id FROM mysql_server WHERE name ='" . $name . "';";
+        $sql                 = "SELECT id FROM mysql_server WHERE name ='".$name."';";
         $res_id_mysql_server = $default->sql_query($sql);
         if ($default->sql_num_rows($res_id_mysql_server) == 1) {
-            $ob = $default->sql_fetch_object($res_id_mysql_server);
+            $ob              = $default->sql_fetch_object($res_id_mysql_server);
             $id_mysql_server = $ob->id;
         } else {
             throw new \Exception("PMACTRL-001 : Impossible to find the MySQL server");
@@ -318,8 +313,7 @@ class Cleaner extends Controller
     {
         $table = new Table(0);
 
-        echo "[" . date("Y-m-d H:i:s") . "] Starting deamon for cleaner ..." . PHP_EOL;
-
+        echo "[".date("Y-m-d H:i:s")."] Starting deamon for cleaner ...".PHP_EOL;
 
         $table->addHeader(array("Parameter", "Value"));
         $table->addLine(array("SERVER_TO_PURGE", $ob->link_to_purge));
@@ -337,9 +331,9 @@ class Cleaner extends Controller
 
         if (file_exists($path_file_pid)) {
             $pid = file_get_contents($path_file_pid);
-            $msg = "Error a daemon already started with pid : '" . trim($pid) . "' !";
+            $msg = "Error a daemon already started with pid : '".trim($pid)."' !";
             error_log($msg);
-            throw new \Exception("PMACTRL-004 : " . $msg);
+            throw new \Exception("PMACTRL-004 : ".$msg);
         } else {
             $pid = getmypid();
             file_put_contents($path_file_pid, $pid);
@@ -348,12 +342,9 @@ class Cleaner extends Controller
 
     public function showDaemon()
     {
-        $db = $this->di['db']->sql(DB_DEFAULT);
-
-        $sql = "SELECT * FROM `pmacli_drain_process` order by date_start DESC LIMIT 5000";
-
+        $db            = $this->di['db']->sql(DB_DEFAULT);
+        $sql           = "SELECT * FROM `pmacli_drain_process` order by date_start DESC LIMIT 5000";
         $data['clean'] = $db->sql_fetch_yield($sql);
-
 
         $this->set('data', $data);
     }
@@ -372,26 +363,25 @@ class Cleaner extends Controller
 
         $data['cleaner_main'] = $db->sql_fetch_yield($sql);
 
-        $sql = "SELECT DISTINCT `name` FROM pmacli_drain_process";
+        $sql                  = "SELECT DISTINCT `name` FROM pmacli_drain_process";
         $data['cleaner_name'] = $db->sql_fetch_yield($sql);
 
         $data['cleaner_name'] = iterator_to_array($data['cleaner_name']);
 
 
         $data['id_cleaner'] = empty($param[0]) ? 0 : $param[0];
-        $data['menu'] = empty($param[1]) ? "log" : $param[1];
+        $data['menu']       = empty($param[1]) ? "log" : $param[1];
 
 
-        $this->title = __("Cleaner");
-        $this->ariane = " > " . $this->title . " > " . $data['id_cleaner'];
+        $this->title       = __("Cleaner");
+        $this->ariane      = " > ".$this->title." > ".$data['id_cleaner'];
         $this->layout_name = 'pmacontrol';
 
         $this->di['js']->addJavascript(array('jquery-latest.min.js',
             'cleaner/index.cleaner.js'
-            ));
+        ));
 
 
-        
         /*
           $sql = "SELECT `table`, avg(row) as avg FROM `pmacli_drain_item` GROUP BY `table` ORDER by `table`;";
 
@@ -428,24 +418,24 @@ class Cleaner extends Controller
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT * FROM `pmacli_drain_process` WHERE `id_cleaner_main`='" . $param[0] . "' ORDER BY date_start DESC LIMIT 100";
-        $data['treatment'] = $db->sql_fetch_yield($sql);
+        $sql                = "SELECT * FROM `pmacli_drain_process` WHERE `id_cleaner_main`='".$param[0]."' ORDER BY date_start DESC LIMIT 100";
+        $data['treatment']  = $db->sql_fetch_yield($sql);
         $data['id_cleaner'] = $param[0];
         $this->set('data', $data);
     }
 
     public function detail($param)
     {
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db  = $this->di['db']->sql(DB_DEFAULT);
         $tmp = explode('/', $_GET['url']);
         $var = end($tmp);
 
-        $sql = "SELECT * FROM pmacli_drain_item WHERE id_pmacli_drain_process = '" . $var . "' order by `table`";
+        $sql            = "SELECT * FROM pmacli_drain_item WHERE id_pmacli_drain_process = '".$var."' order by `table`";
         $data['detail'] = $db->sql_fetch_yield($sql);
 
-        $sql = "SELECT a.`table`, avg(row) as row FROM pmacli_drain_item a
+        $sql         = "SELECT a.`table`, avg(row) as row FROM pmacli_drain_item a
         INNER JOIN pmacli_drain_process b ON a.id_pmacli_drain_process = b.id
-        WHERE b.id_cleaner_main = '" . $param[0] . "'
+        WHERE b.id_cleaner_main = '".$param[0]."'
         GROUP BY a.`table`";
         $data['avg'] = $db->sql_fetch_yield($sql);
         //var_dump($sql);
@@ -463,10 +453,10 @@ class Cleaner extends Controller
     public function add($param)
     {
         $this->layout_name = 'pmacontrol';
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->di['js']->addJavascript(array("jquery-latest.min.js", "jquery.browser.min.js", "jquery.autocomplete.min.js", "cleaner/add.cleaner.js"));
-        $this->title = __('Add a cleaner');
-        $this->ariane = " > " . '<a href="' . LINK . 'Cleaner/index/">' . __('Cleaner') . "</a> > " . $this->title;
+        $this->title       = __('Add a cleaner');
+        $this->ariane      = " > ".'<a href="'.LINK.'Cleaner/index/">'.__('Cleaner')."</a> > ".$this->title;
 
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
@@ -478,35 +468,35 @@ class Cleaner extends Controller
 
             if ($id_cleaner_main) {
                 foreach ($_POST['cleaner_foreign_key'] as $data) {
-                    $cleaner_foreign_key['cleaner_foreign_key'] = $data;
+                    $cleaner_foreign_key['cleaner_foreign_key']                    = $data;
                     $cleaner_foreign_key['cleaner_foreign_key']['id_cleaner_main'] = $id_cleaner_main;
 
                     $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
                 }
 
                 if ($id_cleaner_foreign_key) {
-                    header('location: ' . LINK . 'Cleaner/index/');
+                    header('location: '.LINK.'Cleaner/index/');
                 }
             }
         }
 
-        $sql = "SELECT * FROM mysql_server order by `name`";
+        $sql     = "SELECT * FROM mysql_server order by `name`";
         $servers = $db->sql_fetch_yield($sql);
 
         $data['server'] = [];
         foreach ($servers as $server) {
-            $tmp = [];
-            $tmp['id'] = $server['id'];
-            $tmp['libelle'] = str_replace('_', '-', $server['name']) . " (" . $server['ip'] . ")";
+            $tmp              = [];
+            $tmp['id']        = $server['id'];
+            $tmp['libelle']   = str_replace('_', '-', $server['name'])." (".$server['ip'].")";
             $data['server'][] = $tmp;
         }
 
 
         $data['wait_time'] = [];
         for ($i = 1; $i < 101; $i++) {
-            $tmp = [];
-            $tmp['id'] = $i;
-            $tmp['libelle'] = $i;
+            $tmp                 = [];
+            $tmp['id']           = $i;
+            $tmp['libelle']      = $i;
             $data['wait_time'][] = $tmp;
         }
 
@@ -517,9 +507,9 @@ class Cleaner extends Controller
     {
 
         $this->layout_name = false;
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db                = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($param[0]) . "';";
+        $sql = "SELECT id,name FROM mysql_server WHERE id = '".$db->sql_real_escape_string($param[0])."';";
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
@@ -531,10 +521,10 @@ class Cleaner extends Controller
 
 
         $data['databases'] = [];
-        while ($ob = $db_to_get_db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->Database;
-            $tmp['libelle'] = $ob->Database;
+        while ($ob                = $db_to_get_db->sql_fetch_object($res)) {
+            $tmp                 = [];
+            $tmp['id']           = $ob->Database;
+            $tmp['libelle']      = $ob->Database;
             $data['databases'][] = $tmp;
         }
 
@@ -546,25 +536,25 @@ class Cleaner extends Controller
         $database = $param[0];
 
         $this->layout_name = false;
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db                = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($_GET['id_mysql_server']) . "';";
+        $sql = "SELECT id,name FROM mysql_server WHERE id = '".$db->sql_real_escape_string($_GET['id_mysql_server'])."';";
         $res = $db->sql_query($sql);
 
 
         while ($ob = $db->sql_fetch_object($res)) {
             $id_server = $ob->id;
-            $db_clean = $this->di['db']->sql($ob->name);
+            $db_clean  = $this->di['db']->sql($ob->name);
         }
 
-        $sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '" . $database . "' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
+        $sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '".$database."' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
 
         $res = $db_clean->sql_query($sql);
 
         $data['table'] = [];
-        while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->TABLE_NAME;
+        while ($ob            = $db->sql_fetch_object($res)) {
+            $tmp            = [];
+            $tmp['id']      = $ob->TABLE_NAME;
             $tmp['libelle'] = $ob->TABLE_NAME;
 
             $data['table'][] = $tmp;
@@ -577,17 +567,17 @@ class Cleaner extends Controller
     {
 
         $this->layout_name = false;
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db                = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT id,name FROM mysql_server WHERE id = '" . $db->sql_real_escape_string($_GET['id_mysql_server']) . "';";
+        $sql = "SELECT id,name FROM mysql_server WHERE id = '".$db->sql_real_escape_string($_GET['id_mysql_server'])."';";
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
             $id_server = $ob->id;
-            $db_clean = $this->di['db']->sql($ob->name);
+            $db_clean  = $this->di['db']->sql($ob->name);
         }
 
-        $sql = "show index from `" . $_GET['schema'] . "`.`" . $param[0] . "`";
+        $sql = "show index from `".$_GET['schema']."`.`".$param[0]."`";
         //$sql = "SELECT TABLE_NAME from `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = '".$database."' AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME";
 
         echo $sql;
@@ -595,9 +585,9 @@ class Cleaner extends Controller
         $res = $db_clean->sql_query($sql);
 
         $data['column'] = [];
-        while ($ob = $db->sql_fetch_object($res)) {
-            $tmp = [];
-            $tmp['id'] = $ob->Column_name;
+        while ($ob             = $db->sql_fetch_object($res)) {
+            $tmp            = [];
+            $tmp['id']      = $ob->Column_name;
             $tmp['libelle'] = $ob->Column_name;
 
             $data['column'][] = $tmp;
@@ -609,34 +599,34 @@ class Cleaner extends Controller
     function delete($param)
     {
 
-        $this->view = false;
+        $this->view        = false;
         $this->layout_name = false;
 
 
         $id_cleaner = $param[0];
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $db         = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT * FROM cleaner_main WHERE id ='" . $id_cleaner . "'";
+        $sql = "SELECT * FROM cleaner_main WHERE id ='".$id_cleaner."'";
         $res = $db->sql_query($sql);
 
 
         if ($db->sql_num_rows($res) !== 1) {
-            $msg = I18n::getTranslation(__("The cleaner with the id :") . " '" . $id_cleaner . "' " . __("doesn't exist"));
+            $msg   = I18n::getTranslation(__("The cleaner with the id :")." '".$id_cleaner."' ".__("doesn't exist"));
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
         } else {
 
             $ob = $db->sql_fetch_object($res);
 
-            $res = $sql = "DELETE FROM cleaner_main where id ='" . $id_cleaner . "'";
+            $res = $sql = "DELETE FROM cleaner_main where id ='".$id_cleaner."'";
             $db->sql_query($sql);
 
-            $msg = I18n::getTranslation(__("The cleaner has been deleted : ") . "'" . $ob->libelle . "'");
+            $msg   = I18n::getTranslation(__("The cleaner has been deleted : ")."'".$ob->libelle."'");
             $title = I18n::getTranslation(__("Cleaner deleted"));
             set_flash("success", $title, $msg);
         }
 
-        header("location: " . LINK . "cleaner/index");
+        header("location: ".LINK."cleaner/index");
     }
 
     public function settings($param)
@@ -649,7 +639,7 @@ class Cleaner extends Controller
 
         $this->title = __('Add a cleaner');
 
-        $this->ariane = " > " . '<a href="' . LINK . 'Cleaner/index/">' . __('Cleaner') . "</a> > " . $this->title;
+        $this->ariane = " > ".'<a href="'.LINK.'Cleaner/index/">'.__('Cleaner')."</a> > ".$this->title;
 
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
@@ -661,7 +651,7 @@ class Cleaner extends Controller
 
             if ($id_cleaner_main) {
                 foreach ($_POST['cleaner_foreign_key'] as $data) {
-                    $cleaner_foreign_key['cleaner_foreign_key'] = $data;
+                    $cleaner_foreign_key['cleaner_foreign_key']                    = $data;
                     $cleaner_foreign_key['cleaner_foreign_key']['id_cleaner_main'] = $id_cleaner_main;
 
                     $id_cleaner_foreign_key = $db->sql_save($cleaner_foreign_key);
@@ -669,13 +659,13 @@ class Cleaner extends Controller
 
 
                 if ($id_cleaner_foreign_key) {
-                    header('location: ' . LINK . 'Cleaner/index/');
+                    header('location: '.LINK.'Cleaner/index/');
                 }
             }
         }
 
 
-        $sql = "SELECT * FROM mysql_server order by `name`";
+        $sql     = "SELECT * FROM mysql_server order by `name`";
         $servers = $db->sql_fetch_yield($sql);
 
 
@@ -683,8 +673,8 @@ class Cleaner extends Controller
         foreach ($servers as $server) {
             $tmp = [];
 
-            $tmp['id'] = $server['id'];
-            $tmp['libelle'] = str_replace('_', '-', $server['name']) . " (" . $server['ip'] . ")";
+            $tmp['id']      = $server['id'];
+            $tmp['libelle'] = str_replace('_', '-', $server['name'])." (".$server['ip'].")";
 
             $data['server'][] = $tmp;
         }
@@ -694,7 +684,7 @@ class Cleaner extends Controller
         for ($i = 1; $i < 101; $i++) {
             $tmp = [];
 
-            $tmp['id'] = $i;
+            $tmp['id']      = $i;
             $tmp['libelle'] = $i;
 
             $data['wait_time'][] = $tmp;
@@ -708,7 +698,7 @@ class Cleaner extends Controller
     {
 
         $id_cleaner = $param[0];
-        $command = $param[1];
+        $command    = $param[1];
 
 
         switch ($command) {
@@ -730,15 +720,15 @@ class Cleaner extends Controller
 
     public function launch($param)
     {
-        $id_cleaner = $param[0];
-        $default = $this->di['db']->sql(DB_DEFAULT);
-        $this->view = false;
+        $id_cleaner        = $param[0];
+        $default           = $this->di['db']->sql(DB_DEFAULT);
+        $this->view        = false;
         $this->layout_name = false;
 
         $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
             FROM cleaner_main a
                 INNER JOIN mysql_server b ON a.id_mysql_server = b.id
-                WHERE a.id = '" . $id_cleaner . "'";
+                WHERE a.id = '".$id_cleaner."'";
 
         $res = $default->sql_query($sql);
 
@@ -747,28 +737,17 @@ class Cleaner extends Controller
         }
 
         if (empty($cleaner)) {
-            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '" . $id_cleaner . "'");
+            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '".$id_cleaner."'");
         }
 
         $purge = new PmaCliDraining($this->di['db']);
 
-        $purge->link_to_purge = $cleaner->nameserver;
+        $purge->link_to_purge   = $cleaner->nameserver;
         $purge->schema_to_purge = $cleaner->database;
-        $purge->schema_delete = $cleaner->cleaner_db;
-        $purge->prefix = $cleaner->prefix;
-        $purge->debug = false;
-
-
-
-        //get and set virtual Foreign keys.
-        $sql = "SELECT * FROM cleaner_foreign_key WHERE id_cleaner_main = '" . $id_cleaner . "'";
-        $foreign_keys = $default->sql_fetch_yield($sql);
-
-        foreach ($foreign_keys as $line) {
-            $fk[$line['constraint_schema']][$line['constraint_table']][$line['constraint_column']] = $line['referenced_schema'] . "-" . $line['referenced_table'] . "-" . $line['referenced_column'];
-        }
-        $purge->foreign_keys = $fk;
-
+        $purge->schema_delete   = $cleaner->cleaner_db;
+        $purge->prefix          = $cleaner->prefix;
+        $purge->debug           = false;
+        $purge->id_cleaner      = $id_cleaner;
 
         $purge->main_table = $cleaner->main_table;
 
@@ -778,10 +757,10 @@ class Cleaner extends Controller
         //$this->getMsgStartDaemon($purge);
 
 
-        echo "[" . date("Y-m-d H:i:s") . "] Starting Cleaner with id : $id_cleaner\n";
-        $sql = "SELECT PK FROM `" . $purge->schema_to_purge . "`.`" . $purge->main_table . "` \nWHERE " . $cleaner->query . "\n";
+        echo "[".date("Y-m-d H:i:s")."] Starting Cleaner with id : $id_cleaner\n";
+        $sql = "SELECT PK FROM `".$purge->schema_to_purge."`.`".$purge->main_table."` \nWHERE ".$cleaner->query."\n";
 
-        echo \SqlFormatter::format($sql) . PHP_EOL;
+        echo \SqlFormatter::format($sql).PHP_EOL;
 
         $default->sql_close();
 
@@ -792,13 +771,13 @@ class Cleaner extends Controller
 
             $date_start = date("Y-m-d H:i:s");
             $time_start = microtime(true);
-            $ret = $purge->start();
+            $ret        = $purge->start();
 
             if (empty($ret[$purge->main_table])) {
                 $ret[$purge->main_table] = 0;
             }
 
-            debug($ret);
+            //debug($ret);
 
             $this->stats_for_log($ret);
 
@@ -810,14 +789,14 @@ class Cleaner extends Controller
 
             $default = $this->di['db']->sql(DB_DEFAULT);
 
-            $data = array();
+            $data                                            = array();
             $data['pmacli_drain_process']['id_mysql_server'] = $cleaner->id_mysql_server;
-            $data['pmacli_drain_process']['date_start'] = $date_start;
-            $data['pmacli_drain_process']['date_end'] = $date_end;
-            $data['pmacli_drain_process']['time'] = round($time_end - $time_start, 2);
-            $data['pmacli_drain_process']['item_deleted'] = $ret[$purge->main_table];
+            $data['pmacli_drain_process']['date_start']      = $date_start;
+            $data['pmacli_drain_process']['date_end']        = $date_end;
+            $data['pmacli_drain_process']['time']            = round($time_end - $time_start, 2);
+            $data['pmacli_drain_process']['item_deleted']    = $ret[$purge->main_table];
             $data['pmacli_drain_process']['id_cleaner_main'] = $id_cleaner;
-            $data['pmacli_drain_process']['name'] = $cleaner->libelle;
+            $data['pmacli_drain_process']['name']            = $cleaner->libelle;
             //$data['pmacli_drain_process']['time_by_item'] = round($data['pmacli_drain_process']['time'] / $this->NB_ELEM, 4);
 
             $res = $default->sql_save($data);
@@ -826,7 +805,7 @@ class Cleaner extends Controller
                 debug($default->sql_error());
                 debug($data);
 
-                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner (ID : " . $id_cleaner . ")");
+                throw new \Exception("PMACTRL-002 : Impossible to insert stat for cleaner (ID : ".$id_cleaner.")");
             } else {
 
                 $id_pmacli_drain_process = $default->sql_insert_id();
@@ -835,10 +814,10 @@ class Cleaner extends Controller
 
                     if (!empty($val)) {
 
-                        $data = [];
+                        $data                                                 = [];
                         $data['pmacli_drain_item']['id_pmacli_drain_process'] = $id_pmacli_drain_process;
-                        $data['pmacli_drain_item']['row'] = $val;
-                        $data['pmacli_drain_item']['table'] = $table;
+                        $data['pmacli_drain_item']['row']                     = $val;
+                        $data['pmacli_drain_item']['table']                   = $table;
 
                         $res = $default->sql_save($data);
 
@@ -846,7 +825,7 @@ class Cleaner extends Controller
                             debug($default->sql_error());
                             debug($data);
 
-                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner (ID : " . $id_cleaner . ")");
+                            throw new \Exception("PMACTRL-003 : Impossible to insert an item for cleaner (ID : ".$id_cleaner.")");
                         }
                     }
                 }
@@ -854,7 +833,7 @@ class Cleaner extends Controller
 
             $i++;
 
-            echo "[" . date('Y-m-d H:i:s') . "] Execution time : " . round($time_end - $time_start, 2) . " sec - Comandes deleted : " . $ret[$purge->main_table] . "\n";
+            echo "[".date('Y-m-d H:i:s')."] Execution time : ".round($time_end - $time_start, 2)." sec - rows deleted : ".$ret[$purge->main_table]."\n";
 
             $default->sql_close(); //to prevent mysql gone away
 
@@ -866,21 +845,21 @@ class Cleaner extends Controller
     function start($param)
     {
 
-        $id_cleaner = $param[0];
-        $db = $this->di['db']->sql(DB_DEFAULT);
-        $this->view = false;
+        $id_cleaner        = $param[0];
+        $db                = $this->di['db']->sql(DB_DEFAULT);
+        $this->view        = false;
         $this->layout_name = false;
 
 
-        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $sql = "SELECT * FROM cleaner_main where id ='".$id_cleaner."'";
         $res = $db->sql_query($sql);
 
 
         if ($db->sql_num_rows($res) !== 1) {
-            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the id : ") . "'" . $id_cleaner . "'");
+            $msg   = I18n::getTranslation(__("Impossible to find the cleaner with the id : ")."'".$id_cleaner."'");
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
-            header("location: " . LINK . "cleaner/index");
+            header("location: ".LINK."cleaner/index");
             exit;
         }
 
@@ -892,59 +871,59 @@ class Cleaner extends Controller
 
             //todo add error flux in the log
 
-            $log_file = TMP . "log/cleaner_" . $ob->id . ".log";
+            $log_file = TMP."log/cleaner_".$ob->id.".log";
 
-            $cmd = $php . " " . GLIAL_INDEX . " Cleaner launch " . $id_cleaner . " >> " . $log_file . " & echo $!";
+            $cmd = $php." ".GLIAL_INDEX." Cleaner launch ".$id_cleaner." >> ".$log_file." & echo $!";
             $pid = shell_exec($cmd);
 
 
-            $sql = "UPDATE cleaner_main SET pid ='" . $pid . "',log_file='" . $log_file . "' WHERE id = '" . $id_cleaner . "'";
+            $sql = "UPDATE cleaner_main SET pid ='".$pid."',log_file='".$log_file."' WHERE id = '".$id_cleaner."'";
             $db->sql_query($sql);
 
-            $msg = I18n::getTranslation(__("The cleaner id (" . $id_cleaner . ") successfully started with") . " pid : " . $pid);
+            $msg   = I18n::getTranslation(__("The cleaner id (".$id_cleaner.") successfully started with")." pid : ".$pid);
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
-            header("location: " . LINK . "cleaner/index");
+            header("location: ".LINK."cleaner/index");
         } else {
 
-            $msg = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ") . "'" . $id_cleaner . "'" . " (" . __("Already running !") . ")");
+            $msg   = I18n::getTranslation(__("Impossible to launch the cleaner with the id : ")."'".$id_cleaner."'"." (".__("Already running !").")");
             $title = I18n::getTranslation(__("Error"));
             set_flash("caution", $title, $msg);
-            header("location: " . LINK . "cleaner/index");
+            header("location: ".LINK."cleaner/index");
         }
     }
 
     function stop($param)
     {
-        $id_cleaner = $param[0];
-        $db = $this->di['db']->sql(DB_DEFAULT);
-        $this->view = false;
+        $id_cleaner        = $param[0];
+        $db                = $this->di['db']->sql(DB_DEFAULT);
+        $this->view        = false;
         $this->layout_name = false;
 
-        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $sql = "SELECT * FROM cleaner_main where id ='".$id_cleaner."'";
         $res = $db->sql_query($sql);
 
         if ($db->sql_num_rows($res) !== 1) {
-            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the id : ") . "'" . $id_cleaner . "'");
+            $msg   = I18n::getTranslation(__("Impossible to find the cleaner with the id : ")."'".$id_cleaner."'");
             $title = I18n::getTranslation(__("Error"));
             set_flash("error", $title, $msg);
-            header("location: " . LINK . "cleaner/index");
+            header("location: ".LINK."cleaner/index");
             exit;
         }
 
         $ob = $db->sql_fetch_object($res);
 
         if ($this->isRunning($ob->pid)) {
-            $msg = I18n::getTranslation(__("The cleaner with pid : '" . $ob->pid . "' successfully stopped "));
+            $msg   = I18n::getTranslation(__("The cleaner with pid : '".$ob->pid."' successfully stopped "));
             $title = I18n::getTranslation(__("Success"));
             set_flash("success", $title, $msg);
 
 
-            $cmd = "kill " . $ob->pid;
+            $cmd = "kill ".$ob->pid;
             shell_exec($cmd);
-            shell_exec("echo '[" . date("Y-m-d H:i:s") . "] CLEANER STOPED !' >> " . $ob->log_file);
+            shell_exec("echo '[".date("Y-m-d H:i:s")."] CLEANER STOPED !' >> ".$ob->log_file);
         } else {
-            $msg = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ") . "'" . $ob->pid . "'");
+            $msg   = I18n::getTranslation(__("Impossible to find the cleaner with the pid : ")."'".$ob->pid."'");
             $title = I18n::getTranslation(__("Cleaner was already stopped or in error"));
             set_flash("caution", $title, $msg);
         }
@@ -952,13 +931,13 @@ class Cleaner extends Controller
         sleep(1);
 
         if (!$this->isRunning($ob->pid)) {
-            $sql = "UPDATE cleaner_main SET pid ='0' WHERE id = '" . $id_cleaner . "'";
+            $sql = "UPDATE cleaner_main SET pid ='0' WHERE id = '".$id_cleaner."'";
             $db->sql_query($sql);
         } else {
-            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "' . $ob->pid . '"');
+            throw new Exception('PMACTRL-875 : Impossible to stop cleaner with pid : "'.$ob->pid.'"');
         }
 
-        header("location: " . LINK . "cleaner/index");
+        header("location: ".LINK."cleaner/index");
     }
 
     private function isRunning($pid)
@@ -968,7 +947,7 @@ class Cleaner extends Controller
             return false;
         }
 
-        $cmd = "ps -p " . $pid;
+        $cmd   = "ps -p ".$pid;
         $alive = shell_exec($cmd);
 
         if (strpos($alive, $pid) !== false) {
@@ -979,25 +958,22 @@ class Cleaner extends Controller
 
     public function log($param)
     {
-        $id_cleaner = $param[0];
-        $db = $this->di['db']->sql(DB_DEFAULT);
+        $id_cleaner        = $param[0];
+        $db                = $this->di['db']->sql(DB_DEFAULT);
         $this->layout_name = false;
 
-        $sql = "SELECT * FROM cleaner_main where id ='" . $id_cleaner . "'";
+        $sql = "SELECT * FROM cleaner_main where id ='".$id_cleaner."'";
         $res = $db->sql_query($sql);
 
         $ob = $db->sql_fetch_object($res);
 
-        $data['log'] = shell_exec("tail -n2000 " . $ob->log_file);
+        $data['log']      = shell_exec("tail -n2000 ".$ob->log_file);
         $data['log_file'] = $ob->log_file;
 
 
         $this->di['js']->code_javascript("var objDiv = document.getElementById('data_log');
 objDiv.scrollTop = objDiv.scrollHeight;
 ");
-
-
-
 
         $this->set('data', $data);
     }
@@ -1018,16 +994,16 @@ objDiv.scrollTop = objDiv.scrollHeight;
 
     public function getTableImpacted($param)
     {
-        $id_cleaner= $param[0];
-        
+        $id_cleaner = $param[0];
+
         $default = $this->di['db']->sql(DB_DEFAULT);
-        
+
         $this->view = false;
-        
+
         $sql = "SELECT *, b.name as nameserver,a.id as id_cleaner_main
             FROM cleaner_main a
                 INNER JOIN mysql_server b ON a.id_mysql_server = b.id
-                WHERE a.id = '" . $id_cleaner . "'";
+                WHERE a.id = '".$id_cleaner."'";
 
         $res = $default->sql_query($sql);
 
@@ -1036,31 +1012,34 @@ objDiv.scrollTop = objDiv.scrollHeight;
         }
 
         if (empty($cleaner)) {
-            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '" . $id_cleaner . "'");
+            throw new \Exception("PMACTRL-254 : Impossible to find id_cleaner_main = '".$id_cleaner."'");
         }
 
         $purge = new PmaCliDraining($this->di['db']);
 
-        $purge->link_to_purge = $cleaner->nameserver;
+        $purge->link_to_purge   = $cleaner->nameserver;
         $purge->schema_to_purge = $cleaner->database;
-        $purge->schema_delete = $cleaner->cleaner_db;
-        $purge->prefix = $cleaner->prefix;
-        $purge->debug = false;
+        $purge->schema_delete   = $cleaner->cleaner_db;
+        $purge->prefix          = $cleaner->prefix;
+        $purge->debug           = false;
 
 
         //get and set virtual Foreign keys.
-        $sql = "SELECT * FROM cleaner_foreign_key WHERE id_cleaner_main = '" . $id_cleaner . "'";
+        $sql          = "SELECT * FROM cleaner_foreign_key WHERE id_cleaner_main = '".$id_cleaner."'";
         $foreign_keys = $default->sql_fetch_yield($sql);
 
         foreach ($foreign_keys as $line) {
-            $fk[$line['constraint_schema']][$line['constraint_table']][$line['constraint_column']] = $line['referenced_schema'] . "-" . $line['referenced_table'] . "-" . $line['referenced_column'];
+            $fk[$line['constraint_schema']][$line['constraint_table']][$line['constraint_column']] = $line['referenced_schema']."-".$line['referenced_table']."-".$line['referenced_column'];
         }
-        $purge->foreign_keys = $fk;
+
+        if (!empty($fk)) {
+            $purge->foreign_keys = $fk;
+        }
+
 
 
         $purge->main_table = $cleaner->main_table;
-        
+
         return $purge->getImpactedTable();
     }
-
 }

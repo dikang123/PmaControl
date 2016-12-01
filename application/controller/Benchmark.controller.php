@@ -280,7 +280,7 @@ Threads fairness:
     public function index()
     {
 
-        $db  = $this->di['db']->sql(DB_DEFAULT);
+        $db = $this->di['db']->sql(DB_DEFAULT);
         $this->di['js']->addJavascript(array("Chart.min.js"));
 
 
@@ -288,14 +288,10 @@ Threads fairness:
         $sql = "SELECT max(id) as idmax from benchmark_main";
         $res = $db->sql_query($sql);
 
-        while ($ob = $db->sql_fetch_object($res))
-        {
+        while ($ob = $db->sql_fetch_object($res)) {
             $id_benchmark_main = $ob->idmax;
         }
-        
 
-
-        
         $sql = "SELECT * FROM benchmark_run where `id_benchmark_main` = ".$id_benchmark_main;
 
         $res = $db->sql_query($sql);
@@ -324,17 +320,86 @@ Threads fairness:
         $transaction  = implode(',', $transaction);
         $error        = implode(',', $error);
 
+        /*
+          $this->di['js']->code_javascript('
+
+          var rt = document.getElementById("rt").getContext("2d");
+
+          var options = {
+          pointDot : true,
+          }
+
+          var data_rt = {
+          labels: "",
+          datasets: [ ]
+          };
+
+          data_rt.datasets[0] = {
+          fillColor: "rgba(252,215,95,0.4)",
+          strokeColor: "rgba(252,215,95,1)",
+          pointStrokeColor: "#fff",
+          pointHighlightFill: "#fff",
+          pointHighlightStroke: "rgba(214,165,5,1)"
+          };
+          data_rt.datasets[0].label = "AVG";
+          data_rt.datasets[0].data = ['.$reponse_time.'];
+
+
+          var myLineChart_rt = new Chart(rt,data_rt);
+          ');
+         */
 
         $this->di['js']->code_javascript('
-var ctx = document.getElementById("rds");
+var ctx4 = document.getElementById("tps");
 
-var myChart = new Chart(ctx, {
+var myChart4 = new Chart(ctx4, {
+    type: "line",
+    data: {
+        labels: ['.$threads.'],
+        datasets: [{
+            label: "Transactions by second",
+            data: ['.$transaction.'],
+             backgroundColor: "rgba(75,215,134,0.4)",
+             borderColor: "rgba(75,215,134,1)",
+             /*
+             borderWidth: 1,
+             pointBackgroundColor: "#000",
+             pointRadius :0
+             */
+        }]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:false
+                }
+            }]
+        },
+        pointDot : false,
+    }
+});
+');
+
+        $this->di['js']->code_javascript('
+var ctx1 = document.getElementById("rds");
+
+var myChart1 = new Chart(ctx1, {
     type: "line",
     data: {
         labels: ['.$threads.'],
         datasets: [{
             label: "Reads by second",
-            data: ['.$reads.']
+            data: ['.$reads.'],
+            backgroundColor: "rgba(142,199,255,0.4)",
+            borderColor: "rgba(142,199,255,1)",
+
+
+        },{
+            label: "Writes by second",
+            data: ['.$write.'],
+            backgroundColor: "rgba(255,168,168, 0.4)",
+            borderColor: "rgba(255,168,168,1)",
         }]
     },
     options: {
@@ -354,14 +419,20 @@ var myChart = new Chart(ctx, {
         $this->di['js']->code_javascript('
 var ctx2 = document.getElementById("wrs");
 
-var myChart = new Chart(ctx2, {
+
+var myChart2 = new Chart(ctx2, {
     type: "line",
+
     data: {
         labels: ['.$threads.'],
-        datasets: [{
+        datasets: [{            
             label: "Writes by second",
-            data: ['.$write.']
-        }]
+            data: ['.$write.'],
+            backgroundColor: "rgba(255,168,168, 0.4)",
+            borderColor: "rgba(255,168,168,1)",
+            fill: true,            
+        }],
+
     },
     options: {
         scales: {
@@ -378,15 +449,17 @@ var myChart = new Chart(ctx2, {
 
 
         $this->di['js']->code_javascript('
-var ctx2 = document.getElementById("rt");
+var ctx3 = document.getElementById("rt");
 
-var myChart = new Chart(ctx2, {
+var myChart = new Chart(ctx3, {
     type: "line",
     data: {
         labels: ['.$threads.'],
         datasets: [{
             label: "Response Time",
-            data: ['.$reponse_time.']
+            data: ['.$reponse_time.'],
+            backgroundColor: ["rgba(252,215,95,0.4)"],
+            borderColor: "rgba(252,215,95,1)"
         }]
     },
     options: {
@@ -404,55 +477,30 @@ var myChart = new Chart(ctx2, {
 
 
         $this->di['js']->code_javascript('
-var ctx2 = document.getElementById("tps");
+          var ctx5 = document.getElementById("err");
 
-var myChart = new Chart(ctx2, {
-    type: "line",
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{
-            label: "Transactions by second",
-            data: ['.$transaction.']
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
-
-
-        $this->di['js']->code_javascript('
-var ctx2 = document.getElementById("err");
-
-var myChart = new Chart(ctx2, {
-    type: "line",
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{
-            label: "Transactions by second",
-            data: ['.$error.']
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
+          var myChart5 = new Chart(ctx5, {
+            type: "line",
+                data: {
+                    labels: ['.$threads.'],
+                    datasets: [{
+                    label: "Errors by second",
+                    data: ['.$error.'],
+                    
+                }]
+            },
+            options: {
+                  scales: {
+                      yAxes: [{
+                          ticks: {
+                              beginAtZero:false
+                          }
+                      }]
+                },
+            pointDot : false,
+            }
+          });
+          ');
     }
 
     public function testError($input_lines)
