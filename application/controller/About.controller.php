@@ -9,7 +9,7 @@ class About extends Controller {
 
         $name = __("About");
         $this->title = '<i class="fa fa-info-circle" style="font-size:32px"></i> ' . $name;
-        $this->ariane = '> <i style="font-size: 16px" class="fa fa-puzzle-piece"></i> Plugins > <i class="fa fa-info-circle" style="font-size:16px"></i> ' 
+        $this->ariane = '> <i class="fa fa-question" style="font-size:16px" aria-hidden="true"></i> Help > <i class="fa fa-info-circle" style="font-size:16px"></i> '
                 . $name;
         
         
@@ -23,7 +23,4 @@ class About extends Controller {
         
         $this->set('data',$data);
     }
-
-
-
 }

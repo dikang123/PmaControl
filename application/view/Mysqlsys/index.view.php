@@ -10,9 +10,11 @@ use Glial\Html\Form\Form;
 echo '<div class="well">';
 
 
-\Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
+\Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment",
+    array());
 
-function remove($array) {
+function remove($array)
+{
     $params = explode("/", trim($_GET['url'], "/"));
 
     //print_r($params);
@@ -20,7 +22,7 @@ function remove($array) {
 
     foreach ($params as $key => $param) {
         foreach ($array as $var) {
-            if (strstr($param, $var . ':')) {
+            if (strstr($param, $var.':')) {
                 unset($params[$key]);
             }
         }
@@ -29,11 +31,11 @@ function remove($array) {
 
     return $ret;
 }
-
 echo '<br />';
 echo '<form action="" method="POST">';
-echo __("Server") . " : ";
-echo Form::select("mysql_server", "id", $data['servers'], "", array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
+echo __("Server")." : ";
+echo Form::select("mysql_server", "id", $data['servers'], "",
+    array("data-live-search" => "true", "class" => "selectpicker", "data-width" => "auto"));
 echo ' ';
 
 
@@ -41,11 +43,11 @@ echo '<button type="submit" class="btn btn-primary">Filter</button>';
 echo '</form>';
 echo '</div>';
 
-
+//debug($data['innodb']);
 
 if (!empty($_GET['mysql_server']['id'])) {
 
-    if (!empty($data['view_available']) && count($data['view_available']) > 0) {
+    if (!empty($data['view_available']) && count($data['view_available']) > 0 && !empty($data['innodb'])) {
         ?>
         <div class="row">
             <div class="col-md-2">
@@ -54,7 +56,7 @@ if (!empty($_GET['mysql_server']['id'])) {
                 echo '<table class="table table-condensed table-bordered table-striped">';
 
                 echo '<tr>';
-                echo '<th>' . __("Reporting") . '</th>';
+                echo '<th>'.__("Reporting").'</th>';
                 echo '</tr>';
 
 
@@ -66,9 +68,9 @@ if (!empty($_GET['mysql_server']['id'])) {
                     $url = remove(array("mysqlsys"));
 
                     if (!empty($_GET['mysqlsys']) && $view == $_GET['mysqlsys']) {
-                        echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '"><b>' . $view . '</b></a><br/>';
+                        echo '<a href="'.LINK.$url.'/mysqlsys:'.$view.'"><b>'.$view.'</b></a><br/>';
                     } else {
-                        echo '<a href="' . LINK . $url . '/mysqlsys:' . $view . '">' . $view . '</a><br/>';
+                        echo '<a href="'.LINK.$url.'/mysqlsys:'.$view.'">'.$view.'</a><br/>';
                     }
                 }
 
@@ -92,17 +94,17 @@ if (!empty($_GET['mysql_server']['id'])) {
                         if ($i === 1) {
                             echo '<tr>';
 
-                            echo '<th>' . __("Top") . '</th>';
+                            echo '<th>'.__("Top").'</th>';
                             foreach ($line as $var => $val) {
-                                echo '<th>' . $var . '</th>';
+                                echo '<th>'.$var.'</th>';
                             }
                             echo '</tr>';
                         }
 
                         echo '<tr>';
-                        echo '<td>' . $i . '</td>';
+                        echo '<td>'.$i.'</td>';
                         foreach ($line as $var => $val) {
-                            echo '<td>' . $val . '</td>';
+                            echo '<td>'.$val.'</td>';
                         }
 
                         echo '</tr>';
@@ -118,25 +120,31 @@ if (!empty($_GET['mysql_server']['id'])) {
             </div>
         </div>
         <?php
-    } elseif ( version_compare($data['variables'], "5.5", "<=")) {
+    } elseif (version_compare($data['variables'], "5.6", "<=")) {
 
         echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
             <p><b>Error :</b></p>';
 
         echo "This version of MySQL / MariaDB / Percona Server is not compatible with mysql-sys !<br />"
-        . " mysql-sys require version of MySQL / MariaDB / Percona Server 5.5 (<b>".$data['variables']."</b>) at minimum.";
+        ." mysql-sys require version of MySQL / MariaDB / Percona Server 5.6 (<b>".$data['variables']."</b>) at minimum.";
 
         echo '</div>';
+    } elseif (empty($data['innodb'])) {
+        echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
+            <p><b>Error :</b></p>';
+
+        echo "InnoDB must be activated to install or use MySQL-sys<br />";
+        echo '</div>';
     } else {
-            echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
+
+        echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">
             <p><b>Install:</b></p>';
-            
-        
+
         echo 'Your version of MySQL / MariaDB / Percona Server: <b>'.$data['variables']."</b><br />";
         echo 'mysql-sys is not yet installed on this server, do you want to install it ? ';
-        echo '<a href="'.LINK.'mysqlsys/install" role="button" class="btn btn-primary">Install MySQL-sys</a>';
-        
-            echo '</div>';
+        echo '<a href="'.LINK.'mysqlsys/install/mysql_server:id:'.$_GET['mysql_server']['id'].'" role="button" class="btn btn-primary">Install MySQL-sys</a>';
+
+        echo '</div>';
     }
 } else {
     echo '<div class="well" style="border-left-color: #5cb85c;   border-left-width: 10px;">

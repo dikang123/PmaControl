@@ -32,7 +32,6 @@ use Glial\Html\Form\Form;
     
 
     echo '<div style="float:right" class="btn-group" role="group" aria-label="Default button group">';
-    echo ' <a href="/pmacontrol/en/Cleaner/add/" class="btn btn-primary" style="font-size:12px"><span class="glyphicon glyphicon-plus" style="font-size:12px"></span> Add a MySQL server</a> ';
     echo '</div>';
 
 
@@ -43,8 +42,8 @@ use Glial\Html\Form\Form;
     
 
     
-    echo '&nbsp;<a href="' . LINK . 'Agent/stop/' . $data['pid'] . '" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-stop" aria-hidden="true" style="font-size:12px"></span> Stop Daemon</a>';
-    echo '<a href="' . LINK . 'Agent/start" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-play" aria-hidden="true" style="font-size:12px"></span> Start Daemon</a>';
+    echo '&nbsp;<a href="' . LINK . 'Agent/stop/1" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-stop" aria-hidden="true" style="font-size:12px"></span> Stop Daemon</a>';
+    echo '<a href="' . LINK . 'Agent/start/1" type="button" class="btn btn-primary" style="font-size:12px"> <span class="glyphicon glyphicon-play" aria-hidden="true" style="font-size:12px"></span> Start Daemon</a>';
 
     if (empty($data['pid'])) {
         echo '<a href="' . LINK . 'Server/listing/logs" type="button" class="btn btn-warning" style="font-size:12px"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true" style="font-size:13px"></span> Stopped</a>';

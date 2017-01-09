@@ -144,7 +144,7 @@ class Backup extends Controller
                 }
             } catch (\Exception $ex) {
 
-                echo 'Exception found : ', $e->getMessage(), "\n";
+                echo 'Exception found : ', $ex->getMessage(), "\n";
             }
         }
     }
@@ -252,6 +252,9 @@ class Backup extends Controller
             Crypt::$key = CRYPT_KEY;
 
             $storage_area['backup_storage_area'] = $_POST['backup_storage_area'];
+
+
+            
 
             if (!Ssh::testAccount($storage_area['backup_storage_area']['ip'], $storage_area['backup_storage_area']['port'],
                     $storage_area['backup_storage_area']['ssh_login'], $storage_area['backup_storage_area']['ssh_password'])) {

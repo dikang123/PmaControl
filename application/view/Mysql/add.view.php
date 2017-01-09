@@ -67,7 +67,7 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Type") ?></div>
             <div class="col-md-4"><?=
-                Form::select("mysql_server", "login",
+                Form::select("mysql_server", "type",
                     array(array("id" => "1", "libelle" => "Login / Password"), array("id" => "2", "libelle" => "SSH keys"))
                     , "", array("class" => "form-control"))
                 ?></div>
@@ -78,14 +78,14 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Login") ?></div>
             <div class="col-md-4"><?=
-                Form::input("mysql_server", "login", array("class" => "form-control", "placeholder" => "login mysql server"))
+                Form::input("mysql_server", "ssh_login", array("class" => "form-control", "placeholder" => "login mysql server"))
                 ?></div>
             <div class="col-md-4"></div>
         </div>
         <div class="row">
             <div class="col-md-4"><?= __("Password") ?></div>
             <div class="col-md-4"><?=
-                Form::input("mysql_server", "password", array("class" => "form-control", "placeholder" => "Password of mysql server"))
+                Form::input("mysql_server", "ssh_password", array("class" => "form-control", "placeholder" => "Password of mysql server"))
                 ?></div>
             <div class="col-md-4"></div>
         </div>
@@ -94,14 +94,22 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Public key") ?></div>
             <div class="col-md-4"><?=
-                Form::input("mysql_server", "login", array("class" => "form-control", "placeholder" => "login mysql server"))
+                Form::input("mysql_server", "public_key", array("class" => "form-control", "placeholder" => "login mysql server"))
                 ?></div>
             <div class="col-md-4"></div>
         </div>
         <div class="row">
             <div class="col-md-4"><?= __("Private key") ?></div>
             <div class="col-md-4"><?=
-                Form::input("mysql_server", "password", array("class" => "form-control", "placeholder" => "Password of mysql server"))
+                Form::input("mysql_server", "private_key", array("class" => "form-control", "placeholder" => "Password of mysql server"))
+                ?></div>
+            <div class="col-md-4"></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4"><?= __("Path for temp backup") ?></div>
+            <div class="col-md-4"><?=
+                Form::input("mysql_server", "path", array("class" => "form-control", "placeholder" => "Path where will be stored the backup before to transfert to storage area"))
                 ?></div>
             <div class="col-md-4"></div>
         </div>
@@ -115,7 +123,7 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Tags") ?></div>
             <div class="col-md-4"><?=
-                Form::select("mysql_server", "login",
+                Form::select("mysql_server", "tags",
                     array(array("id" => "1", "libelle" => "Login / Password"), array("id" => "2", "libelle" => "SSH keys"))
                     , "", array("class" => "form-control"))
                 ?></div>
@@ -125,8 +133,7 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Environement") ?></div>
             <div class="col-md-4"><?=
-                Form::select("mysql_server", "login",
-                    array(array("id" => "1", "libelle" => "Login / Password"), array("id" => "2", "libelle" => "SSH keys"))
+                Form::select("mysql_server", "id_environement", $data['environment']
                     , "", array("class" => "form-control"))
                 ?></div>
             <div class="col-md-4"></div>
@@ -136,21 +143,13 @@ use Glial\Html\Form\Form;
         <div class="row">
             <div class="col-md-4"><?= __("Clients") ?></div>
             <div class="col-md-4"><?=
-                Form::select("mysql_server", "login",
-                    array(array("id" => "1", "libelle" => "Login / Password"), array("id" => "2", "libelle" => "SSH keys"))
-                    , "", array("class" => "form-control"))
+                Form::select("mysql_server", "id_client", $data['client'], "", array("class" => "form-control"))
                 ?></div>
             <div class="col-md-4"></div>
         </div>
 
 
-                <div class="row">
-            <div class="col-md-4"><?= __("Path for temp backup") ?></div>
-            <div class="col-md-4"><?=
-                Form::input("mysql_server", "password", array("class" => "form-control", "placeholder" => "Password of mysql server"))
-                ?></div>
-            <div class="col-md-4"></div>
-        </div>
+
 
 
         <div class="row">
