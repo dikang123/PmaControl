@@ -1,5 +1,54 @@
 #!/bin/bash
 
+#check OSTYPE
+
+case "$OSTYPE" in
+  solaris*) OS="SOLARIS" ;;
+  darwin*)  OS="OSX" ;; 
+  linux*)   OS="LINUX" ;;
+  bsd*)     OS="BSD" ;;
+  msys*)    OS="WINDOWS" ;;
+  *)        OS="unknown: $OSTYPE" ;;
+esac
+
+if [ "$OS" != "LINUX" ]
+then
+    echo "This OS is not supported : $OS"
+    exit 1;
+else
+    echo "This OS is supported : $OS"
+fi
+
+
+#Check distribution GNU / Linux
+
+dist=`grep DISTRIB_ID /etc/*-release | awk -F '=' '{print $2}'`
+
+DIOK="OK"
+case "$dist" in
+  Ubuntu*) DISTRIB="Ubuntu" ;;
+  Debian*) DISTRIB="Debian" ;;
+  Redhat*) DISTRIB="RedHat" ;;
+  Centos*) DISTRIB="Centos" ;;
+  *)       
+        DISTRIB=$dist
+        DIOK="KO"
+ ;;
+esac
+
+
+if [ "$DIOK" != "OK" ]
+then
+    echo "This distribution GNU/Linux is not supported : $DISTRIB"
+    exit 1;
+else
+    echo "This distribution GNU/Linux is supported : $DISTRIB"
+fi
+
+#check version supported
+# TODO
+
+
 workFolder=$(readlink -f $(dirname $0))
 path=`echo $workFolder | awk -F"/" ' { print $(NF) } '`
 
@@ -42,27 +91,15 @@ chmod 777 -R tmp/
 
 
 
-## disable support for transparent hugepages in Linux for TokuDB
-#redhat
-#if test -f /sys/kernel/mm/redhat_transparent_hugepage/enabled; then
-#	echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled
-#fi
 
-#centos & debian
-#if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
-#   echo never > /sys/kernel/mm/transparent_hugepage/enabled
-#fi
-#if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
-#   echo never > /sys/kernel/mm/transparent_hugepage/defrag
-#fi
 
 cat > /etc/init.d/disable-transparent-hugepages << EOF
-
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          disable-transparent-hugepages
 # Required-Start:    $local_fs
 # Required-Stop:
+# X-Start-Before:    mongod mongodb-mms-automation-agent
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Disable Linux transparent huge pages
@@ -70,7 +107,10 @@ cat > /etc/init.d/disable-transparent-hugepages << EOF
 #                    database performance.
 ### END INIT INFO
 
-case $1 in
+
+
+#why $1 doesn't work ?
+case "start" in
   start)
     if [ -d /sys/kernel/mm/transparent_hugepage ]; then
       thp_path=/sys/kernel/mm/transparent_hugepage
@@ -95,20 +135,44 @@ chmod 755 /etc/init.d/disable-transparent-hugepages
 
 
 #Debian & Ubuntu
-update-rc.d disable-transparent-hugepages defaults
+if ! [ -x "$(command -v update-rc.d)" ]; then
+    echo 'update-rc.d is not installed.' >&2
+else
+    update-rc.d disable-transparent-hugepages defaults
+fi
+
+
 
 #SUSE
-insserv /etc/init.d/disable-transparent-hugepages
+
+if ! [ -x "$(command -v insserv)" ]; then
+    echo 'insserv is not installed.' >&2
+else
+    insserv /etc/init.d/disable-transparent-hugepages
+fi
+
 
 #Red Hat, CentOS, Amazon Linux, and derivatives
-chkconfig --add disable-transparent-hugepages
+if ! [ -x "$(command -v chkconfig)" ]; then
+    echo 'chkconfig is not installed.' >&2
+else
+    chkconfig --add disable-transparent-hugepages
+fi
 
-/etc/init.d/disable-transparent-hugepages start
 
 
-/etc/init.d/mysql restart
+if [ -x "/etc/init.d/disable-transparent-hugepages" ]; then
+    /etc/init.d/disable-transparent-hugepages start
+fi
+
+if [ -x ./etc/init.d/mysql ]; then
+    /etc/init.d/mysql restart
+fi
 
 
+if [ -x ./etc/init.d/mysqld ]; then
+    /etc/init.d/mysqld restart
+fi
 
 
 #check composer && composer install
@@ -117,7 +181,6 @@ if test -f ./vendor/glial/glial/Glial/Bootstrap.php; then
    echo "Glial Installed !"
 else
     composer -V foo >/dev/null 2>&1 || { echo >&2 "PmaControl require composer but it's not installed.  Aborting."; echo "To install composer : ";echo ""; echo "        curl -sS https://getcomposer.org/installer | php";  echo "        \$ mv composer.phar /usr/local/bin/composer"; echo ""; exit 1;}
-
     composer install
 fi
 
