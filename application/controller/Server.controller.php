@@ -95,8 +95,8 @@ class Server extends Controller
         $data['menu']['logs']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
         $data['menu']['logs']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/index';
 
-        $data['menu']['id']['name']  = __('Server');
-        $data['menu']['id']['icone'] = '<span class="glyphicon glyphicon-list-alt" style="font-size:12px"></span>';
+        $data['menu']['id']['name']  = __('Graphs');
+        $data['menu']['id']['icone'] = '<i class="fa fa-line-chart" aria-hidden="true"></i>';
         $data['menu']['id']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/id';
 
         $data['menu']['cache']['name']  = __('Cache');
