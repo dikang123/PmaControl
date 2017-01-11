@@ -239,6 +239,7 @@ rankdir=LR; splines=ortho;
 
             $tmp_db = "";
 
+            
 
             if (!empty($databases[$ob->id_mysql_server]) && count($databases[$ob->id_mysql_server]) > 0) {
                 $tmp_db = $databases[$ob->id_mysql_server];
@@ -272,7 +273,6 @@ rankdir=LR; splines=ortho;
         $ret = "";
 
         while ($ob = $db->sql_fetch_object($res)) {
-
 
             if (empty($this->exclude[$ob->id_mysql_server])) {
                 $ret .= $this->getColorEdge($ob);
