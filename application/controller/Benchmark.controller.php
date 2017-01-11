@@ -284,6 +284,14 @@ Threads fairness:
         $this->di['js']->addJavascript(array("Chart.min.js"));
 
 
+        $sql = "select * from `benchmark_main` a
+         INNER JOIN mysql_server b ON a.id_mysql_server = b.id
+         ORDER BY b.name, a.date LIMIT 100";
+
+
+
+
+
 
         $sql = "SELECT max(id) as idmax from benchmark_main";
         $res = $db->sql_query($sql);
@@ -389,17 +397,17 @@ var myChart1 = new Chart(ctx1, {
     data: {
         labels: ['.$threads.'],
         datasets: [{
+            label: "Writes by second",
+            data: ['.$write.'],
+            backgroundColor: "rgba(255,168,168, 0.4)",
+            borderColor: "rgba(255,168,168,1)",
+        },{
             label: "Reads by second",
             data: ['.$reads.'],
             backgroundColor: "rgba(142,199,255,0.4)",
             borderColor: "rgba(142,199,255,1)",
 
 
-        },{
-            label: "Writes by second",
-            data: ['.$write.'],
-            backgroundColor: "rgba(255,168,168, 0.4)",
-            borderColor: "rgba(255,168,168,1)",
         }]
     },
     options: {
@@ -415,7 +423,7 @@ var myChart1 = new Chart(ctx1, {
 });
 ');
 
-
+/*
         $this->di['js']->code_javascript('
 var ctx2 = document.getElementById("wrs");
 
@@ -446,7 +454,7 @@ var myChart2 = new Chart(ctx2, {
     }
 });
 ');
-
+*/
 
         $this->di['js']->code_javascript('
 var ctx3 = document.getElementById("rt");

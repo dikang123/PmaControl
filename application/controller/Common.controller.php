@@ -149,6 +149,8 @@ class Common extends Controller {
 
         $ret = implode('/', $params);
 
+        $ret = trim($ret, "/");
+
         return $ret;
     }
 

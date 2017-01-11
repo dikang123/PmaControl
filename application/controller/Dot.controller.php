@@ -274,7 +274,6 @@ rankdir=LR; splines=ortho;
 
         while ($ob = $db->sql_fetch_object($res)) {
 
-
             if (empty($this->exclude[$ob->id_mysql_server])) {
                 $ret .= $this->getColorEdge($ob);
             }
