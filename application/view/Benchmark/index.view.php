@@ -1,28 +1,33 @@
-
-
-<div id="charts">
-    <div class="row">
-        <div class="col-md-6">
-            <p><strong> Transactions/s </strong></p>
-            <canvas id="tps" class="graph" width="550" heigth="400"></canvas>
-        </div>
-        <div class="col-md-6">
-            <p><strong> Response Time (ms) </strong></p>
-            <canvas id="rt" class="graph" width="550" heigth="400"></canvas>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-6">
-            <p><strong> Write/s & Reads/s </strong></p>
-            <canvas id="rds" class="graph" width="550" heigth="400"></canvas>
-        </div>
+<?php
 
 
 
-        <div class="col-md-6">
-            <p><strong> Errors </strong></p>
-            <canvas id="err" class="graph" width="550" heigth="400"></canvas>
-        </div>
-    </div>
+echo '<div class="well">';
 
-</div>
+
+\Glial\Synapse\FactoryController::addNode("Common", "displayClientEnvironment", array());
+
+echo '<br />';
+echo ' <div class="btn-group" role="group" aria-label="Default button group">';
+
+
+unset($data['menu']['logs']);
+
+foreach ($data['menu'] as $key => $elem) {
+    if ($_GET['path'] == $elem['path']) {
+        $color = "btn-primary";
+    } else {
+        $color = "btn-default";
+    }
+
+    echo '<a href="'.$elem['path'].'" type="button" class="btn '.$color.'" style="font-size:12px">'
+    .' '.$elem['icone'].' '.__($elem['name']).'</a>';
+}
+echo '</div>';
+echo '</div>';
+
+
+$elems  = explode('/', $_GET['path']);
+$method = end($elems);
+
+\Glial\Synapse\FactoryController::addNode("benchmark", $method, array());
