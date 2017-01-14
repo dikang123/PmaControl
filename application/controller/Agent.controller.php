@@ -21,6 +21,7 @@ class Agent extends Controller
     var $log_file = TMP."log/daemon.log";
     var $logger;
     var $loop     = 0;
+    var $count    = 1;
 
     /*
      * (PmaControl 0.8)<br/>
@@ -409,7 +410,7 @@ class Agent extends Controller
          *
          */
 
-        $date_time;
+        //$date_time;
 
 
         $date_time = date('c');
@@ -1050,12 +1051,10 @@ GROUP BY table_schema ;';
 
         $this->view = false;
         $db         = $this->di['db']->sql(DB_DEFAULT);
-        $sql        = "SELECT * FROM `mysql_server` WHERE id >= 655";
+        $sql        = "SELECT * FROM `mysql_server` WHERE  ssh_available =1";
         $res        = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
-
-
 
             $ssh = new SSH2($ob->ip);
             $rsa = new RSA();
@@ -1457,6 +1456,7 @@ GROUP BY table_schema ;';
 
     public function testAllSsh($param)
     {
+        $this->view = false;
 
         $db  = $this->di['db']->sql(DB_DEFAULT);
         $sql = "SELECT * FROM mysql_server WHERE is_monitored=1 AND key_private_path != '' and key_private_user != ''";
@@ -1544,9 +1544,42 @@ GROUP BY table_schema ;';
         }
     }
 
-    public function testSshServer()
+    public function testSshServer($server_id, $max_execution_time)
     {
-        
+        //exeute a process with a timelimit (in case of MySQL don't answer and keep connection)
+        //$max_execution_time = 20; // in seconds
+        $ret = SetTimeLimit::run("Agent", "trySshConnection", array($server_id), $max_execution_time);
+
+        if (!SetTimeLimit::exitWithoutError($ret)) {
+            /* in case of somthing wrong :
+             * server don't answer
+             * server didn't give msg
+             * wrong credentials
+             * error in PHP script
+             */
+            $db = $this->di['db']->sql(DB_DEFAULT);
+
+            //in case of no answer provided we create a msg of error
+            if (empty($ret['stdout'])) {
+                $ret['stdout'] = "[".date("Y-m-d H:i:s")."]"." Server MySQL didn't answer in time (delay max : ".$max_execution_time." seconds)";
+            }
+
+            $sql = "UPDATE mysql_server SET `error`='".$db->sql_real_escape_string($ret['stdout'])."', `date_refresh`='".date("Y-m-d H:i:s")."' where id = '".$server['id']."'";
+            $db->sql_query($sql);
+
+            //echo $sql . "\n";
+
+            $sql = "UPDATE mysql_replication_stats SET is_available = 0 where id_mysql_server = '".$server['id']."'";
+            $db->sql_query($sql);
+            $db->sql_close();
+
+            echo ($this->debug) ? $server['name']." KO :\n" : "";
+            ($this->debug) ? print_r($ret) : '';
+            return false;
+        } else {
+            //echo ($this->debug) ? $server['name']." OK \n" : "";
+            return true;
+        }
     }
 
     public function extract($wsrep_provider_options, $variable)
@@ -1559,6 +1592,83 @@ GROUP BY table_schema ;';
             return 0;
             //throw new \Exception("Impossible to find : ".$variable." in (".$wsrep_provider_options.")");
         }
+    }
+
+    public function debug($string)
+    {
+        if ($this->debug) {
+            $calledFrom = debug_backtrace();
+            $file       = pathinfo(substr(str_replace(ROOT, '', $calledFrom[0]['file']), 1))["basename"];
+            $line       = $calledFrom[0]['line'];
+
+            $file = explode(".", $file)[0];
+
+            echo "#".$this->count++."\t";
+            echo $file.":".$line."\t";
+            echo Color::getColoredString("[".date('Y-m-d H:i:s')."]", "purple")." ";
+            echo $string."\n";
+        }
+    }
+
+    public function trySshConnection($param)
+    {
+        $this->view = false;
+        $id_server  = $param[0];
+
+
+        if (!empty($param)) {
+            foreach ($param as $elem) {
+                if ($elem == "--debug") {
+                    $this->debug = true;
+                    echo Color::getColoredString("DEBUG activated !", "yellow")."\n";
+                }
+            }
+        }
+
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $sql = "SELECT * FROM mysql_server where id=".$id_server;
+        $res = $db->sql_query($sql);
+
+        $login_successfull = true;
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+
+            $ssh = new SSH2($ob->ip);
+
+            $ip  = $ob->ip;
+            $rsa = new RSA();
+
+            $privatekey = file_get_contents($ob->key_private_path);
+
+
+            if ($rsa->loadKey($privatekey) === false) {
+                $login_successfull = false;
+                echo("private key loading failed!");
+                continue;
+            }
+
+            //debug($rsa);
+            //echo $ob->ip." : ".$ob->key_private_user." ".$ob->key_private_path."\n";
+
+            if (!$ssh->login($ob->key_private_user, $rsa)) {
+                echo "Login Failed\n";
+                $login_successfull = false;
+                continue;
+            }
+        }
+
+
+        $msg = ($login_successfull) ? "Successfull" : "Failed";
+
+        $this->debug("Connection to server (".$ip.":port) : ".$msg);
+
+        $sql = "UPDATE mysql_server SET ssh_available = '".((bool) $login_successfull)."' where id=".$id_server;
+        $db->sql_query($sql);
+
+        $db->sql_close();
     }
 }
 /*

@@ -2,98 +2,153 @@
 
 use \Glial\Synapse\Controller;
 use \Glial\Security\Crypt\Crypt;
+use \Glial\Cli\Color;
 
 class Benchmark extends Controller
 {
+    const COLOR_GREEN  = "75,215,134";
+    const COLOR_BLUE   = "142,199,255";
+    const COLOR_YELLOW = "252,215,95";
+    const COLOR_RED    = "255,168,168";
+    const COLOR_GREY   = "130,130,130";
+    const SHADOW       = "0.2";
+
+    var $debug = false;
+    var $count = 1;
+
+    /*
+     * @brand-primary: darken(#428bca, 6.5%); // #337ab7
+      @brand-success: #5cb85c;
+      @brand-info:    #5bc0de;
+      @brand-warning: #f0ad4e;
+      @brand-danger:  #d9534f;
+     */
+    var $colors = array(self::COLOR_BLUE, self::COLOR_RED, self::COLOR_YELLOW, self::COLOR_GREEN, self::COLOR_GREY, "114,147,203", "225,151,76",
+        "132,186,91", "211,94,96", "128,133,133", "144,103,167", "171,104,87", "204,194,16");
+
+    //var $colors = array(self::COLOR_BLUE, self::COLOR_RED, self::COLOR_YELLOW, self::COLOR_GREEN, self::COLOR_GREY);
 
     public function run($param)
     {
-
-
         $this->view = false;
 
-        $id_mysql_server = 487;
+        if (!empty($param)) {
+            foreach ($param as $elem) {
+                if ($elem == "--debug") {
+                    $this->debug = true;
 
-        $id_mysql_server = 632;
-        $id_mysql_server = 633;
+                    $this->debug(Color::getColoredString("Debug enabled !", "yellow"));
+                }
+            }
+        }
 
+        $id_benchmark_main = $param[0];
+
+        $this->debug("id_benchmark_main : $id_benchmark_main");
 
         $db = $this->di['db']->sql(DB_DEFAULT);
 
-        $sql = "SELECT * FROM mysql_server WHERE id = ".$id_mysql_server;
+        $sql = "SELECT * FROM benchmark_main a
+            INNER JOIN mysql_server b ON a.id_mysql_server = b.id
+        WHERE a.id = ".$id_benchmark_main;
         $res = $db->sql_query($sql);
 
-        while ($mysql = $db->sql_fetch_object($res)) {
+        $this->debug(trim(SqlFormatter::highlight($sql)));
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+            $sql2 = "UPDATE benchmark_main SET status = 'RUNNING',date_start = '".date('c')."' WHERE id ='".$id_benchmark_main."'";
+            $db->sql_query($sql2);
+            $this->debug(trim(SqlFormatter::highlight($sql2)));
+
+            $password = Crypt::decrypt($ob->passwd, CRYPT_KEY);
+
+            $server = $this->di['db']->sql($ob->name);
+
+            $sql = "DROP DATABASE IF EXISTS sbtest;";
+            $server->sql_query($sql);
+
+            $sql = "CREATE DATABASE sbtest;";
+            $server->sql_query($sql);
 
 
-            $sql  = "SELECT * FROM benchmark_config";
-            $res2 = $db->sql_query($sql);
-
-            while ($ob = $db->sql_fetch_object($res2)) {
-
-                $sql = "INSERT INTO benchmark_main
-                    SET id_mysql_server = '".$id_mysql_server."',
-                    date = '".date("c")."',
-                    sysbench_version = '".shell_exec("sysbench --version")."',
-                    threads = '".$ob->threads."',
-                    tables_count = '".$ob->tables_count."',
-                    table_size = '".$ob->table_size."',
-                    max_time = '".$ob->max_time."'
-                    ";
-
-                $db->sql_query($sql);
-
-                $id_benchmark_main = $db->_insert_id();
+            $prepare = 'sysbench --test=/usr/local/sysbench/tests/db/oltp.lua --mysql-host='.$ob->ip.' --mysql-port='.$ob->port;
+            $prepare .= ' --mysql-user='.$ob->login.' --mysql-password='.$password.' '
+                .'--mysql-db=sbtest --mysql-table-engine=InnoDB '
+                .'--oltp-tables-count='.$ob->tables_count.' --max-time='.$ob->max_time.' prepare';
 
 
-                $password = Crypt::decrypt($mysql->passwd, CRYPT_KEY);
+            $this->debug($prepare);
+
+            $input_lines = shell_exec($prepare);
+            $this->debug($input_lines);
 
 
-                $prepare = 'sysbench --test=/usr/local/sysbench/tests/db/oltp.lua --mysql-host='.$mysql->ip.' --mysql-port='.$mysql->port;
-                $prepare .= ' --mysql-user='.$mysql->login.' --mysql-password='.$password.' '
-                    .'--mysql-db=sysbench --mysql-table-engine=InnoDB '
-                    .'--oltp-tables-count='.$ob->tables_count.' --max-time='.$ob->max_time.' prepare';
 
-                $threads = explode(',', $ob->threads);
+            $sql  = "select @@max_connections as max;";
+            $res2 = $server->sql_query($sql);
 
-
-                foreach ($threads as $thread) {
-                    $cmd = 'sysbench --test=/usr/local/sysbench/tests/db/oltp.lua --mysql-host='.$mysql->ip.' --mysql-port='.$mysql->port.''
-                        .' --mysql-user='.$mysql->login.' --mysql-password='.$password.' --mysql-db=sysbench --mysql-table-engine=InnoDB '
-                        .'--oltp-tables-count='.$ob->tables_count.' --num-threads='.$thread.' --max-time='.$ob->max_time.' run';
-
-                    echo $cmd."\n";
+            while ($ob2 = $server->sql_fetch_object($res2)) {
+                $max_connections = $ob2->max;
+            }
 
 
+            $threads = explode(',', $ob->threads);
+            foreach ($threads as $thread) {
+
+
+                if ($max_connections > $thread + 1) {
+
+                    $cmd = 'sysbench '
+                        .' --test=/usr/local/sysbench/tests/db/oltp.lua'
+                        .' --mysql-host='.$ob->ip
+                        .' --mysql-port='.$ob->port
+                        .' --mysql-user='.$ob->login
+                        .' --mysql-password='.$password
+                        .' --mysql-db=sbtest'
+                        .' --mysql-table-engine=InnoDB'
+                        .' --oltp-test-mode='.$ob->mode
+                        .' --oltp-read-only='.strtolower($ob->read_only)
+                        .' --oltp-tables-count='.$ob->tables_count
+                        .' --num-threads='.$thread
+                        .' --max-time='.$ob->max_time.' run';
+
+                    $this->debug(Color::getColoredString($cmd, "yellow"));
 
                     $input_lines = shell_exec($cmd);
+                    sleep(5);
 
-
+                    $this->debug(Color::getColoredString($input_lines, "blue"));
 
                     $sql = "INSERT INTO benchmark_run
-                    SET id_benchmark_main = '".$id_benchmark_main."',
-                    `date` = '".date("c")."',
-                    `threads`  = '".$thread."',
+                      SET id_benchmark_main = '".$id_benchmark_main."',
+                      `date` = '".date("c")."',
+                      `threads`  = '".$thread."',
 
-                    `read` = '".$this->getQueriesPerformedRead($input_lines)."',
-                    `write` = '".$this->getQueriesPerformedWrite($input_lines)."',
-                    `other` = '".$this->getQueriesPerformedOther($input_lines)."',
-                    `total` = '".$this->getQueriesPerformedTotal($input_lines)."',
-                    `transaction` = '".$this->getTransactions($input_lines)."',
-                    `error` = '".$this->getErrors($input_lines)."',
-                    `time` = '".$this->getTotalTime($input_lines)."',
-                    `reponse_min` = '".$this->getReponseTimeMin($input_lines)."',
-                    `reponse_max` = '".$this->getReponseTimeMax($input_lines)."',
-                    `reponse_avg` = '".$this->getReponseTimeAvg($input_lines)."',
-                    `reponse_percentile95` = '".$this->getReponseTime95percent($input_lines)."'
-                    ";
+                      `read` = '".$this->getQueriesPerformedRead($input_lines)."',
+                      `write` = '".$this->getQueriesPerformedWrite($input_lines)."',
+                      `other` = '".$this->getQueriesPerformedOther($input_lines)."',
+                      `total` = '".$this->getQueriesPerformedTotal($input_lines)."',
+                      `transaction` = '".$this->getTransactions($input_lines)."',
+                      `error` = '".$this->getErrors($input_lines)."',
+                      `time` = '".$this->getTotalTime($input_lines)."',
+                      `reponse_min` = '".$this->getReponseTimeMin($input_lines)."',
+                      `reponse_max` = '".$this->getReponseTimeMax($input_lines)."',
+                      `reponse_avg` = '".$this->getReponseTimeAvg($input_lines)."',
+                      `reponse_percentile95` = '".$this->getReponseTime95percent($input_lines)."'
+                      ";
 
                     //better to get PANIC and FATAL error and send to log
                     if (!empty($this->getQueriesPerformedRead($input_lines))) {
                         $db->sql_query($sql);
                     }
+                } else {
+                    $this->debug(Color::getColoredString("Thread canceled : ".$thread." (max_connections : ".$max_connections.")", "yellow"));
                 }
             }
+
+            $sql2 = "UPDATE benchmark_main SET status = 'COMPLETED',date_end = '".date('c')."' WHERE id ='".$id_benchmark_main."'";
+            $db->sql_query($sql2);
         }
     }
 
@@ -240,7 +295,7 @@ class Benchmark extends Controller
         echo "Nombre de avg : ".$this->getReponseTimeAvg($data)."\n";
         echo "Nombre de percent95 : ".$this->getReponseTime95percent($data)."\n";
 
-        // 13 benchmark_thread
+// 13 benchmark_thread
     }
 
     public function moc()
@@ -272,243 +327,59 @@ Threads fairness:
     execution time (avg/stddev):   29.0808/0.04";
     }
 
-    public function graph()
+    public function index($param)
     {
-
-    }
-
-    public function index()
-    {
+        $this->title  = '<i class="fa fa-bar-chart"></i> '."Benchmark";
+        $this->ariane = '> <a href="'.LINK.'plugins"><i class="fa fa-puzzle-piece"></i> '.__("Plugins").'</a> > '.$this->title;
 
         $db = $this->di['db']->sql(DB_DEFAULT);
-        $this->di['js']->addJavascript(array("Chart.min.js"));
 
-
-        $sql = "select * from `benchmark_main` a
-         INNER JOIN mysql_server b ON a.id_mysql_server = b.id
-         ORDER BY b.name, a.date LIMIT 100";
-
-
-
-
-
-
-        $sql = "SELECT max(id) as idmax from benchmark_main";
+        $sql = "SELECT count(1) as cpt from benchmark_main where status != 'COMPLETED'";
         $res = $db->sql_query($sql);
 
         while ($ob = $db->sql_fetch_object($res)) {
-            $id_benchmark_main = $ob->idmax;
+            $cpt = $ob->cpt;
         }
 
-        $sql = "SELECT * FROM benchmark_run where `id_benchmark_main` = ".$id_benchmark_main;
 
-        $res = $db->sql_query($sql);
-
-        $threads      = [];
-        $reads        = [];
-        $write        = [];
-        $reponse_time = [];
-        $transaction  = [];
-        $error        = [];
-
-        while ($ob = $db->sql_fetch_object($res)) {
-
-            $threads[]      = $ob->threads;
-            $reads[]        = $ob->read / $ob->time;
-            $write[]        = $ob->write / $ob->time;
-            $reponse_time[] = $ob->reponse_avg;
-            $transaction[]  = $ob->transaction / $ob->time;
-            $error[]        = $ob->error;
+        $badge = "";
+        if (!empty($cpt)) {
+            $badge = ' <span class="badge">'.$cpt.'</span>';
         }
 
-        $threads      = implode(',', $threads);
-        $reads        = implode(',', $reads);
-        $write        = implode(',', $write);
-        $reponse_time = implode(',', $reponse_time);
-        $transaction  = implode(',', $transaction);
-        $error        = implode(',', $error);
+        $data['menu']['bench']['name']  = __('Make a new benchmark');
+        $data['menu']['bench']['icone'] = '<i class="fa fa-clock-o" aria-hidden="true"></i>';
+        $data['menu']['bench']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/bench';
 
-        /*
-          $this->di['js']->code_javascript('
+        $data['menu']['current']['name']  = __('Currents').$badge;
+        $data['menu']['current']['icone'] = '<i class="fa fa-refresh fa-spin" aria-hidden="true"></i>';
+        $data['menu']['current']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/current';
 
-          var rt = document.getElementById("rt").getContext("2d");
+        $data['menu']['config']['name']  = __('Configuration');
+        $data['menu']['config']['icone'] = '<i class="fa fa-wrench" aria-hidden="true"></i>';
+        $data['menu']['config']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/config';
 
-          var options = {
-          pointDot : true,
-          }
-
-          var data_rt = {
-          labels: "",
-          datasets: [ ]
-          };
-
-          data_rt.datasets[0] = {
-          fillColor: "rgba(252,215,95,0.4)",
-          strokeColor: "rgba(252,215,95,1)",
-          pointStrokeColor: "#fff",
-          pointHighlightFill: "#fff",
-          pointHighlightStroke: "rgba(214,165,5,1)"
-          };
-          data_rt.datasets[0].label = "AVG";
-          data_rt.datasets[0].data = ['.$reponse_time.'];
+        $data['menu']['graph']['name']  = __('Graphs');
+        $data['menu']['graph']['icone'] = '<i class="fa fa-area-chart" aria-hidden="true"></i>';
+        $data['menu']['graph']['path']  = LINK.__CLASS__.'/'.__FUNCTION__.'/graph';
 
 
-          var myLineChart_rt = new Chart(rt,data_rt);
-          ');
-         */
-
-        $this->di['js']->code_javascript('
-var ctx4 = document.getElementById("tps");
-
-var myChart4 = new Chart(ctx4, {
-    type: "line",
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{
-            label: "Transactions by second",
-            data: ['.$transaction.'],
-             backgroundColor: "rgba(75,215,134,0.4)",
-             borderColor: "rgba(75,215,134,1)",
-             /*
-             borderWidth: 1,
-             pointBackgroundColor: "#000",
-             pointRadius :0
-             */
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
-
-        $this->di['js']->code_javascript('
-var ctx1 = document.getElementById("rds");
-
-var myChart1 = new Chart(ctx1, {
-    type: "line",
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{
-            label: "Writes by second",
-            data: ['.$write.'],
-            backgroundColor: "rgba(255,168,168, 0.4)",
-            borderColor: "rgba(255,168,168,1)",
-        },{
-            label: "Reads by second",
-            data: ['.$reads.'],
-            backgroundColor: "rgba(142,199,255,0.4)",
-            borderColor: "rgba(142,199,255,1)",
-
-
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
-
-/*
-        $this->di['js']->code_javascript('
-var ctx2 = document.getElementById("wrs");
-
-
-var myChart2 = new Chart(ctx2, {
-    type: "line",
-
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{            
-            label: "Writes by second",
-            data: ['.$write.'],
-            backgroundColor: "rgba(255,168,168, 0.4)",
-            borderColor: "rgba(255,168,168,1)",
-            fill: true,            
-        }],
-
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
-*/
-
-        $this->di['js']->code_javascript('
-var ctx3 = document.getElementById("rt");
-
-var myChart = new Chart(ctx3, {
-    type: "line",
-    data: {
-        labels: ['.$threads.'],
-        datasets: [{
-            label: "Response Time",
-            data: ['.$reponse_time.'],
-            backgroundColor: ["rgba(252,215,95,0.4)"],
-            borderColor: "rgba(252,215,95,1)"
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero:false
-                }
-            }]
-        },
-        pointDot : false,
-    }
-});
-');
-
-
-        $this->di['js']->code_javascript('
-          var ctx5 = document.getElementById("err");
-
-          var myChart5 = new Chart(ctx5, {
-            type: "line",
-                data: {
-                    labels: ['.$threads.'],
-                    datasets: [{
-                    label: "Errors by second",
-                    data: ['.$error.'],
-                    
-                }]
-            },
-            options: {
-                  scales: {
-                      yAxes: [{
-                          ticks: {
-                              beginAtZero:false
-                          }
-                      }]
-                },
-            pointDot : false,
+        if (!empty($param[0])) {
+            if (in_array($param[0], array('bench', 'current', 'config', 'graph'))) {
+                $_GET['path'] = LINK.__CLASS__.'/'.__FUNCTION__.'/'.$param[0];
             }
-          });
-          ');
+        }
+
+        if (empty($_GET['path']) && empty($param[0])) {
+            $_GET['path'] = $data['menu']['graph']['path'];
+            $param[0]     = 'graph';
+        }
+
+        if (empty($_GET['path'])) {
+            $_GET['path'] = 'graph';
+        }
+
+        $this->set("data", $data);
     }
 
     public function testError($input_lines)
@@ -531,5 +402,508 @@ var myChart = new Chart(ctx3, {
         $db = $this->di['db']->sql(DB_DEFAULT);
 
         $variables = $mysql_tested->getVariables();
+    }
+
+    public function install()
+    {
+        
+    }
+
+    public function uninstall()
+    {
+
+    }
+
+    public function graph()
+    {
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+        $this->di['js']->addJavascript(array("Chart.min.js"));
+
+        $data = array();
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+            if (!empty($_POST['benchmark'])) {
+
+                if (!empty($_POST['benchmark_main']['id'])) {
+                    $ret = "";
+                    $ret .= "benchmark/index/benchmark_main:id:".json_encode($_POST['benchmark_main']['id']);
+                } else {
+
+                    $ret = "";
+                    $ret .= "benchmark/index/";
+                }
+
+                header("location: ".LINK.$ret);
+
+                exit;
+            }
+        }
+
+
+
+
+        if (!empty($_GET['benchmark_main']['id'])) {
+            $id_to_take = implode(",", json_decode($_GET['benchmark_main']['id']));
+        } else {
+            $sql = "SELECT max(id) as id FROM `benchmark_main` WHERE status = 'COMPLETED'";
+            $res = $db->sql_query($sql);
+
+            while ($ob = $db->sql_fetch_object($res)) {
+                $id_to_take                   = $ob->id;
+                $_GET['benchmark_main']['id'] = json_encode(array($id_to_take));
+            }
+        }
+
+
+
+
+        if (empty($id_to_take)) {
+            $this->set("data", $data);
+            return;
+        }
+
+
+        $sql = "select a.*,b.display_name from `benchmark_main` a
+         INNER JOIN mysql_server b ON a.id_mysql_server = b.id
+         ORDER BY a.date_end DESC LIMIT 100";
+        $res = $db->sql_query($sql);
+
+
+        $data['select_bench'] = array();
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+            $tmp = array();
+
+            $tmp['id']      = $ob->id;
+            $tmp['libelle'] = $ob->display_name." (".$ob->date_end.")";
+
+            $data['select_bench'][] = $tmp;
+        }
+
+        $sql = "SELECT a.display_name, b.`date`,b.id
+            FROM mysql_server a
+            INNER JOIN `benchmark_main` b ON a.id = b.id_mysql_server
+            WHERE b.id IN (".$id_to_take.")
+            ";
+        $res = $db->sql_query($sql);
+
+        $benchmark = array();
+        while ($ob        = $db->sql_fetch_object($res)) {
+            $benchmark[$ob->id] = $ob->display_name." (".$ob->date.")";
+        }
+
+        $sql = "SELECT id_benchmark_main,
+            GROUP_CONCAT(a.threads) as thread,
+            GROUP_CONCAT(ROUND(`read`/`time`,2)) as `read`,
+            GROUP_CONCAT(ROUND(`write`/`time`,2)) as `write`,
+            GROUP_CONCAT(reponse_avg) as `reponse_avg`,
+            GROUP_CONCAT(ROUND(`transaction`/`time`,2)) as `transaction`,
+            GROUP_CONCAT(a.error) as `error`,
+            GROUP_CONCAT(ROUND(`read`/(`read`+`write`)*100,2)) as `ratio`
+            FROM benchmark_run a
+            where `id_benchmark_main` in (".$id_to_take.") GROUP BY id_benchmark_main;";
+
+
+        $res = $db->sql_query($sql);
+
+        $threads      = [];
+        $reads        = [];
+        $write        = [];
+        $reponse_time = [];
+        $transaction  = [];
+        $error        = [];
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+            $threads[]                                                 = $ob->thread;
+            $results["Reads by second"][$ob->id_benchmark_main]        = $ob->read;
+            $results["Writes by second"][$ob->id_benchmark_main]       = $ob->write;
+            $results["Response Time (ms)"][$ob->id_benchmark_main]     = $ob->reponse_avg;
+            $results["Transactions by second"][$ob->id_benchmark_main] = $ob->transaction;
+            $results["Errors"][$ob->id_benchmark_main]                 = $ob->error;
+            $results["Ratio"][$ob->id_benchmark_main]                  = $ob->ratio;
+        }
+
+        $val     = 0;
+        $absisse = "";
+        foreach ($threads as $thread) {
+            if (strlen($thread) > strlen($absisse)) {
+
+                $absisse = $thread;
+            }
+        }
+
+
+        $i = 1;
+        foreach ($results as $title => $result) {
+
+            $js = 'var ctx'.$i.' = document.getElementById("graph'.$i.'");
+
+            var myChart'.$i.' = new Chart(ctx'.$i.', {
+                type: "line",
+                data: {
+                    labels: ['.$absisse.'],
+                    datasets: [';
+
+            $j   = 0;
+            $tmp = '';
+            foreach ($result as $server => $res_by_server) {
+
+                $j = $j % count($this->colors);
+
+                $tmp[] .= '
+                {
+                    label: "'.$benchmark[$server].'",
+                    data: ['.$res_by_server.'],
+                    backgroundColor: "rgba('.$this->colors[$j].','.self::SHADOW.')",
+                    borderColor: "rgba('.$this->colors[$j].',1)",
+                }';
+
+                $j++;
+            }
+
+            $js .= implode(',', $tmp);
+
+            $js .= ']
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: "'.$title.'",
+                        position: "top",
+                        padding: "10"
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero:false
+                            }
+                        }]
+                    },
+                    pointDot : false,
+                }
+            });';
+
+
+            $this->di['js']->code_javascript($js);
+            $i++;
+        }
+
+        $this->set("data", $data);
+    }
+
+    public function config()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+    }
+
+    public function bench($param)
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+            if (!empty($_POST['benchmark'])) {
+                if (!empty($_POST['mysql_server']['id'])) {
+
+//boucler sur tous les cas à prévoir
+
+                    foreach ($_POST['mysql_server']['id'] as $id_mysql_server) {
+
+                        $sql = "INSERT INTO benchmark_main
+                    SET id_mysql_server = '".$id_mysql_server."',
+                    date = '".date("c")."',
+                    sysbench_version = '".shell_exec("sysbench --version")."',
+                    threads = '".implode(',', $_POST['benchmark_main']['threads'])."',
+                    tables_count = '".$_POST['benchmark_main']['tables_count']."',
+                    table_size = '".$_POST['benchmark_main']['tables_count']."',
+                    mode = '".$_POST['benchmark_main']['mode']."',
+                    read_only = '".$_POST['benchmark_main']['read_only']."',
+                    max_time = '".$_POST['benchmark_main']['max_time']."',
+                    status = 'NOT STARTED'
+                    ";
+
+                        $db->sql_query($sql);
+                    }
+
+                    $sql = "SELECT * FROM benchmark_config where id=1";
+
+                    $res = $db->sql_query($sql);
+
+                    while ($ob = $db->sql_fetch_object($res)) {
+
+                        $start_queue = true;
+                        if (!empty($ob->pid)) {
+                            $cmd   = "ps -p ".$ob->pid;
+                            $alive = shell_exec($cmd);
+
+                            if (strpos($alive, $ob->pid) !== false) {
+                                $start_queue = false;
+                            }
+                        }
+
+                        if ($start_queue) {
+
+                            $php = explode(" ", shell_exec("whereis php"))[1];
+                            $cmd = $php." ".GLIAL_INDEX." Benchmark queue >> /tmp/queue & echo $!";
+
+                            $pid = 0;
+                            //$pid = shell_exec($cmd);
+
+
+                            $sql = "UPDATE `benchmark_config` SET pid = '".$pid."' WHERE id = 1";
+                            $db->sql_query($sql);
+
+
+                            set_flash("success", "Daemon", "Benchmark started in background, check onglet current");
+                        } else {
+                            set_flash("caution", "Daemon", "Daemon already started, benchmark added in queue, check onglet current");
+                        }
+                    }
+                } else {
+                    set_flash("error", "Server", "Please select the server(s) you want to bench");
+
+
+                    header("location: ".LINK.__CLASS__."/index/".__FUNCTION__);
+                }
+            }
+        }
+
+
+
+
+
+        $sql = "SELECT * FROM benchmark_config where id=1";
+        $res = $db->sql_query($sql);
+
+        while ($ob = $db->sql_fetch_object($res)) {
+
+            $_GET['benchmark_main']['threads']      = json_encode(explode(",", $ob->threads));
+            $_GET['benchmark_main']['tables_count'] = $ob->tables_count;
+            $_GET['benchmark_main']['table_size ']  = $ob->table_size;
+            $_GET['benchmark_main']['max_time']     = $ob->max_time;
+            $_GET['benchmark_main']['mode']         = $ob->mode;
+            $_GET['benchmark_main']['read_only']    = $ob->read_only;
+        }
+
+//debug($_GET['benchmark_main']);
+// get server available
+        $sql             = "SELECT * FROM mysql_server a WHERE error = '' ".$this->getFilter()." order by a.name ASC";
+        $res             = $db->sql_query($sql);
+        $data['servers'] = array();
+        while ($ob              = $db->sql_fetch_object($res)) {
+            $tmp               = [];
+            $tmp['id']         = $ob->id;
+            $tmp['libelle']    = $ob->name." (".$ob->ip.")";
+            $data['servers'][] = $tmp;
+        }
+
+        $data['treads'] = array();
+
+        for ($i = 0; $i < 1024; $i++) {
+            $tmp              = array();
+            $tmp['id']        = ($i + 1);
+            $tmp['libelle']   = ($i + 1);
+            $data['treads'][] = $tmp;
+        }
+
+
+        $data['tables_count'] = array();
+
+        for ($i = 0; $i < 100; $i++) {
+            $tmp                    = array();
+            $tmp['id']              = ($i + 1);
+            $tmp['libelle']         = ($i + 1);
+            $data['tables_count'][] = $tmp;
+        }
+
+        $modes = array("simple", "complex", "nontrx");
+
+        $data['test_mode'] = array();
+        foreach ($modes as $mode) {
+            $tmp                 = array();
+            $tmp['id']           = $mode;
+            $tmp['libelle']      = $mode;
+            $data['test_mode'][] = $tmp;
+        }
+
+        $read_o = array("ON", "OFF");
+
+        $data['read_only'] = array();
+        foreach ($read_o as $mode) {
+            $tmp                 = array();
+            $tmp['id']           = $mode;
+            $tmp['libelle']      = $mode;
+            $data['read_only'][] = $tmp;
+        }
+
+        $data['max_time'] = array();
+
+        for ($i = 2; $i < 300; $i++) {
+            $tmp                = array();
+            $tmp['id']          = ($i + 1);
+            $tmp['libelle']     = ($i + 1);
+            $data['max_time'][] = $tmp;
+        }
+
+
+        $this->set("data", $data);
+    }
+
+    public function current()
+    {
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        $sql = "SELECT *,a.id as id_benchmark_main FROM benchmark_main a
+             INNER JOIN mysql_server b on a.id_mysql_server = b.id
+             ORDER BY a.id desc limit 50";
+
+        $res = $db->sql_query($sql);
+
+        $data['current'] = array();
+        while ($ob              = $db->sql_fetch_array($res)) {
+            $data['current'][] = $ob;
+        }
+
+        $this->set('data', $data);
+    }
+
+    private function getFilter()
+    {
+
+        $where = "";
+
+
+        if (!empty($_GET['environment']['libelle'])) {
+            $environment = $_GET['environment']['libelle'];
+        }
+        if (!empty($_SESSION['environment']['libelle']) && empty($_GET['environment']['libelle'])) {
+            $environment                    = $_SESSION['environment']['libelle'];
+            $_GET['environment']['libelle'] = $environment;
+        }
+
+        if (!empty($_SESSION['client']['libelle'])) {
+            $client = $_SESSION['client']['libelle'];
+        }
+        if (!empty($_GET['client']['libelle']) && empty($_GET['client']['libelle'])) {
+            $client                    = $_GET['client']['libelle'];
+            $_GET['client']['libelle'] = $client;
+        }
+
+
+        if (!empty($environment)) {
+            $where .= " AND a.id_environment IN (".implode(',', json_decode($environment, true)).")";
+        }
+
+        if (!empty($client)) {
+            $where .= " AND a.id_client IN (".implode(',', json_decode($client, true)).")";
+        }
+
+
+        return $where;
+    }
+
+    public function queue($param)
+    {
+        /*
+         *
+         * status :
+         * NOT STARTED
+         * STARTED
+         * ERROR
+         * COMPLETED
+         */
+
+        $this->view = false;
+
+        $db = $this->di['db']->sql(DB_DEFAULT);
+
+        if (!empty($param)) {
+            foreach ($param as $elem) {
+                if ($elem == "--debug") {
+                    $this->debug = true;
+
+                    $this->debug(Color::getColoredString("Debug enabled !", "yellow"));
+                }
+            }
+        }
+
+
+        $sql3 = "UPDATE `benchmark_main` SET `status` = 'NOT STARTED' WHERE `status` = 'LAUNCHED';";
+        $db->sql_query($sql3);
+
+        $this->debug(trim(SqlFormatter::highlight($sql3)));
+
+
+        $sql = "SELECT * FROM `benchmark_main` WHERE `status` = 'NOT STARTED' limit 1;";
+        $res = $db->sql_query($sql);
+        $this->debug(trim(SqlFormatter::highlight($sql)));
+
+        while ($ob = $db->sql_fetch_object($res)) {
+            $id_benchmark_main = $ob->id;
+        }
+
+        if (!empty($id_benchmark_main)) {
+
+            do {
+                //to prevent any trouble with fork, or long time bench
+                $db->sql_close();
+
+                $debug = '';
+                if ($this->debug) {
+                    $debug = "--debug";
+                }
+
+                $php = explode(" ", shell_exec("whereis php"))[1];
+                $cmd = $php." ".GLIAL_INDEX." Benchmark run ".$id_benchmark_main." ".$debug."";
+
+
+                $this->debug($cmd);
+
+                $err = 1;
+                echo passthru($cmd, $err);
+
+                $this->debug("return : ".$err);
+
+
+                $db  = $this->di['db']->sql(DB_DEFAULT);
+                $res = $db->sql_query($sql);
+                while ($ob  = $db->sql_fetch_object($res)) {
+                    $id_benchmark_main = $ob->id;
+
+                    $sql2 = "UPDATE benchmark_main SET status = 'LAUNCHED' WHERE id ='".$id_benchmark_main."';";
+                    $db->sql_query($sql2);
+
+                    $this->debug(trim(SqlFormatter::highlight($sql2)));
+                }
+            } while ($db->sql_num_rows($res) > 0);
+        } else {
+            $this->debug("No bench to do !");
+        }
+
+
+
+
+        $sql = "UPDATE `benchmark_config` SET pid = '0' WHERE id = 1";
+        $db->sql_query($sql);
+    }
+
+    public function debug($string)
+    {
+        if ($this->debug) {
+            $calledFrom = debug_backtrace();
+            $file       = pathinfo(substr(str_replace(ROOT, '', $calledFrom[0]['file']), 1))["basename"];
+            $line       = $calledFrom[0]['line'];
+
+            $file = explode(".", $file)[0];
+
+            echo "#".$this->count++."\t";
+            echo $file.":".$line."\t";
+            echo Color::getColoredString("[".date('Y-m-d H:i:s')."]", "purple")." ";
+            echo $string."\n";
+        }
     }
 }

@@ -85,6 +85,23 @@ if (count($data['resultat'][$_GET['menu']]) != 0) {
             </ul>
         </div>
         <?php
+        echo '<textarea class="form-control" style="height:500px">';
+
+        foreach ($data['resultat'][$_GET['menu']] as $tablename => $table) {
+            if (count($table['script']) != 0) {
+                $queries = implode(';', $table['script']).";";
+                $queries = str_replace(";",";\n", $queries);
+                echo $queries."\n";
+            }
+            
+        }
+
+
+        echo '</textarea>';
+
+
+
+
     endif;
 }
 ?>
