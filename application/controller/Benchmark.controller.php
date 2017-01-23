@@ -77,13 +77,10 @@ class Benchmark extends Controller
                 .'--mysql-db=sbtest --mysql-table-engine=InnoDB '
                 .'--oltp-tables-count='.$ob->tables_count.' --max-time='.$ob->max_time.' prepare';
 
-
             $this->debug($prepare);
 
             $input_lines = shell_exec($prepare);
             $this->debug($input_lines);
-
-
 
             $sql  = "select @@max_connections as max;";
             $res2 = $server->sql_query($sql);
@@ -95,7 +92,6 @@ class Benchmark extends Controller
 
             $threads = explode(',', $ob->threads);
             foreach ($threads as $thread) {
-
 
                 if ($max_connections > $thread + 1) {
 

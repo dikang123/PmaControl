@@ -239,7 +239,7 @@ rankdir=LR; splines=ortho;
 
             $tmp_db = "";
 
-            
+
 
             if (!empty($databases[$ob->id_mysql_server]) && count($databases[$ob->id_mysql_server]) > 0) {
                 $tmp_db = $databases[$ob->id_mysql_server];
@@ -529,7 +529,8 @@ rankdir=LR; splines=ortho;
         }
 
         if (!empty($this->exclude)) {
-            $where .= " AND a.id NOT IN  (".implode(',', $this->exclude).")";
+            $tab = array_flip($this->exclude);
+            $where .= " AND a.id NOT IN  (".implode(',', $tab).")";
         }
 
         return $where;
@@ -661,7 +662,7 @@ rankdir=LR; splines=ortho;
 
                     $ret .= 'subgraph cluster_'.str_replace('-', '', $ob->name).' {';
                     $ret .= 'rankdir="LR";';
-                     $ret .= 'label = "Galera : '.$ob->name.'";';
+                    $ret .= 'label = "Galera : '.$ob->name.'";';
 
                     $super_cluster_open = true;
                 }
@@ -681,9 +682,7 @@ rankdir=LR; splines=ortho;
 
 
             // nodeA -> nodeB [style=invis]
-            // outputorder="edgesfirst"  
-
-
+            // outputorder="edgesfirst"
             //debug($ob->id_mysql_server);
             //debug($this->exclude);
 
